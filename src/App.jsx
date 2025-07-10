@@ -5,7 +5,7 @@ import './styles/App.css';
 function App() {
   return (
     <div className="App">
-      <h1>Dividash Form</h1>
+      <h1>DiviForm</h1>
       <DividendForm />
     </div>
   );
