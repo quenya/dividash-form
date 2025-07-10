@@ -1,5 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import insertDividend from '../api/insertDividend';
+import { createClient } from '@supabase/supabase-js';
+
+const supabase = createClient(
+  process.env.REACT_APP_SUPABASE_URL,
+  process.env.REACT_APP_SUPABASE_ANON_KEY
+);
 
 function DividendForm() {
   const [form, setForm] = useState({
@@ -11,18 +17,19 @@ function DividendForm() {
   const [customStock, setCustomStock] = useState('');
 
   useEffect(() => {
-    // Supabase REST API에서 distinct account_name 목록 가져오기
     const fetchAccountNames = async () => {
-      const res = await fetch(`${process.env.REACT_APP_SUPABASE_URL}/rest/v1/dividend_entries?select=account_name&distinct=account_name`, {
-        headers: {
-          apikey: process.env.REACT_APP_SUPABASE_ANON_KEY,
-          Authorization: `Bearer ${process.env.REACT_APP_SUPABASE_ANON_KEY}`
-        }
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setAccountNames(data.map(item => item.account_name).filter(Boolean));
+      const { data, error } = await supabase
+        .from('dividend_entries')
+        .select('account_name', { distinct: true });
+      if (error) {
+        console.error('Supabase distinct 쿼리 에러:', error);
+        return;
       }
+      setAccountNames(
+        (data || [])
+          .map(item => item.account_name)
+          .filter(Boolean)
+      );
     };
     fetchAccountNames();
   }, []);
