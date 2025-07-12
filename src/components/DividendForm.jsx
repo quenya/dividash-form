@@ -7,11 +7,25 @@ const supabase = createClient(
   process.env.REACT_APP_SUPABASE_ANON_KEY
 );
 
+function getToday() {
+  const d = new Date();
+  return d.toISOString().slice(0, 10);
+}
+
+function formatAmount(amount, currency) {
+  if (amount === undefined || amount === null) return '';
+  let symbol = '';
+  if (currency === 'KRW') symbol = '\u20A9'; // ₩
+  else if (currency === 'USD') symbol = '$';
+  else symbol = currency || '';
+  return symbol + ' ' + amount.toLocaleString();
+}
+
 function DividendForm() {
   const [form, setForm] = useState({
     stock: '',
     amount: '',
-    date: ''
+    date: getToday()
   });
   const [companyNames, setCompanyNames] = useState([]);
   const [customStock, setCustomStock] = useState('');
@@ -19,21 +33,25 @@ function DividendForm() {
 
   useEffect(() => {
     const fetchCompanyNames = async () => {
+      const oneYearAgo = new Date();
+      oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
+      const oneYearAgoStr = oneYearAgo.toISOString().slice(0, 10);
       const { data, error } = await supabase
         .from('dividend_entries')
-        .select('company_name', { distinct: true });
+        .select('company_name, payment_date', { distinct: false });
       if (error) {
         console.error('Supabase distinct 쿼리 에러:', error);
         return;
       }
-      setCompanyNames(
-        Array.from(new Set(
-          (data || [])
-            .map(item => item.company_name)
-            .filter(Boolean)
-            .map(name => name.trim())
-        ))
-      );
+      // 1년 이내 입금 내역이 있는 종목만 추출
+      const recentCompanies = Array.from(new Set(
+        (data || [])
+          .filter(item => item.payment_date >= oneYearAgoStr)
+          .map(item => item.company_name)
+          .filter(Boolean)
+          .map(name => name.trim())
+      ));
+      setCompanyNames(recentCompanies);
     };
     fetchCompanyNames();
 
@@ -99,7 +117,7 @@ function DividendForm() {
             />
           </div>
         </label>
-        <input name="amount" value={form.amount} onChange={handleChange} placeholder="금액" required type="number" />
+        <input name="amount" value={form.amount} onChange={handleChange} placeholder="금액" required type="number" style={{ textAlign: 'right' }} />
         <input name="date" value={form.date} onChange={handleChange} placeholder="날짜" required type="date" />
         <button type="submit">등록</button>
       </form>
@@ -120,7 +138,7 @@ function DividendForm() {
               <tr key={item.id || idx}>
                 <td style={{ border: '1px solid #ddd', padding: '6px' }}>{item.account_name}</td>
                 <td style={{ border: '1px solid #ddd', padding: '6px' }}>{item.company_name}</td>
-                <td style={{ border: '1px solid #ddd', padding: '6px', textAlign: 'right' }}>{item.dividend_amount}</td>
+                <td style={{ border: '1px solid #ddd', padding: '6px', textAlign: 'right' }}>{formatAmount(item.dividend_amount, item.currency)}</td>
                 <td style={{ border: '1px solid #ddd', padding: '6px' }}>{item.currency}</td>
                 <td style={{ border: '1px solid #ddd', padding: '6px' }}>{item.payment_date}</td>
               </tr>
