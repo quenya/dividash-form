@@ -11,7 +11,7 @@ import {
 } from 'chart.js';
 import { Bar } from 'react-chartjs-2';
 import ChartDataLabels from 'chartjs-plugin-datalabels';
-ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, ChartDataLabels);
+ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
 const supabase = createClient(
   process.env.REACT_APP_SUPABASE_URL,
@@ -42,12 +42,13 @@ function DividendChart() {
       // 실시간 환율 fetch
       let USD_KRW = 1300;
       try {
-        const res = await fetch('https://api.exchangerate.host/latest?base=USD&symbols=KRW');
+        // frankfurter.app API 사용 (무료, 키 필요 없음)
+        const res = await fetch('https://api.frankfurter.app/latest?from=USD&to=KRW');
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const json = await res.json();
         if (json && json.rates && json.rates.KRW) {
           USD_KRW = json.rates.KRW;
-          console.log(`[환율] USD→KRW 적용 환율: ${USD_KRW}`);
+          console.log(`[환율] USD→KRW 적용 환율 (frankfurter.app): ${USD_KRW}`);
         } else {
           console.log('[환율] 환율 응답 파싱 실패:', json);
         }
@@ -113,6 +114,18 @@ function DividendChart() {
               plugins: {
                 legend: { position: 'top' },
                 title: { display: true, text: '월별 배당금 (연도별 비교)' },
+                tooltip: {
+                  enabled: true,
+                  callbacks: {
+                    label: ctx => {
+                      // 연도 정보는 dataset.label에 있음
+                      const year = ctx.dataset.label;
+                      const amount = `₩ ${Number(ctx.parsed.y).toLocaleString()}`;
+                      return `${year}: ${amount}`;
+                    },
+                  },
+                },
+                // datalabels 옵션 제거
               },
               scales: {
                 x: { title: { display: true, text: '월' } },
@@ -124,6 +137,7 @@ function DividendChart() {
                 },
               },
             }}
+            // plugins prop 제거
             height={320}
           />
         ) : (
@@ -164,6 +178,7 @@ function DividendChart() {
                 },
               },
             }}
+            plugins={[ChartDataLabels]}
             height={320}
           />
         ) : (
