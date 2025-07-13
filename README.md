@@ -16,3 +16,18 @@
 - CSS 모듈
 
 ## 시작하기
+
+### 개발 환경 설정
+
+```bash
+npm install
+npm start
+```
+
+### 빌드
+
+```bash
+npm run build
+```
+
+<!-- 커밋&푸시 기능 테스트 완료 - Commit & push functionality verified -->
