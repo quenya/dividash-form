@@ -23,37 +23,59 @@ function formatAmount(amount, currency) {
 
 function DividendForm() {
   const [form, setForm] = useState({
+    account_name: '',
     stock: '',
-    amount: '',
-    date: getToday()
+    dividend_amount: '',
+    payment_date: getToday(),
+    currency: 'KRW',
   });
   const [companyNames, setCompanyNames] = useState([]);
+  const [accountNames, setAccountNames] = useState([]);
   const [customStock, setCustomStock] = useState('');
   const [recentDividends, setRecentDividends] = useState([]);
 
   useEffect(() => {
-    const fetchCompanyNames = async () => {
+    const fetchCompanyAndAccountNames = async () => {
       const oneYearAgo = new Date();
       oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
       const oneYearAgoStr = oneYearAgo.toISOString().slice(0, 10);
       const { data, error } = await supabase
         .from('dividend_entries')
-        .select('company_name, payment_date', { distinct: false });
+        .select('company_name, account_name, payment_date', { distinct: false });
       if (error) {
         console.error('Supabase distinct 쿼리 에러:', error);
         return;
       }
-      // 1년 이내 입금 내역이 있는 종목만 추출
-      const recentCompanies = Array.from(new Set(
-        (data || [])
-          .filter(item => item.payment_date >= oneYearAgoStr)
-          .map(item => item.company_name)
-          .filter(Boolean)
-          .map(name => name.trim())
-      ));
+      // 최신순 정렬 후 중복 제거 (종목명)
+      const sortedCompanies = (data || [])
+        .filter(item => item.payment_date >= oneYearAgoStr)
+        .sort((a, b) => b.payment_date.localeCompare(a.payment_date));
+      const recentCompanies = [];
+      const seenCompanies = new Set();
+      for (const item of sortedCompanies) {
+        const name = item.company_name && item.company_name.trim();
+        if (name && !seenCompanies.has(name)) {
+          recentCompanies.push(name);
+          seenCompanies.add(name);
+        }
+      }
       setCompanyNames(recentCompanies);
+      // 최신순 정렬 후 중복 제거 (계좌명)
+      const sortedAccounts = (data || [])
+        .filter(item => item.payment_date >= oneYearAgoStr)
+        .sort((a, b) => b.payment_date.localeCompare(a.payment_date));
+      const recentAccounts = [];
+      const seenAccounts = new Set();
+      for (const item of sortedAccounts) {
+        const acc = item.account_name && item.account_name.trim();
+        if (acc && !seenAccounts.has(acc)) {
+          recentAccounts.push(acc);
+          seenAccounts.add(acc);
+        }
+      }
+      setAccountNames(recentAccounts);
     };
-    fetchCompanyNames();
+    fetchCompanyAndAccountNames();
 
     const fetchRecentDividends = async () => {
       const { data, error } = await supabase
@@ -71,10 +93,17 @@ function DividendForm() {
   }, []);
 
   const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
-    if (e.target.name === 'stock') {
+    let name = e.target.name;
+    if (name === 'amount') name = 'dividend_amount';
+    if (name === 'date') name = 'payment_date';
+    setForm({ ...form, [name]: e.target.value });
+    if (name === 'stock') {
       setCustomStock('');
     }
+  };
+
+  const handleCurrencyChange = (e) => {
+    setForm({ ...form, currency: e.target.value });
   };
 
   const handleCustomStockChange = (e) => {
@@ -84,15 +113,38 @@ function DividendForm() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    await insertDividend(form);
+    // DB 컬럼에 맞게 데이터 변환
+    const payload = {
+      account_name: form.account_name,
+      company_name: form.stock,
+      dividend_amount: form.dividend_amount,
+      payment_date: form.payment_date,
+      currency: form.currency,
+    };
+    await insertDividend(payload);
     alert('배당금이 등록되었습니다!');
-    setForm({ stock: '', amount: '', date: '' });
+    setForm({ account_name: '', stock: '', dividend_amount: '', payment_date: '', currency: 'KRW' });
     setCustomStock('');
   };
 
   return (
     <>
       <form onSubmit={handleSubmit}>
+        <label style={{ display: 'block', marginBottom: 12 }}>
+          계좌명:
+          <select
+            name="account_name"
+            value={form.account_name}
+            onChange={handleChange}
+            required
+            style={{ minWidth: 180, marginLeft: 8 }}
+          >
+            <option value="">계좌명 선택</option>
+            {accountNames.map((name) => (
+              <option key={name} value={name}>{name}</option>
+            ))}
+          </select>
+        </label>
         <label style={{ display: 'block', marginBottom: 12 }}>
           종목명:
           <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: 4 }}>
@@ -117,8 +169,67 @@ function DividendForm() {
             />
           </div>
         </label>
-        <input name="amount" value={form.amount} onChange={handleChange} placeholder="금액" required type="number" style={{ textAlign: 'right' }} />
-        <input name="date" value={form.date} onChange={handleChange} placeholder="날짜" required type="date" />
+        <div style={{ margin: '12px 0' }}>
+          <span style={{ marginRight: 8 }}>통화:</span>
+          <div style={{ display: 'inline-flex', borderBottom: '2px solid #e0e0e0', borderRadius: 4 }}>
+            <button
+              type="button"
+              style={{
+                border: 'none',
+                background: 'none',
+                padding: '8px 24px',
+                cursor: 'pointer',
+                fontWeight: form.currency === 'KRW' ? 'bold' : 'normal',
+                borderBottom: form.currency === 'KRW' ? '3px solid #1976d2' : 'none',
+                color: form.currency === 'KRW' ? '#1976d2' : '#555',
+                outline: 'none',
+                fontSize: '1em',
+                transition: 'border-bottom 0.2s'
+              }}
+              onClick={() => setForm({ ...form, currency: 'KRW' })}
+            >
+              원화
+            </button>
+            <button
+              type="button"
+              style={{
+                border: 'none',
+                background: 'none',
+                padding: '8px 24px',
+                cursor: 'pointer',
+                fontWeight: form.currency === 'USD' ? 'bold' : 'normal',
+                borderBottom: form.currency === 'USD' ? '3px solid #1976d2' : 'none',
+                color: form.currency === 'USD' ? '#1976d2' : '#555',
+                outline: 'none',
+                fontSize: '1em',
+                transition: 'border-bottom 0.2s'
+              }}
+              onClick={() => setForm({ ...form, currency: 'USD' })}
+            >
+              달러
+            </button>
+          </div>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', marginBottom: 8 }}>
+          <span style={{
+            minWidth: 24,
+            fontSize: '1.1em',
+            color: '#888',
+            marginRight: 4
+          }}>
+            {form.currency === 'KRW' ? '₩' : form.currency === 'USD' ? '$' : ''}
+          </span>
+          <input
+            name="amount"
+            value={form.dividend_amount}
+            onChange={handleChange}
+            placeholder="금액"
+            required
+            type="number"
+            style={{ textAlign: 'right', flex: 1 }}
+          />
+        </div>
+        <input name="date" value={form.payment_date} onChange={handleChange} placeholder="날짜" required type="date" />
         <button type="submit">등록</button>
       </form>
       <div style={{ marginTop: 24 }}>
