@@ -20,7 +20,7 @@ form {
   gap: 12px;
 }
 
-input, button {
+input, button, select {
   padding: 10px;
   border-radius: 4px;
   border: 1px solid #ddd;

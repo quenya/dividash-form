@@ -15,8 +15,13 @@ function getToday() {
 function formatAmount(amount, currency) {
   if (amount === undefined || amount === null) return '';
   let symbol = '';
-  if (currency === 'KRW') symbol = '\u20A9'; // ₩
+  if (currency === 'KRW') symbol = '₩';
   else if (currency === 'USD') symbol = '$';
+  else if (currency === 'EUR') symbol = '€';
+  else if (currency === 'GBP') symbol = '£';
+  else if (currency === 'JPY') symbol = '¥';
+  else if (currency === 'CAD') symbol = 'C$';
+  else if (currency === 'AUD') symbol = 'A$';
   else symbol = currency || '';
   return symbol + ' ' + amount.toLocaleString();
 }
@@ -25,7 +30,8 @@ function DividendForm() {
   const [form, setForm] = useState({
     stock: '',
     amount: '',
-    date: getToday()
+    date: getToday(),
+    currency: 'USD'
   });
   const [companyNames, setCompanyNames] = useState([]);
   const [customStock, setCustomStock] = useState('');
@@ -86,7 +92,7 @@ function DividendForm() {
     e.preventDefault();
     await insertDividend(form);
     alert('배당금이 등록되었습니다!');
-    setForm({ stock: '', amount: '', date: '' });
+    setForm({ stock: '', amount: '', date: '', currency: 'USD' });
     setCustomStock('');
   };
 
@@ -116,6 +122,23 @@ function DividendForm() {
               style={{ minWidth: 120, maxWidth: 220 }}
             />
           </div>
+        </label>
+        <label style={{ display: 'block', marginBottom: 12 }}>
+          통화:
+          <select
+            name="currency"
+            value={form.currency}
+            onChange={handleChange}
+            style={{ width: '100%', padding: '10px', borderRadius: '4px', border: '1px solid #ddd' }}
+          >
+            <option value="USD">USD - 미국 달러</option>
+            <option value="EUR">EUR - 유로</option>
+            <option value="KRW">KRW - 한국 원</option>
+            <option value="JPY">JPY - 일본 엔</option>
+            <option value="GBP">GBP - 영국 파운드</option>
+            <option value="CAD">CAD - 캐나다 달러</option>
+            <option value="AUD">AUD - 호주 달러</option>
+          </select>
         </label>
         <input name="amount" value={form.amount} onChange={handleChange} placeholder="금액" required type="number" style={{ textAlign: 'right' }} />
         <input name="date" value={form.date} onChange={handleChange} placeholder="날짜" required type="date" />
