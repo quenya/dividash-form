@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import DividendPredictionChart from './DividendPredictionChart';
 import { createClient } from '@supabase/supabase-js';
 import {
   Chart as ChartJS,
@@ -43,19 +44,14 @@ function DividendChart() {
       // 실시간 환율 fetch
       let USD_KRW = 1300;
       try {
-        // frankfurter.app API 사용 (무료, 키 필요 없음)
         const res = await fetch('https://api.frankfurter.app/latest?from=USD&to=KRW');
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const json = await res.json();
         if (json && json.rates && json.rates.KRW) {
           USD_KRW = json.rates.KRW;
-          console.log(`[환율] USD→KRW 적용 환율 (frankfurter.app): ${USD_KRW}`);
-        } else {
-          console.log('[환율] 환율 응답 파싱 실패:', json);
         }
       } catch (e) {
-        console.log('[환율] 환율 fetch 실패:', e);
-        console.log('[환율] 기본값 사용:', USD_KRW);
+        // 환율 fetch 실패 시 기본값 사용
       }
       const { data, error } = await supabase
         .from('dividend_entries')
@@ -64,22 +60,17 @@ function DividendChart() {
       // 월별 연도별 집계
       const monthYearMap = {};
       const yearMap = {};
-      // 계좌별 집계용
       const accountMap = {};
       (data || []).forEach(item => {
         if (!item.payment_date) return;
         const [year, month] = item.payment_date.split('-');
-        // 환율 적용: USD는 KRW로 환산
         let amount = Number(item.dividend_amount) || 0;
         if (item.currency === 'USD') amount = amount * USD_KRW;
-        amount = Math.round(amount); // 소수점 반올림
-        // 월별 차트: 연도별로 1~12월 집계
+        amount = Math.round(amount);
         if (!monthYearMap[year]) monthYearMap[year] = Array(12).fill(0);
         monthYearMap[year][parseInt(month, 10) - 1] += amount;
-        // 연도별 차트: 연도별 합계
         if (!yearMap[year]) yearMap[year] = 0;
         yearMap[year] += amount;
-        // 계좌별 차트: 계좌명별 합계
         const acc = (item.account_name || '').trim();
         if (acc) {
           if (!accountMap[acc]) accountMap[acc] = 0;
@@ -88,56 +79,22 @@ function DividendChart() {
       });
       // 월별 차트 데이터
       const years = Object.keys(monthYearMap).sort();
-      // 명확한 색상 팔레트 (최대 8개, 부족하면 hsl fallback)
       const palette = [
-        '#4e73df', // 파랑
-        '#e74a3b', // 빨강
-        '#1cc88a', // 초록
-        '#f6c23e', // 노랑
-        '#36b9cc', // 청록
-        '#858796', // 회색
-        '#fd7e14', // 오렌지
-        '#6f42c1', // 보라
+        '#4e73df', '#e74a3b', '#1cc88a', '#f6c23e', '#36b9cc', '#858796', '#fd7e14', '#6f42c1',
       ];
-      // 월별 예측: 이번달~12월은 작년 데이터만으로 예측
-      const now = new Date();
-      const thisYear = now.getFullYear();
-      const nextYear = thisYear + 1;
-      const thisMonth = now.getMonth(); // 0~11
-      const lastYear = (thisYear - 1).toString();
-      // 실제 데이터 시리즈
       const monthDatasets = years.map((year, idx) => ({
         label: year,
         data: monthYearMap[year],
-        backgroundColor: palette[idx % palette.length] || `hsl(${(idx * 60) % 360}, 70%, 55%)`,
-        borderColor: palette[idx % palette.length] || `hsl(${(idx * 60) % 360}, 70%, 40%)`,
+        backgroundColor: palette[idx % palette.length],
+        borderColor: palette[idx % palette.length],
         borderWidth: 2,
-        hoverBackgroundColor: palette[idx % palette.length] || `hsl(${(idx * 60) % 360}, 70%, 40%)`,
+        hoverBackgroundColor: palette[idx % palette.length],
       }));
-      // ...예측 데이터 시리즈 제거...
       setMonthChart({
         labels: MONTH_LABELS,
         datasets: monthDatasets,
       });
-      // 연도별 예측: 최근 1~3년 평균
-      // 최근 3년(올해 제외, 데이터 있는 연도만) 구하기
-      const sortedYears = Object.keys(yearMap)
-        .map(Number)
-        .filter(y => y < thisYear)
-        .sort((a, b) => b - a);
-      const recentYears = sortedYears.slice(0, 3).map(String);
-      let yearAvg = 0;
-      if (recentYears.length > 0) {
-        let sum = 0, cnt = 0;
-        for (const y of recentYears) {
-          if (yearMap[y]) {
-            sum += yearMap[y];
-            cnt++;
-          }
-        }
-        yearAvg = cnt ? Math.round(sum / cnt) : 0;
-      }
-      // 연도별 실제 데이터만 시리즈
+      // 연도별 차트 데이터
       setYearChart({
         labels: years,
         datasets: [
@@ -147,11 +104,10 @@ function DividendChart() {
             backgroundColor: years.map(() => '#4e73df'),
             borderColor: years.map(() => '#4e73df'),
             borderWidth: 2,
-            borderDash: years.map(() => []),
           },
         ],
       });
-      // 계좌별 차트 데이터 (금액 내림차순 정렬)
+      // 계좌별 차트 데이터
       let accArr = Object.entries(accountMap);
       accArr.sort((a, b) => b[1] - a[1]);
       const accNames = accArr.map(([name]) => name);
@@ -197,6 +153,18 @@ function DividendChart() {
                     },
                   },
                 },
+                datalabels: {
+                  display: ctx => {
+                    const currentYear = new Date().getFullYear().toString();
+                    const currentMonthIdx = new Date().getMonth();
+                    return ctx.dataset.label === currentYear && ctx.dataIndex === currentMonthIdx;
+                  },
+                  formatter: value => `₩ ${Math.round(Number(value)).toLocaleString()}`,
+                  anchor: 'end',
+                  align: 'top',
+                  font: { weight: 'bold' },
+                  color: '#333',
+                },
               },
               scales: {
                 x: { title: { display: true, text: '월' } },
@@ -208,6 +176,7 @@ function DividendChart() {
                 },
               },
             }}
+            plugins={[ChartDataLabels]}
             height={320}
           />
         ) : (
@@ -297,8 +266,9 @@ function DividendChart() {
           <div>차트 데이터를 불러오는 중...</div>
         )}
       </div>
-    </div>
-  );
+    <DividendPredictionChart monthChart={monthChart} />
+  </div>
+);
 }
 
 export default DividendChart;
