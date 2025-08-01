@@ -17,8 +17,8 @@ export async function extractDividendFromText(text) {
             content: `당신은 한국 증권사의 배당금 알림 문자에서 정보를 추출하는 전문가입니다. 
             주어진 텍스트에서 다음 정보를 JSON 형식으로 추출해주세요:
             - account_name: 증권사명 (예: 미래에셋증권, 신한투자증권, 키움증권 등)
-            - account_type: 계좌 유형 (예: 퇴직연금, 개인형IRP, 일반계좌, 연금(신), KB연금 등)
-            - account_number: 마스킹된 계좌번호 (예: 312-53-****480, 010-67**-**68-1, A458730 등)
+            - account_type: 계좌 유형 (퇴직연금, 개인연금, 일반계좌 중 하나)
+            - account_number: 마스킹된 계좌번호 (예: 312-53-****480, 010-67**-**68-1 등, A4... 형태는 종목코드이므로 제외)
             - stock: 종목명 또는 ETF명 (예: 삼성전자, SOL 미국배당미국채혼합50, TIGER 미국배당다우존스 등)
             - dividend_amount: 배당금액 (숫자만, 쉼표 제거)
             - payment_date: 지급일 (YYYY-MM-DD 형식)
@@ -30,8 +30,12 @@ export async function extractDividendFromText(text) {
             - "배당금입금", "배당금 지급", "ETF분배금입금" 등의 키워드 포함
             - 날짜는 YYYY.MM.DD 또는 YYYY-MM-DD 형식
             - 금액은 "12,650원", "배정금액 : 11,798원(세전)" 형태로 표시
-            - 계좌번호는 마스킹되어 있음 (312-53-****480, A458730 형태)
-            - 계좌 유형: 퇴직연금, 개인형IRP, 일반계좌 등으로 구분
+            - 계좌번호는 마스킹되어 있음 (312-53-****480 형태, A4... 형태는 종목코드임)
+            - 종목코드: A4..., A3... 등의 형태로 표시되며, 이는 계좌번호가 아닌 종목코드
+            - 계좌 유형: 퇴직연금(IRP), 개인연금, 일반계좌로 구분
+            - USD 배당금은 모두 일반계좌로 분류
+            - IRP가 아닌 연금계좌는 개인연금으로 분류
+            - 특별 규칙: 010-67**-**68-0은 일반계좌, 010-67**-**68-1과 010-67**-**68-2는 개인연금
             - ETF명은 긴 공식명칭을 축약해서 표현 (예: "미래에셋 TIGER 미국배당다우존스증권상장지수투자신탁(주식)" → "TIGER 미국배당다우존스")
             
             정보가 없으면 빈 문자열이나 null을 사용하세요.`
@@ -158,14 +162,19 @@ function fallbackTextParsing(text) {
     // 일반적인 패턴
     /\n([가-힣A-Za-z0-9\s&]+)\n.*?배당금/,
     /계좌\s*[0-9\-*]+\s*\n([가-힣A-Za-z0-9\s&]+)/,
-    // 새로운 패턴: 계좌번호 다음에 오는 종목명 (A458730 다음)
-    /[A-Z]\d+\s+([가-힣A-Za-z0-9\s&()]+(?:ETF|투자신탁)[가-힣]*)/
+    // 종목코드 패턴: A4... 형태의 종목코드 다음에 오는 종목명
+    /([A-Z]\d+)\s+([가-힣A-Za-z0-9\s&()]+(?:ETF|투자신탁)(?:\([가-힣]+\))?)/
   ];
 
   for (const pattern of stockPatterns) {
     const match = text.match(pattern);
     if (match) {
-      result.stock = match[1].trim();
+      // 종목코드 패턴인 경우 match[2] (종목명)을 사용, 아니면 match[1] 사용
+      if (pattern.source.includes('([A-Z]\\d+)\\s+([')) {
+        result.stock = match[2].trim();  // 종목코드 다음의 종목명
+      } else {
+        result.stock = match[1].trim();  // 일반적인 경우
+      }
 
       // ETF 이름 정리 및 축약
       if (result.stock.includes('미래에셋 TIGER') || result.stock.includes('TIGER')) {
@@ -260,33 +269,10 @@ function fallbackTextParsing(text) {
     }
   }
 
-  // 계좌 유형 추출
-  const accountTypePatterns = [
-    /퇴직연금/,
-    /개인형\s*IRP/,
-    /IRP/,
-    /연금\(신\)/,
-    /연금\(구\)/,
-    /KB연금/,
-    /일반계좌/,
-    /종합.*주식/,
-    /직투/,
-    /위탁/
-  ];
-
-  for (const pattern of accountTypePatterns) {
-    const match = text.match(pattern);
-    if (match) {
-      result.account_type = match[0];
-      break;
-    }
-  }
-
-  // 계좌번호 추출 (마스킹된 계좌번호)
+  // 계좌번호 추출 (마스킹된 계좌번호) - A4... 형태는 종목코드이므로 제외
   const accountNumberPatterns = [
     /(\d{3}-\d{2}-\*{4}\d{3})/,  // 312-53-****480 형태
-    /(\d{3}-\d{8}-\d)/,          // 010-67**-**68-1 형태
-    /([A-Z]\d+)/,                // A458730 형태
+    /(\d{3}-\d{2}\*{2}-\*{2}\d{2}-\d)/,  // 010-67**-**68-1 형태 (계좌번호)
     /(\d{10,15})/                // 긴 계좌번호
   ];
 
@@ -295,6 +281,47 @@ function fallbackTextParsing(text) {
     if (match) {
       result.account_number = match[1];
       break;
+    }
+  }
+
+  // 계좌 유형 추출 - 퇴직연금, 개인연금, 일반계좌로 분류
+  if (result.currency === 'USD') {
+    // USD 배당금은 모두 일반계좌
+    result.account_type = '일반계좌';
+  } else {
+    // 1. 먼저 계좌번호 패턴으로 유형 확인 (특별 규칙)
+    let accountTypeByNumber = null;
+    if (result.account_number) {
+      if (result.account_number.match(/010-67\*\*-\*\*68-0/)) {
+        accountTypeByNumber = '일반계좌';
+      } else if (result.account_number.match(/010-67\*\*-\*\*68-[12]/)) {
+        accountTypeByNumber = '개인연금';
+      }
+    }
+
+    // 2. 텍스트에서 유형 추출
+    const accountTypePatterns = [
+      { pattern: /퇴직연금|개인형\s*IRP|IRP/, type: '퇴직연금' },
+      { pattern: /연금\(신\)|연금\(구\)|KB연금|연금계좌/, type: '개인연금' },
+      { pattern: /일반계좌|종합.*주식|직투|위탁/, type: '일반계좌' }
+    ];
+
+    let accountTypeByText = null;
+    for (const { pattern, type } of accountTypePatterns) {
+      const match = text.match(pattern);
+      if (match) {
+        accountTypeByText = type;
+        break;
+      }
+    }
+
+    // 3. 우선순위: 계좌번호 패턴 > 텍스트 패턴 > 기본값
+    if (accountTypeByNumber) {
+      result.account_type = accountTypeByNumber;
+    } else if (accountTypeByText) {
+      result.account_type = accountTypeByText;
+    } else {
+      result.account_type = '일반계좌';
     }
   }
 

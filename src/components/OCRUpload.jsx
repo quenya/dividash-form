@@ -40,12 +40,36 @@ function OCRUpload() {
     if (!extractedData) return;
 
     try {
-      await insertDividend({
-        ...extractedData,
-        input_method: 'ocr',
-        confidence_score: extractedData.confidence || 0.8
-      });
-      setMessage('배당금 정보가 성공적으로 저장되었습니다!');
+      // entries 배열이 있고 2건 이상인 경우 모든 배당금을 저장
+      if (extractedData.entries && extractedData.entries.length > 1) {
+        let savedCount = 0;
+        
+        for (const entry of extractedData.entries) {
+          await insertDividend({
+            account_name: extractedData.account_name,
+            account_type: extractedData.account_type,
+            account_number: extractedData.account_number,
+            stock: entry.stock,
+            dividend_amount: entry.amount,
+            payment_date: entry.date,
+            currency: entry.currency,
+            input_method: 'ocr',
+            confidence_score: extractedData.confidence || 0.8
+          });
+          savedCount++;
+        }
+        
+        setMessage(`${savedCount}건의 배당금 정보가 성공적으로 저장되었습니다!`);
+      } else {
+        // 단일 배당금인 경우 기존 방식으로 저장
+        await insertDividend({
+          ...extractedData,
+          input_method: 'ocr',
+          confidence_score: extractedData.confidence || 0.8
+        });
+        setMessage('배당금 정보가 성공적으로 저장되었습니다!');
+      }
+      
       // Reset form
       setImage(null);
       setImagePreview(null);
@@ -93,87 +117,138 @@ function OCRUpload() {
       {extractedData && (
         <div style={{ marginBottom: 20 }}>
           <h3>추출된 정보:</h3>
-          <div style={{ display: 'grid', gap: 10, maxWidth: 400 }}>
-            <div>
-              <label>증권사명:</label>
-              <input
-                type="text"
-                value={extractedData.account_name || ''}
-                onChange={(e) => updateExtractedData('account_name', e.target.value)}
-                style={{ width: '100%', padding: 5 }}
-              />
+          
+          {/* 공통 계좌 정보 */}
+          <div style={{ marginBottom: 20, padding: 15, backgroundColor: '#f8f9fa', borderRadius: 4 }}>
+            <h4>계좌 정보:</h4>
+            <div style={{ display: 'grid', gap: 10, maxWidth: 400 }}>
+              <div>
+                <label>증권사명:</label>
+                <input
+                  type="text"
+                  value={extractedData.account_name || ''}
+                  onChange={(e) => updateExtractedData('account_name', e.target.value)}
+                  style={{ width: '100%', padding: 5 }}
+                />
+              </div>
+              <div>
+                <label>계좌 유형:</label>
+                <input
+                  type="text"
+                  value={extractedData.account_type || ''}
+                  onChange={(e) => updateExtractedData('account_type', e.target.value)}
+                  style={{ width: '100%', padding: 5 }}
+                  placeholder="퇴직연금, 개인연금, 일반계좌"
+                />
+              </div>
+              <div>
+                <label>계좌번호:</label>
+                <input
+                  type="text"
+                  value={extractedData.account_number || ''}
+                  onChange={(e) => updateExtractedData('account_number', e.target.value)}
+                  style={{ width: '100%', padding: 5 }}
+                  placeholder="예: 312-53-****480, A458730"
+                />
+              </div>
             </div>
-            <div>
-              <label>계좌 유형:</label>
-              <input
-                type="text"
-                value={extractedData.account_type || ''}
-                onChange={(e) => updateExtractedData('account_type', e.target.value)}
-                style={{ width: '100%', padding: 5 }}
-                placeholder="예: 퇴직연금, 개인형IRP, 일반계좌"
-              />
-            </div>
-            <div>
-              <label>계좌번호:</label>
-              <input
-                type="text"
-                value={extractedData.account_number || ''}
-                onChange={(e) => updateExtractedData('account_number', e.target.value)}
-                style={{ width: '100%', padding: 5 }}
-                placeholder="예: 312-53-****480, A458730"
-              />
-            </div>
-            <div>
-              <label>종목명:</label>
-              <input
-                type="text"
-                value={extractedData.stock || ''}
-                onChange={(e) => updateExtractedData('stock', e.target.value)}
-                style={{ width: '100%', padding: 5 }}
-              />
-            </div>
-            <div>
-              <label>배당금액:</label>
-              <input
-                type="number"
-                value={extractedData.dividend_amount || ''}
-                onChange={(e) => updateExtractedData('dividend_amount', parseFloat(e.target.value))}
-                style={{ width: '100%', padding: 5 }}
-              />
-            </div>
-            <div>
-              <label>지급일:</label>
-              <input
-                type="date"
-                value={extractedData.payment_date || ''}
-                onChange={(e) => updateExtractedData('payment_date', e.target.value)}
-                style={{ width: '100%', padding: 5 }}
-              />
-            </div>
-            <div>
-              <label>통화:</label>
-              <select
-                value={extractedData.currency || 'KRW'}
-                onChange={(e) => updateExtractedData('currency', e.target.value)}
-                style={{ width: '100%', padding: 5 }}
-              >
-                <option value="KRW">KRW</option>
-                <option value="USD">USD</option>
-              </select>
-            </div>
-            <button
-              onClick={handleSave}
-              style={{
-                padding: '10px 20px',
-                backgroundColor: '#007bff',
-                color: 'white',
-                border: 'none',
-                cursor: 'pointer'
-              }}
-            >
-              저장
-            </button>
           </div>
+
+          {/* 배당금 내역 */}
+          {extractedData.entries && extractedData.entries.length > 1 ? (
+            <div>
+              <h4>추출된 배당금 내역 ({extractedData.entries.length}건):</h4>
+              {extractedData.entries.map((entry, index) => (
+                <div key={index} style={{ 
+                  marginBottom: 15, 
+                  padding: 10, 
+                  border: '1px solid #ddd', 
+                  borderRadius: 4,
+                  backgroundColor: '#fff'
+                }}>
+                  <h5>배당금 #{index + 1}</h5>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                    <div>
+                      <strong>종목:</strong> {entry.stock}
+                    </div>
+                    <div>
+                      <strong>금액:</strong> {entry.amount} {entry.currency}
+                    </div>
+                    <div>
+                      <strong>지급일:</strong> {entry.date}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div>
+              <h4>배당금 정보:</h4>
+              <div style={{ display: 'grid', gap: 10, maxWidth: 400 }}>
+                <div>
+                  <label>종목명:</label>
+                  <input
+                    type="text"
+                    value={extractedData.stock || ''}
+                    onChange={(e) => updateExtractedData('stock', e.target.value)}
+                    style={{ width: '100%', padding: 5 }}
+                  />
+                </div>
+                <div>
+                  <label>배당금액:</label>
+                  <input
+                    type="number"
+                    value={extractedData.dividend_amount || ''}
+                    onChange={(e) => updateExtractedData('dividend_amount', parseFloat(e.target.value))}
+                    style={{ width: '100%', padding: 5 }}
+                  />
+                </div>
+                <div>
+                  <label>지급일:</label>
+                  <input
+                    type="date"
+                    value={extractedData.payment_date || ''}
+                    onChange={(e) => updateExtractedData('payment_date', e.target.value)}
+                    style={{ width: '100%', padding: 5 }}
+                  />
+                </div>
+                <div>
+                  <label>통화:</label>
+                  <select
+                    value={extractedData.currency || 'KRW'}
+                    onChange={(e) => updateExtractedData('currency', e.target.value)}
+                    style={{ width: '100%', padding: 5 }}
+                  >
+                    <option value="KRW">KRW</option>
+                    <option value="USD">USD</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          )}
+
+          <button
+            onClick={handleSave}
+            style={{
+              padding: '10px 20px',
+              backgroundColor: '#007bff',
+              color: 'white',
+              border: 'none',
+              borderRadius: 4,
+              cursor: 'pointer',
+              marginTop: 20
+            }}
+          >
+            {extractedData.entries && extractedData.entries.length > 1 
+              ? `${extractedData.entries.length}건 모두 저장` 
+              : '저장'}
+          </button>
+
+          {extractedData.confidence && (
+            <div style={{ marginTop: 10, fontSize: '0.9em', color: '#666' }}>
+              신뢰도: {Math.round(extractedData.confidence * 100)}%
+            </div>
+          )}
         </div>
       )}
 

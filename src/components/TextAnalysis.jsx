@@ -103,7 +103,7 @@ function TextAnalysis() {
                 value={extractedData.account_type || ''}
                 onChange={(e) => updateExtractedData('account_type', e.target.value)}
                 style={{ width: '100%', padding: 5 }}
-                placeholder="예: 퇴직연금, 개인형IRP, 일반계좌"
+                placeholder="퇴직연금, 개인연금, 일반계좌"
               />
             </div>
             <div>
@@ -199,9 +199,15 @@ function TextAnalysis() {
       <div style={{ marginTop: 30, padding: 15, backgroundColor: '#f8f9fa', borderRadius: 4 }}>
         <h4>지원하는 텍스트 형식 예시:</h4>
         <ul style={{ fontSize: '0.9em', color: '#666' }}>
+          <li>[미래에셋증권] 퇴직연금 권리 입금 안내<br/>
+              개인형IRP 계좌 312-53-****480<br/>
+              SOL 미국배당미국채혼합50<br/>
+              12,650원 2025.07.16 배당금입금 처리되었습니다.</li>
+          <li>[미래에셋증권] 권리 입금 안내<br/>
+              010-67**-**68-1<br/>
+              A458730 미래에셋 TIGER 미국배당다우존스증권상장지수투자신탁(주식) ETF분배금입금<br/>
+              배정금액 : 11,798원(세전)</li>
           <li>[신한투자증권] 삼성전자 배당금 1,200원이 입금되었습니다.</li>
-          <li>키움증권: AAPL 배당금 $0.25 지급완료 (2024-03-15)</li>
-          <li>배당금 알림 - 계좌: 신한투자, 종목: 카카오, 금액: 150원</li>
         </ul>
       </div>
     </div>
