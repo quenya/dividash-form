@@ -7,13 +7,13 @@
       "Bash(git push:*)",
       "mcp__supabase__list_tables",
       "Bash(node:*)",
-      "mcp__supabase__execute_sql"
+      "mcp__supabase__execute_sql",
+      "Bash(mkdir:*)"
     ],
     "deny": []
   },
   "enableAllProjectMcpServers": true,
   "enabledMcpjsonServers": [
-    "supabase",
-    "tosspayments-integration-guide"
+    "supabase"
   ]
 }
