@@ -4,8 +4,16 @@
     "allow": [
       "mcp__context7__resolve-library-id",
       "mcp__context7__get-library-docs",
-      "Bash(git push:*)"
+      "Bash(git push:*)",
+      "mcp__supabase__list_tables",
+      "Bash(node:*)",
+      "mcp__supabase__execute_sql"
     ],
     "deny": []
-  }
+  },
+  "enableAllProjectMcpServers": true,
+  "enabledMcpjsonServers": [
+    "supabase",
+    "tosspayments-integration-guide"
+  ]
 }
