@@ -34,6 +34,7 @@ function DividendChart() {
   const [monthChart, setMonthChart] = useState(null);
   const [yearChart, setYearChart] = useState(null);
   const [accountChart, setAccountChart] = useState(null);
+  const [stockChart, setStockChart] = useState(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -51,12 +52,13 @@ function DividendChart() {
       }
       const { data, error } = await supabase
         .from('dividend_entries')
-        .select('dividend_amount, payment_date, currency, account_name');
+        .select('dividend_amount, payment_date, currency, account_name, ticker, company_name');
       if (error) return;
       // 월별 연도별 집계
       const monthYearMap = {};
       const yearMap = {};
       const accountMap = {};
+      const stockMap = {};
       (data || []).forEach(item => {
         if (!item.payment_date) return;
         const [year, month] = item.payment_date.split('-');
@@ -71,6 +73,11 @@ function DividendChart() {
         if (acc) {
           if (!accountMap[acc]) accountMap[acc] = 0;
           accountMap[acc] += amount;
+        }
+        const stock = (item.company_name || item.ticker || '').trim();
+        if (stock) {
+          if (!stockMap[stock]) stockMap[stock] = 0;
+          stockMap[stock] += amount;
         }
       });
       // 월별 차트 데이터
@@ -119,6 +126,27 @@ function DividendChart() {
             data: accValues,
             backgroundColor: accNames.map((_, i) => accPalette[i % accPalette.length]),
             borderColor: accNames.map((_, i) => accPalette[i % accPalette.length]),
+            borderWidth: 2,
+          },
+        ],
+      });
+      // 종목별 차트 데이터 (상위 7개만)
+      let stockArr = Object.entries(stockMap);
+      stockArr.sort((a, b) => b[1] - a[1]);
+      stockArr = stockArr.slice(0, 7);
+      const stockNames = stockArr.map(([name]) => name);
+      const stockValues = stockArr.map(([_, value]) => value);
+      const stockPalette = [
+        '#4e73df', '#e74a3b', '#1cc88a', '#f6c23e', '#36b9cc', '#858796', '#fd7e14', '#6f42c1',
+      ];
+      setStockChart({
+        labels: stockNames,
+        datasets: [
+          {
+            label: '종목별 배당금 합계',
+            data: stockValues,
+            backgroundColor: stockNames.map((_, i) => stockPalette[i % stockPalette.length]),
+            borderColor: stockNames.map((_, i) => stockPalette[i % stockPalette.length]),
             borderWidth: 2,
           },
         ],
@@ -247,6 +275,48 @@ function DividendChart() {
               },
               scales: {
                 x: { title: { display: true, text: '계좌명' } },
+                y: {
+                  title: { display: true, text: '배당금 합계 (₩+달러 단순합산)' },
+                  ticks: {
+                    callback: value => `₩ ${Math.round(Number(value)).toLocaleString()}`,
+                  },
+                },
+              },
+            }}
+            plugins={[ChartDataLabels]}
+            height={320}
+          />
+        ) : (
+          <div>차트 데이터를 불러오는 중...</div>
+        )}
+      </div>
+      {/* 종목별 배당금 합계 차트 */}
+      <div style={{ flex: 1, minWidth: 320 }}>
+        <h4>종목별 배당금 합계 (상위 7개)</h4>
+        {stockChart ? (
+          <Bar
+            data={stockChart}
+            options={{
+              responsive: true,
+              plugins: {
+                legend: { display: false },
+                title: { display: true, text: '종목별 배당금 합계 (상위 7개)' },
+                tooltip: {
+                  enabled: true,
+                  callbacks: {
+                    label: ctx => `₩ ${Math.round(Number(ctx.parsed.y)).toLocaleString()}`,
+                  },
+                },
+                datalabels: {
+                  anchor: 'end',
+                  align: 'top',
+                  formatter: value => `₩ ${Math.round(Number(value)).toLocaleString()}`,
+                  font: { weight: 'bold' },
+                  color: '#333',
+                },
+              },
+              scales: {
+                x: { title: { display: true, text: '종목명' } },
                 y: {
                   title: { display: true, text: '배당금 합계 (₩+달러 단순합산)' },
                   ticks: {
