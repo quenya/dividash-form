@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import DividendPredictionChart from './DividendPredictionChart';
-import { createClient } from '@supabase/supabase-js';
+import { supabase } from '../api/supabaseClient';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -14,10 +14,6 @@ import { Bar } from 'react-chartjs-2';
 import ChartDataLabels from 'chartjs-plugin-datalabels';
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
-const supabase = createClient(
-  process.env.REACT_APP_SUPABASE_URL,
-  process.env.REACT_APP_SUPABASE_ANON_KEY
-);
 
 const MONTH_LABELS = [
   '1월',

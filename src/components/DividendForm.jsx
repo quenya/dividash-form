@@ -1,11 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import insertDividend from '../api/insertDividend';
-import { createClient } from '@supabase/supabase-js';
-
-const supabase = createClient(
-  process.env.REACT_APP_SUPABASE_URL,
-  process.env.REACT_APP_SUPABASE_ANON_KEY
-);
+import { supabase } from '../api/supabaseClient';
 
 function getToday() {
   const d = new Date();

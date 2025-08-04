@@ -8,7 +8,8 @@
       "mcp__supabase__list_tables",
       "Bash(node:*)",
       "mcp__supabase__execute_sql",
-      "Bash(mkdir:*)"
+      "Bash(mkdir:*)",
+      "Bash(npm start)"
     ],
     "deny": []
   },

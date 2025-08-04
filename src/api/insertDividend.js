@@ -1,9 +1,4 @@
-import { createClient } from '@supabase/supabase-js';
-
-const supabase = createClient(
-  process.env.REACT_APP_SUPABASE_URL,
-  process.env.REACT_APP_SUPABASE_ANON_KEY
-);
+import { supabase } from './supabaseClient';
 
 async function insertDividend(dividendData) {
   try {
@@ -13,7 +8,7 @@ async function insertDividend(dividendData) {
         account_name: dividendData.account_name,
         account_type: dividendData.account_type || null,
         account_number: dividendData.account_number || null,
-        stock: dividendData.stock,
+        company_name: dividendData.company_name,
         dividend_amount: dividendData.dividend_amount,
         payment_date: dividendData.payment_date,
         currency: dividendData.currency || 'KRW',
