@@ -10,9 +10,10 @@ import {
   Tooltip,
   Legend,
 } from 'chart.js';
-import { Bar } from 'react-chartjs-2';
+import { Bar, Chart } from 'react-chartjs-2';
+import { TreemapController, TreemapElement } from 'chartjs-chart-treemap';
 import ChartDataLabels from 'chartjs-plugin-datalabels';
-ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
+ChartJS.register(CategoryScale, LinearScale, BarElement, TreemapController, TreemapElement, Title, Tooltip, Legend);
 
 
 const MONTH_LABELS = [
@@ -37,23 +38,44 @@ function DividendChart() {
   const [stockChart, setStockChart] = useState(null);
 
   useEffect(() => {
+    let isMounted = true;
+    
     const fetchData = async () => {
       // 실시간 환율 fetch
       let USD_KRW = 1300;
       try {
-        const res = await fetch('https://api.frankfurter.app/latest?from=USD&to=KRW');
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 5000); // 5초 타임아웃
+        
+        const res = await fetch('https://api.frankfurter.app/latest?from=USD&to=KRW', {
+          signal: controller.signal
+        });
+        clearTimeout(timeoutId);
+        
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const json = await res.json();
         if (json && json.rates && json.rates.KRW) {
           USD_KRW = json.rates.KRW;
         }
       } catch (e) {
+        if (e.name !== 'AbortError') {
+          console.warn('환율 API 호출 실패, 기본값 사용:', e.message);
+        }
         // 환율 fetch 실패 시 기본값 사용
       }
-      const { data, error } = await supabase
-        .from('dividend_entries')
-        .select('dividend_amount, payment_date, currency, account_name, ticker, company_name');
-      if (error) return;
+      
+      if (!isMounted) return;
+      try {
+        const { data, error } = await supabase
+          .from('dividend_entries')
+          .select('dividend_amount, payment_date, currency, account_name, ticker, company_name');
+        
+        if (error) {
+          console.error('Supabase 데이터 조회 오류:', error);
+          return;
+        }
+        
+        if (!isMounted) return;
       // 월별 연도별 집계
       const monthYearMap = {};
       const yearMap = {};
@@ -130,29 +152,96 @@ function DividendChart() {
           },
         ],
       });
-      // 종목별 차트 데이터 (상위 7개만)
+      // 종목별 트리맵 차트 데이터
       let stockArr = Object.entries(stockMap);
       stockArr.sort((a, b) => b[1] - a[1]);
-      stockArr = stockArr.slice(0, 7);
-      const stockNames = stockArr.map(([name]) => name);
-      const stockValues = stockArr.map(([_, value]) => value);
-      const stockPalette = [
-        '#4e73df', '#e74a3b', '#1cc88a', '#f6c23e', '#36b9cc', '#858796', '#fd7e14', '#6f42c1',
+      
+      // 트리맵을 위한 데이터 구조 생성 (상위 15개만)
+      stockArr = stockArr.slice(0, 15);
+      const maxValue = stockArr[0] ? stockArr[0][1] : 1;
+      
+      const treemapData = stockArr.map(([name, value]) => ({
+        label: name,
+        value: value
+      }));
+      
+      // HEX를 RGB로 변환하는 함수
+      const hexToRgb = (hex) => {
+        const r = parseInt(hex.slice(1, 3), 16);
+        const g = parseInt(hex.slice(3, 5), 16);
+        const b = parseInt(hex.slice(5, 7), 16);
+        return `rgb(${r}, ${g}, ${b})`;
+      };
+
+      // 선명하고 다양한 색상 팔레트 생성 (RGB 형식)
+      const colorPalette = [
+        'rgb(255, 107, 107)',  // 코랄 레드
+        'rgb(78, 205, 196)',   // 터키석
+        'rgb(69, 183, 209)',   // 스카이 블루
+        'rgb(150, 206, 180)',  // 민트 그린
+        'rgb(255, 234, 167)',  // 따뜻한 노랑
+        'rgb(221, 160, 221)',  // 플럼
+        'rgb(152, 216, 200)',  // 아쿠아민트
+        'rgb(247, 220, 111)',  // 바나나 옐로우
+        'rgb(187, 143, 206)',  // 라벤더
+        'rgb(133, 193, 233)',  // 라이트 블루
+        'rgb(248, 196, 113)',  // 피치
+        'rgb(130, 224, 170)',  // 라이트 그린
+        'rgb(241, 148, 138)',  // 로즈
+        'rgb(174, 214, 241)',  // 파우더 블루
+        'rgb(250, 215, 160)',  // 크림
+        'rgb(215, 219, 221)',  // 실버
+        'rgb(232, 218, 239)',  // 라일락
+        'rgb(213, 244, 230)',  // 허니듀
+        'rgb(250, 219, 216)',  // 미스티 로즈
+        'rgb(235, 245, 251)'   // 앨리스 블루
       ];
+      
+      const colors = stockArr.map(([name, value], index) => {
+        return colorPalette[index % colorPalette.length];
+      });
+      
       setStockChart({
-        labels: stockNames,
         datasets: [
           {
-            label: '종목별 배당금 합계',
-            data: stockValues,
-            backgroundColor: stockNames.map((_, i) => stockPalette[i % stockPalette.length]),
-            borderColor: stockNames.map((_, i) => stockPalette[i % stockPalette.length]),
+            label: '종목별 배당금',
+            tree: treemapData,
+            key: 'value',
+            groups: ['label'],
+            spacing: 0.5,
             borderWidth: 2,
-          },
-        ],
+            borderColor: 'rgba(255,255,255,0.8)',
+            backgroundColor: colors,
+            hoverBackgroundColor: colors.map(color => {
+              // RGB 색상을 더 진하게 만들기
+              const rgbMatch = color.match(/rgb\((\d+),\s*(\d+),\s*(\d+)\)/);
+              if (rgbMatch) {
+                const r = Math.max(0, parseInt(rgbMatch[1]) - 30);
+                const g = Math.max(0, parseInt(rgbMatch[2]) - 30);
+                const b = Math.max(0, parseInt(rgbMatch[3]) - 30);
+                return `rgb(${r}, ${g}, ${b})`;
+              }
+              return color;
+            }),
+            // 각 데이터에 메타데이터 추가
+            stockNames: stockArr.map(([name]) => name),
+            stockValues: stockArr.map(([, value]) => value)
+          }
+        ]
       });
+      
+      } catch (error) {
+        console.error('차트 데이터 처리 오류:', error);
+      }
     };
-    fetchData();
+    
+    fetchData().catch(error => {
+      console.error('fetchData 실행 오류:', error);
+    });
+    
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   return (
@@ -290,44 +379,244 @@ function DividendChart() {
           <div>차트 데이터를 불러오는 중...</div>
         )}
       </div>
-      {/* 종목별 배당금 합계 차트 */}
+      {/* 종목별 배당금 트리맵 차트 */}
       <div style={{ flex: 1, minWidth: 320 }}>
-        <h4>종목별 배당금 합계 (상위 7개)</h4>
-        {stockChart ? (
-          <Bar
-            data={stockChart}
-            options={{
-              responsive: true,
-              plugins: {
-                legend: { display: false },
-                title: { display: true, text: '종목별 배당금 합계 (상위 7개)' },
-                tooltip: {
-                  enabled: true,
-                  callbacks: {
-                    label: ctx => `₩ ${Math.round(Number(ctx.parsed.y)).toLocaleString()}`,
+        <h4>종목별 배당금 합계 (트리맵)</h4>
+        {stockChart && stockChart.datasets ? (
+          <div style={{ height: '400px', position: 'relative' }}>
+            <Chart
+              type="treemap"
+              data={stockChart}
+              plugins={[ChartDataLabels]}
+              options={{
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                  legend: {
+                    display: false
                   },
-                },
-                datalabels: {
-                  anchor: 'end',
-                  align: 'top',
-                  formatter: value => `₩ ${Math.round(Number(value)).toLocaleString()}`,
-                  font: { weight: 'bold' },
-                  color: '#333',
-                },
-              },
-              scales: {
-                x: { title: { display: true, text: '종목명' } },
-                y: {
-                  title: { display: true, text: '배당금 합계 (₩+달러 단순합산)' },
-                  ticks: {
-                    callback: value => `₩ ${Math.round(Number(value)).toLocaleString()}`,
+                  tooltip: {
+                    callbacks: {
+                      title: (context) => {
+                        const item = context[0];
+                        // 트리맵 데이터에서 라벨 추출
+                        if (item.parsed && item.parsed._data) {
+                          return item.parsed._data.label || '종목';
+                        }
+                        if (item.raw && item.raw.label) {
+                          return item.raw.label;
+                        }
+                        if (item.dataset && item.dataset.stockNames && item.dataIndex !== undefined) {
+                          return item.dataset.stockNames[item.dataIndex];
+                        }
+                        return '종목';
+                      },
+                      label: (context) => {
+                        const item = context;
+                        let value = null;
+                        
+                        // 다양한 방법으로 값 추출 시도
+                        if (item.parsed && item.parsed.v) {
+                          value = item.parsed.v;
+                        } else if (item.raw && item.raw.value) {
+                          value = item.raw.value;
+                        } else if (item.dataset && item.dataset.stockValues && item.dataIndex !== undefined) {
+                          value = item.dataset.stockValues[item.dataIndex];
+                        }
+                        
+                        if (value !== null) {
+                          return `배당금: ₩${Math.round(value).toLocaleString()}`;
+                        }
+                        return '배당금: 정보 없음';
+                      }
+                    }
                   },
+                  datalabels: {
+                    display: true,
+                    color: function(context) {
+                      // 배경색에 따라 텍스트 색상 자동 조정
+                      const bgColor = context.dataset.backgroundColor[context.dataIndex];
+                      
+                      // 밝은 색상들 (RGB 형식 기준)
+                      const lightColors = [
+                        'rgb(255, 234, 167)',  // 따뜻한 노랑
+                        'rgb(247, 220, 111)',  // 바나나 옐로우
+                        'rgb(150, 206, 180)',  // 민트 그린
+                        'rgb(152, 216, 200)',  // 아쿠아민트
+                        'rgb(248, 196, 113)',  // 피치
+                        'rgb(130, 224, 170)',  // 라이트 그린
+                        'rgb(250, 215, 160)',  // 크림
+                        'rgb(215, 219, 221)',  // 실버
+                        'rgb(232, 218, 239)',  // 라일락
+                        'rgb(213, 244, 230)',  // 허니듀
+                        'rgb(250, 219, 216)',  // 미스티 로즈
+                        'rgb(235, 245, 251)',  // 앨리스 블루
+                        'rgb(174, 214, 241)',  // 파우더 블루
+                        'rgb(133, 193, 233)'   // 라이트 블루
+                      ];
+                      
+                      const isLightColor = lightColors.includes(bgColor);
+                      return isLightColor ? '#000000' : '#FFFFFF';
+                    },
+                    font: {
+                      weight: 'bold',
+                      size: function(context) {
+                        // 사각형 크기에 따라 폰트 크기 조정
+                        const area = context.parsed ? (context.parsed.w * context.parsed.h) : 1000;
+                        return Math.min(18, Math.max(12, Math.sqrt(area) / 6));
+                      },
+                      family: 'Arial, sans-serif'
+                    },
+                    textStrokeColor: function(context) {
+                      // 텍스트 외곽선으로 가독성 향상 (텍스트 색상과 반대)
+                      const bgColor = context.dataset.backgroundColor[context.dataIndex];
+                      
+                      const lightColors = [
+                        'rgb(255, 234, 167)', 'rgb(247, 220, 111)', 'rgb(150, 206, 180)', 'rgb(152, 216, 200)', 'rgb(248, 196, 113)',
+                        'rgb(130, 224, 170)', 'rgb(250, 215, 160)', 'rgb(215, 219, 221)', 'rgb(232, 218, 239)', 'rgb(213, 244, 230)',
+                        'rgb(250, 219, 216)', 'rgb(235, 245, 251)', 'rgb(174, 214, 241)', 'rgb(133, 193, 233)'
+                      ];
+                      
+                      const isLightColor = lightColors.includes(bgColor);
+                      // 텍스트와 반대 색상의 외곽선 사용
+                      return isLightColor ? '#FFFFFF' : '#000000';
+                    },
+                    textStrokeWidth: 2,
+                    textShadowColor: function(context) {
+                      // 텍스트 그림자도 동적 조정
+                      const bgColor = context.dataset.backgroundColor[context.dataIndex];
+                      
+                      const lightColors = [
+                        'rgb(255, 234, 167)', 'rgb(247, 220, 111)', 'rgb(150, 206, 180)', 'rgb(152, 216, 200)', 'rgb(248, 196, 113)',
+                        'rgb(130, 224, 170)', 'rgb(250, 215, 160)', 'rgb(215, 219, 221)', 'rgb(232, 218, 239)', 'rgb(213, 244, 230)',
+                        'rgb(250, 219, 216)', 'rgb(235, 245, 251)', 'rgb(174, 214, 241)', 'rgb(133, 193, 233)'
+                      ];
+                      
+                      const isLightColor = lightColors.includes(bgColor);
+                      return isLightColor ? 'rgba(0, 0, 0, 0.9)' : 'rgba(255, 255, 255, 0.9)';
+                    },
+                    textShadowBlur: 3,
+                    formatter: function(value, context) {
+                      const dataset = context.dataset;
+                      const index = context.dataIndex;
+                      if (dataset.stockNames && dataset.stockValues && index !== undefined) {
+                        const name = dataset.stockNames[index];
+                        const amount = dataset.stockValues[index];
+                        
+                        // 전체 배당금 대비 비율 계산
+                        const totalDividend = dataset.stockValues.reduce((sum, val) => sum + val, 0);
+                        const percentage = ((amount / totalDividend) * 100).toFixed(1);
+                        
+                        // 종목명 길이에 따른 표시 방식 결정
+                        let shortName;
+                        if (name.length > 12) {
+                          shortName = name.substring(0, 12) + '...';
+                        } else {
+                          shortName = name;
+                        }
+                        
+                        // 금액 표시 방식
+                        let shortAmount;
+                        if (amount >= 100000000) { // 1억원 이상
+                          shortAmount = `₩${(amount / 100000000).toFixed(1)}억`;
+                        } else if (amount >= 10000000) { // 1천만원 이상
+                          shortAmount = `₩${(amount / 10000000).toFixed(0)}천만`;
+                        } else if (amount >= 1000000) { // 100만원 이상
+                          shortAmount = `₩${(amount / 1000000).toFixed(1)}백만`;
+                        } else if (amount >= 10000) { // 1만원 이상
+                          shortAmount = `₩${(amount / 10000).toFixed(0)}만`;
+                        } else {
+                          shortAmount = `₩${(amount / 1000).toFixed(0)}천`;
+                        }
+                        
+                        // 사각형 크기에 따라 표시할 정보 조정
+                        const area = context.parsed ? (context.parsed.w * context.parsed.h) : 1000;
+                        
+                        if (area > 15000) {
+                          // 매우 큰 사각형: 종목명 + 금액 + 비율 + 순위
+                          return [shortName, shortAmount, `${percentage}%`, `#${index + 1}`];
+                        } else if (area > 10000) {
+                          // 큰 사각형: 종목명 + 금액 + 비율
+                          return [shortName, shortAmount, `${percentage}%`];
+                        } else if (area > 6000) {
+                          // 중간 사각형: 종목명 + 비율
+                          return [shortName, `${percentage}%`];
+                        } else if (area > 3000) {
+                          // 작은 사각형: 종목명만
+                          return shortName.length > 8 ? shortName.substring(0, 8) : shortName;
+                        } else if (area > 1500) {
+                          // 매우 작은 사각형: 비율만
+                          return `${percentage}%`;
+                        } else {
+                          // 극소 사각형: 순위만
+                          return `#${index + 1}`;
+                        }
+                      }
+                      return '';
+                    },
+                    anchor: 'center',
+                    align: 'center',
+                    offset: 0,
+                    rotation: 0,
+                    clip: false,
+                    clamp: false,
+                    opacity: 1,
+                    // 텍스트 박스 배경 (선택사항)
+                    backgroundColor: function(context) {
+                      const bgColor = context.dataset.backgroundColor[context.dataIndex];
+                      const lightColors = [
+                        'rgb(255, 234, 167)', 'rgb(247, 220, 111)', 'rgb(150, 206, 180)', 'rgb(152, 216, 200)', 'rgb(248, 196, 113)',
+                        'rgb(130, 224, 170)', 'rgb(250, 215, 160)', 'rgb(215, 219, 221)', 'rgb(232, 218, 239)', 'rgb(213, 244, 230)',
+                        'rgb(250, 219, 216)', 'rgb(235, 245, 251)', 'rgb(174, 214, 241)', 'rgb(133, 193, 233)'
+                      ];
+                      
+                      const isLightColor = lightColors.includes(bgColor);
+                      
+                      // 매우 작은 사각형에만 배경 적용
+                      const area = context.parsed ? (context.parsed.w * context.parsed.h) : 1000;
+                      if (area < 3000) {
+                        return isLightColor ? 'rgba(255, 255, 255, 0.9)' : 'rgba(0, 0, 0, 0.8)';
+                      }
+                      return 'transparent';
+                    },
+                    borderColor: function(context) {
+                      const bgColor = context.dataset.backgroundColor[context.dataIndex];
+                      const lightColors = [
+                        'rgb(255, 234, 167)', 'rgb(247, 220, 111)', 'rgb(150, 206, 180)', 'rgb(152, 216, 200)', 'rgb(248, 196, 113)',
+                        'rgb(130, 224, 170)', 'rgb(250, 215, 160)', 'rgb(215, 219, 221)', 'rgb(232, 218, 239)', 'rgb(213, 244, 230)',
+                        'rgb(250, 219, 216)', 'rgb(235, 245, 251)', 'rgb(174, 214, 241)', 'rgb(133, 193, 233)'
+                      ];
+                      
+                      const isLightColor = lightColors.includes(bgColor);
+                      
+                      const area = context.parsed ? (context.parsed.w * context.parsed.h) : 1000;
+                      if (area < 3000) {
+                        return isLightColor ? 'rgba(0, 0, 0, 0.6)' : 'rgba(255, 255, 255, 0.6)';
+                      }
+                      return 'transparent';
+                    },
+                    borderWidth: 1,
+                    borderRadius: 4,
+                    padding: {
+                      top: 2,
+                      bottom: 2,
+                      left: 4,
+                      right: 4
+                    }
+                  }
                 },
-              },
-            }}
-            plugins={[ChartDataLabels]}
-            height={320}
-          />
+                elements: {
+                  rectangle: {
+                    borderWidth: 2,
+                    borderColor: 'rgba(255,255,255,0.8)'
+                  }
+                },
+                layout: {
+                  padding: 10
+                }
+              }}
+            />
+          </div>
         ) : (
           <div>차트 데이터를 불러오는 중...</div>
         )}
