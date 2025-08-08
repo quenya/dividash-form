@@ -1,2 +1,3 @@
 node_modules
 sheet/ai-podcast-generator-*.json
+.claude/settings.local.json
