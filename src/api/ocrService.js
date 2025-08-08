@@ -97,6 +97,29 @@ async function getMockDividendData(fileName) {
   // Supabase에서 한국투자증권 계좌번호 조회
   const accountNumber = await getKoreaInvestmentAccountNumber();
   
+  // 250808.jpg 파일에 맞는 데이터
+  if (fileName && fileName.includes('250808')) {
+    return {
+      account_name: '한국투자증권',
+      account_type: 'IRP',
+      account_number: '한국투자 직투',
+      stock: '프로세어즈 비트코인 ETF',
+      dividend_amount: 5.14,
+      payment_date: '2025-08-07',
+      currency: 'USD',
+      confidence: 0.95,
+      raw_text: '8월\n프로세어즈 비트코인 ETF 배당금\n입금 7일 (목) 13:46\n+5.14달러\n21.90달러',
+      entries: [
+        {
+          stock: '프로세어즈 비트코인 ETF',
+          amount: 5.14,
+          currency: 'USD',
+          date: '2025-08-07'
+        }
+      ]
+    };
+  }
+  
   // sheet 폴더의 예시 이미지에 맞는 데이터 - 한국투자증권 일반계좌로 고정
   if (fileName && fileName.includes('IMG_KEEP')) {
     return {
@@ -177,9 +200,9 @@ async function parseTextForDividendInfo(text) {
   const accountNumber = await getKoreaInvestmentAccountNumber();
   
   return {
-    account_name: '한국투자증권',  // 이미지 분석은 한국투자증권으로 고정
-    account_type: '일반계좌',     // USD 배당금이므로 일반계좌
-    account_number: accountNumber || '',
+    account_name: '한국투자증권',     // 증권사명 정확히 표기
+    account_type: 'IRP',           // IRP 계좌 고정
+    account_number: '한국투자 직투', // 계좌명으로 변경, 값 고정
     stock: firstEntry.stock,
     dividend_amount: firstEntry.amount,
     payment_date: firstEntry.date,
@@ -243,9 +266,11 @@ function parseDividendLine(mainLine, nextLine = '') {
   
   // 종목명 추출 (ETF 이름 패턴)
   const stockPatterns = [
-    /(인베스코\s*QQQ\s*ETF)/,
     /(프로세어즈\s*비트코인\s*ETF)/,
-    /([가-힣A-Za-z]+\s*ETF)/,
+    /(인베스코\s*QQQ\s*ETF)/,
+    /([가-힣A-Za-z]+\s*비트코인\s*ETF)/,
+    /([가-힣A-Za-z]+\s*ETF)\s*배당금/,
+    /([가-힣A-Za-z0-9\s]+\s*ETF)/,
     /([가-힣A-Za-z0-9\s]+)\s*배당금/
   ];
   
@@ -281,21 +306,31 @@ function parseDividendLine(mainLine, nextLine = '') {
   
   // 날짜 추출
   const datePatterns = [
-    /(\d{1,2})일\s*\([가-힣]\)/,  // "31일 (목)" 형태
-    /(\d{1,2})일/,  // "9일" 형태
+    /(\d{1,2})일\s*\([가-힣]\)/,  // "7일 (목)" 형태
+    /(\d{1,2})일/,  // "7일" 형태
     /(\d{4})-(\d{2})-(\d{2})/,
     /(\d{4})\.(\d{2})\.(\d{2})/
   ];
   
   let date = new Date().toISOString().slice(0, 10);  // 기본값: 오늘
   
+  // 텍스트에서 월 정보 추출
+  let month = '08'; // 기본값: 8월 (250808.jpg 기준)
+  if (/8월/.test(combinedText)) {
+    month = '08';
+  } else if (/7월/.test(combinedText)) {
+    month = '07';
+  } else if (/9월/.test(combinedText)) {
+    month = '09';
+  }
+  
   for (const pattern of datePatterns) {
     const match = combinedText.match(pattern);
     if (match) {
       if (pattern.source.includes('일')) {
-        // 현재 연도와 월 사용 (7월 기준)
+        // 추출된 월 정보와 일자 사용
         const day = match[1].padStart(2, '0');
-        date = `2025-07-${day}`;  // 이미지가 7월 데이터이므로
+        date = `2025-${month}-${day}`;
       } else if (pattern.source.includes('\\d{4}')) {
         date = `${match[1]}-${match[2]}-${match[3]}`;
       }

@@ -4,12 +4,22 @@
     "allow": [
       "mcp__context7__resolve-library-id",
       "mcp__context7__get-library-docs",
-      "Bash(git push:*)",
       "mcp__supabase__list_tables",
-      "Bash(node:*)",
       "mcp__supabase__execute_sql",
+      "Bash(node:*)",
+      "Bash(del test_stock_code.js)",
+      "Bash(rm:*)",
       "Bash(mkdir:*)",
-      "Bash(npm start)"
+      "Bash(npm start)",
+      "Bash(git add:*)",
+      "Bash(git push:*)",
+      "Bash(git commit:*)",
+      "Bash(git reset:*)",
+      "Bash(gh pr:*)",
+      "WebFetch(domain:github.com)",
+      "Bash(git fetch:*)",
+      "Bash(git merge-base:*)",
+      "Bash(git merge:*)"
     ],
     "deny": []
   },
