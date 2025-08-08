@@ -1,10 +1,5 @@
 // OCR API를 사용하여 이미지에서 배당금 정보를 추출하는 서비스
-import { createClient } from '@supabase/supabase-js';
-
-const supabase = createClient(
-  process.env.REACT_APP_SUPABASE_URL,
-  process.env.REACT_APP_SUPABASE_ANON_KEY
-);
+import { supabase } from './supabaseClient';
 
 export async function extractDividendFromImage(imageFile) {
   try {

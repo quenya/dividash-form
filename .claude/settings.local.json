@@ -2,9 +2,14 @@
   "$schema": "https://json.schemastore.org/claude-code-settings.json",
   "permissions": {
     "allow": [
+      "mcp__context7__resolve-library-id",
+      "mcp__context7__get-library-docs",
+      "mcp__supabase__list_tables",
+      "mcp__supabase__execute_sql",
       "Bash(node:*)",
       "Bash(del test_stock_code.js)",
       "Bash(rm:*)",
+      "Bash(mkdir:*)",
       "Bash(npm start)",
       "Bash(git add:*)",
       "Bash(git push:*)",
@@ -17,5 +22,9 @@
       "Bash(git merge:*)"
     ],
     "deny": []
-  }
+  },
+  "enableAllProjectMcpServers": true,
+  "enabledMcpjsonServers": [
+    "supabase"
+  ]
 }
