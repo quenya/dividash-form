@@ -13,7 +13,7 @@ import {
 import { Bar, Chart } from 'react-chartjs-2';
 import { TreemapController, TreemapElement } from 'chartjs-chart-treemap';
 import ChartDataLabels from 'chartjs-plugin-datalabels';
-ChartJS.register(CategoryScale, LinearScale, BarElement, TreemapController, TreemapElement, Title, Tooltip, Legend);
+ChartJS.register(CategoryScale, LinearScale, BarElement, TreemapController, TreemapElement, Title, Tooltip, Legend, ChartDataLabels);
 
 
 const MONTH_LABELS = [
@@ -30,6 +30,33 @@ const MONTH_LABELS = [
   '11월',
   '12월',
 ];
+function resolveDatasetColor(dataset, context) {
+  if (!dataset) {
+    return undefined;
+  }
+
+  const index = context?.dataIndex ?? 0;
+
+  if (Array.isArray(dataset.nodeColors) && dataset.nodeColors.length > 0) {
+    return dataset.nodeColors[index] ?? dataset.nodeColors[0];
+  }
+
+  const background = dataset.backgroundColor;
+  if (Array.isArray(background)) {
+    return background[index] ?? background[0];
+  }
+
+  if (typeof background === 'function') {
+    try {
+      return background(context);
+    } catch (error) {
+      console.warn('Treemap color resolver failed:', error);
+    }
+  }
+
+  return background;
+}
+
 
 function DividendChart() {
   const [monthChart, setMonthChart] = useState(null);
@@ -152,84 +179,87 @@ function DividendChart() {
           },
         ],
       });
-      // 종목별 트리맵 차트 데이터
+      // 종목 Treemap 차트 데이터
+
       let stockArr = Object.entries(stockMap);
       stockArr.sort((a, b) => b[1] - a[1]);
-      
-      // 트리맵을 위한 데이터 구조 생성 (상위 15개만)
-      stockArr = stockArr.slice(0, 15);
-      const maxValue = stockArr[0] ? stockArr[0][1] : 1;
-      
-      const treemapData = stockArr.map(([name, value]) => ({
-        label: name,
-        value: value
-      }));
-      
-      // HEX를 RGB로 변환하는 함수
-      const hexToRgb = (hex) => {
-        const r = parseInt(hex.slice(1, 3), 16);
-        const g = parseInt(hex.slice(3, 5), 16);
-        const b = parseInt(hex.slice(5, 7), 16);
-        return `rgb(${r}, ${g}, ${b})`;
-      };
 
-      // 선명하고 다양한 색상 팔레트 생성 (RGB 형식)
+      // 트리맵에서 보여줄 최대 항목 수 (상위 15개)
+      stockArr = stockArr.slice(0, 15);
+
       const colorPalette = [
-        'rgb(255, 107, 107)',  // 코랄 레드
-        'rgb(78, 205, 196)',   // 터키석
+        'rgb(255, 107, 107)',  // 라이트 레드
+        'rgb(78, 205, 196)',   // 민트
         'rgb(69, 183, 209)',   // 스카이 블루
-        'rgb(150, 206, 180)',  // 민트 그린
-        'rgb(255, 234, 167)',  // 따뜻한 노랑
-        'rgb(221, 160, 221)',  // 플럼
-        'rgb(152, 216, 200)',  // 아쿠아민트
-        'rgb(247, 220, 111)',  // 바나나 옐로우
+        'rgb(150, 206, 180)',  // 소프트 그린
+        'rgb(255, 234, 167)',  // 라이트 옐로
+        'rgb(221, 160, 221)',  // 라일락
+        'rgb(152, 216, 200)',  // 터쿼이즈
+        'rgb(247, 220, 111)',  // 골든 옐로우
         'rgb(187, 143, 206)',  // 라벤더
-        'rgb(133, 193, 233)',  // 라이트 블루
+        'rgb(133, 193, 233)',  // 아쿠아 블루
         'rgb(248, 196, 113)',  // 피치
         'rgb(130, 224, 170)',  // 라이트 그린
-        'rgb(241, 148, 138)',  // 로즈
+        'rgb(241, 148, 138)',  // 살몬
         'rgb(174, 214, 241)',  // 파우더 블루
-        'rgb(250, 215, 160)',  // 크림
-        'rgb(215, 219, 221)',  // 실버
-        'rgb(232, 218, 239)',  // 라일락
-        'rgb(213, 244, 230)',  // 허니듀
-        'rgb(250, 219, 216)',  // 미스티 로즈
-        'rgb(235, 245, 251)'   // 앨리스 블루
+        'rgb(250, 215, 160)',  // 페일 오렌지
+        'rgb(215, 219, 221)',  // 실버 그레이
+        'rgb(232, 218, 239)',  // 퍼플 틴트
+        'rgb(213, 244, 230)',  // 민트 틴트
+        'rgb(250, 219, 216)',  // 코럴 틴트
+        'rgb(235, 245, 251)'   // 파스텔 블루
       ];
-      
-      const colors = stockArr.map(([name, value], index) => {
-        return colorPalette[index % colorPalette.length];
+
+      const nodeColors = stockArr.map(([, value], index) => colorPalette[index % colorPalette.length]);
+      const hoverColors = nodeColors.map(color => {
+        const rgbMatch = color.match(/rgb\\((\\d+),\\s*(\\d+),\\s*(\\d+)\\)/);
+        if (rgbMatch) {
+          const r = Math.max(0, parseInt(rgbMatch[1], 10) - 30);
+          const g = Math.max(0, parseInt(rgbMatch[2], 10) - 30);
+          const b = Math.max(0, parseInt(rgbMatch[3], 10) - 30);
+          return `rgb(${r}, ${g}, ${b})`;
+        }
+        return color;
       });
-      
+
+      const treemapData = stockArr.map(([name, value], index) => ({
+        label: name,
+        value,
+        backgroundColor: nodeColors[index]
+      }));
+
+      const maxIndex = stockArr.length ? 0 : -1;
+
       setStockChart({
         datasets: [
           {
-            label: '종목별 배당금',
+            label: '종목 배당',
             tree: treemapData,
             key: 'value',
             groups: ['label'],
             spacing: 0.5,
             borderWidth: 2,
             borderColor: 'rgba(255,255,255,0.8)',
-            backgroundColor: colors,
-            hoverBackgroundColor: colors.map(color => {
-              // RGB 색상을 더 진하게 만들기
-              const rgbMatch = color.match(/rgb\((\d+),\s*(\d+),\s*(\d+)\)/);
-              if (rgbMatch) {
-                const r = Math.max(0, parseInt(rgbMatch[1]) - 30);
-                const g = Math.max(0, parseInt(rgbMatch[2]) - 30);
-                const b = Math.max(0, parseInt(rgbMatch[3]) - 30);
-                return `rgb(${r}, ${g}, ${b})`;
+            backgroundColor: (ctx) => {
+              if (ctx.raw && ctx.raw.backgroundColor) {
+                return ctx.raw.backgroundColor;
               }
-              return color;
-            }),
-            // 각 데이터에 메타데이터 추가
+              const idx = ctx.dataIndex ?? 0;
+              return nodeColors[idx % nodeColors.length];
+            },
+            hoverBackgroundColor: (ctx) => {
+              const idx = ctx.dataIndex ?? 0;
+              return hoverColors[idx % hoverColors.length];
+            },
+            maxIndex,
+            nodeColors,
+            nodeHoverColors: hoverColors,
             stockNames: stockArr.map(([name]) => name),
             stockValues: stockArr.map(([, value]) => value)
           }
         ]
       });
-      
+
       } catch (error) {
         console.error('차트 데이터 처리 오류:', error);
       }
@@ -435,7 +465,7 @@ function DividendChart() {
                     display: true,
                     color: function(context) {
                       // 배경색에 따라 텍스트 색상 자동 조정
-                      const bgColor = context.dataset.backgroundColor[context.dataIndex];
+                      const bgColor = resolveDatasetColor(context.dataset, context);
                       
                       // 밝은 색상들 (RGB 형식 기준)
                       const lightColors = [
@@ -463,13 +493,16 @@ function DividendChart() {
                       size: function(context) {
                         // 사각형 크기에 따라 폰트 크기 조정
                         const area = context.parsed ? (context.parsed.w * context.parsed.h) : 1000;
-                        return Math.min(18, Math.max(12, Math.sqrt(area) / 6));
+                        const dataset = context.dataset || {};
+                        const isMax = dataset.maxIndex === context.dataIndex;
+                        const baseSize = Math.min(18, Math.max(12, Math.sqrt(area) / 6));
+                        return isMax ? Math.min(28, Math.max(baseSize, 20)) : baseSize;
                       },
                       family: 'Arial, sans-serif'
                     },
                     textStrokeColor: function(context) {
                       // 텍스트 외곽선으로 가독성 향상 (텍스트 색상과 반대)
-                      const bgColor = context.dataset.backgroundColor[context.dataIndex];
+                      const bgColor = resolveDatasetColor(context.dataset, context);
                       
                       const lightColors = [
                         'rgb(255, 234, 167)', 'rgb(247, 220, 111)', 'rgb(150, 206, 180)', 'rgb(152, 216, 200)', 'rgb(248, 196, 113)',
@@ -484,7 +517,7 @@ function DividendChart() {
                     textStrokeWidth: 2,
                     textShadowColor: function(context) {
                       // 텍스트 그림자도 동적 조정
-                      const bgColor = context.dataset.backgroundColor[context.dataIndex];
+                      const bgColor = resolveDatasetColor(context.dataset, context);
                       
                       const lightColors = [
                         'rgb(255, 234, 167)', 'rgb(247, 220, 111)', 'rgb(150, 206, 180)', 'rgb(152, 216, 200)', 'rgb(248, 196, 113)',
@@ -497,62 +530,78 @@ function DividendChart() {
                     },
                     textShadowBlur: 3,
                     formatter: function(value, context) {
-                      const dataset = context.dataset;
+                      const dataset = context.dataset || {};
                       const index = context.dataIndex;
-                      if (dataset.stockNames && dataset.stockValues && index !== undefined) {
-                        const name = dataset.stockNames[index];
-                        const amount = dataset.stockValues[index];
-                        
-                        // 전체 배당금 대비 비율 계산
-                        const totalDividend = dataset.stockValues.reduce((sum, val) => sum + val, 0);
-                        const percentage = ((amount / totalDividend) * 100).toFixed(1);
-                        
-                        // 종목명 길이에 따른 표시 방식 결정
-                        let shortName;
-                        if (name.length > 12) {
-                          shortName = name.substring(0, 12) + '...';
-                        } else {
-                          shortName = name;
-                        }
-                        
-                        // 금액 표시 방식
-                        let shortAmount;
-                        if (amount >= 100000000) { // 1억원 이상
-                          shortAmount = `₩${(amount / 100000000).toFixed(1)}억`;
-                        } else if (amount >= 10000000) { // 1천만원 이상
-                          shortAmount = `₩${(amount / 10000000).toFixed(0)}천만`;
-                        } else if (amount >= 1000000) { // 100만원 이상
-                          shortAmount = `₩${(amount / 1000000).toFixed(1)}백만`;
-                        } else if (amount >= 10000) { // 1만원 이상
-                          shortAmount = `₩${(amount / 10000).toFixed(0)}만`;
-                        } else {
-                          shortAmount = `₩${(amount / 1000).toFixed(0)}천`;
-                        }
-                        
-                        // 사각형 크기에 따라 표시할 정보 조정
-                        const area = context.parsed ? (context.parsed.w * context.parsed.h) : 1000;
-                        
-                        if (area > 15000) {
-                          // 매우 큰 사각형: 종목명 + 금액 + 비율 + 순위
-                          return [shortName, shortAmount, `${percentage}%`, `#${index + 1}`];
-                        } else if (area > 10000) {
-                          // 큰 사각형: 종목명 + 금액 + 비율
-                          return [shortName, shortAmount, `${percentage}%`];
-                        } else if (area > 6000) {
-                          // 중간 사각형: 종목명 + 비율
-                          return [shortName, `${percentage}%`];
-                        } else if (area > 3000) {
-                          // 작은 사각형: 종목명만
-                          return shortName.length > 8 ? shortName.substring(0, 8) : shortName;
-                        } else if (area > 1500) {
-                          // 매우 작은 사각형: 비율만
-                          return `${percentage}%`;
-                        } else {
-                          // 극소 사각형: 순위만
-                          return `#${index + 1}`;
-                        }
+                      if (index === undefined) {
+                        return '';
                       }
-                      return '';
+
+                      const stockNames = dataset.stockNames || [];
+                      const stockValues = dataset.stockValues || [];
+                      const name = stockNames[index] || '';
+                      const amountRaw = stockValues[index];
+                      const amount = typeof amountRaw === 'number' ? amountRaw : Number(amountRaw);
+                      const isMax = dataset.maxIndex === index;
+
+                      if (isMax) {
+                        if (!name) {
+                          return '';
+                        }
+                        return name.length > 18 ? name.substring(0, 18) + '...' : name;
+                      }
+
+                      if (!Number.isFinite(amount)) {
+                        return '';
+                      }
+
+                      const totalDividend = stockValues.reduce((sum, val) => {
+                        const numeric = typeof val === 'number' ? val : Number(val);
+                        return Number.isFinite(numeric) ? sum + numeric : sum;
+                      }, 0);
+                      const percentage = totalDividend > 0 ? ((amount / totalDividend) * 100).toFixed(1) : null;
+
+                      let shortName;
+                      if (name.length > 12) {
+                        shortName = name.substring(0, 12) + '...';
+                      } else {
+                        shortName = name;
+                      }
+
+                      let shortAmount;
+                      if (amount >= 100000000) {
+                        shortAmount = `₩${(amount / 100000000).toFixed(1)}억`;
+                      } else if (amount >= 10000000) {
+                        shortAmount = `₩${(amount / 10000000).toFixed(0)}천만`;
+                      } else if (amount >= 1000000) {
+                        shortAmount = `₩${(amount / 1000000).toFixed(1)}백만`;
+                      } else if (amount >= 10000) {
+                        shortAmount = `₩${(amount / 10000).toFixed(0)}만`;
+                      } else {
+                        shortAmount = `₩${(amount / 1000).toFixed(0)}천`;
+                      }
+
+                      const area = context.parsed ? (context.parsed.w * context.parsed.h) : 1000;
+
+                      if (area > 15000) {
+                        const lines = [shortName, shortAmount];
+                        if (percentage !== null) lines.push(`${percentage}%`);
+                        lines.push(`#${index + 1}`);
+                        return lines;
+                      } else if (area > 10000) {
+                        const lines = [shortName, shortAmount];
+                        if (percentage !== null) lines.push(`${percentage}%`);
+                        return lines;
+                      } else if (area > 6000) {
+                        const lines = [shortName];
+                        if (percentage !== null) lines.push(`${percentage}%`);
+                        return lines;
+                      } else if (area > 3000) {
+                        return shortName.length > 8 ? shortName.substring(0, 8) : shortName;
+                      } else if (area > 1500) {
+                        return percentage !== null ? `${percentage}%` : '';
+                      }
+
+                      return `#${index + 1}`;
                     },
                     anchor: 'center',
                     align: 'center',
@@ -563,7 +612,7 @@ function DividendChart() {
                     opacity: 1,
                     // 텍스트 박스 배경 (선택사항)
                     backgroundColor: function(context) {
-                      const bgColor = context.dataset.backgroundColor[context.dataIndex];
+                      const bgColor = resolveDatasetColor(context.dataset, context);
                       const lightColors = [
                         'rgb(255, 234, 167)', 'rgb(247, 220, 111)', 'rgb(150, 206, 180)', 'rgb(152, 216, 200)', 'rgb(248, 196, 113)',
                         'rgb(130, 224, 170)', 'rgb(250, 215, 160)', 'rgb(215, 219, 221)', 'rgb(232, 218, 239)', 'rgb(213, 244, 230)',
@@ -580,7 +629,7 @@ function DividendChart() {
                       return 'transparent';
                     },
                     borderColor: function(context) {
-                      const bgColor = context.dataset.backgroundColor[context.dataIndex];
+                      const bgColor = resolveDatasetColor(context.dataset, context);
                       const lightColors = [
                         'rgb(255, 234, 167)', 'rgb(247, 220, 111)', 'rgb(150, 206, 180)', 'rgb(152, 216, 200)', 'rgb(248, 196, 113)',
                         'rgb(130, 224, 170)', 'rgb(250, 215, 160)', 'rgb(215, 219, 221)', 'rgb(232, 218, 239)', 'rgb(213, 244, 230)',
