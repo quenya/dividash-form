@@ -148,7 +148,7 @@ function DividendChart() {
           datasets: monthDatasets,
         });
 
-        // 전년 대비 상승분 차트 데이터 생성 (하이브리드 방식)
+        // 전년 대비 상승분 차트 데이터 생성 (올해 기준, 미래 제외)
         if (years.length > 0) {
           const today = new Date();
           const currentYear = today.getFullYear();
@@ -156,7 +156,6 @@ function DividendChart() {
 
           const currentYearData = monthYearMap[currentYear] || Array(12).fill(0);
           const prevYearData = monthYearMap[currentYear - 1] || Array(12).fill(0);
-          const prevPrevYearData = monthYearMap[currentYear - 2] || Array(12).fill(0);
 
           const diffData = [];
           const comparisonLabels = [];
@@ -164,23 +163,25 @@ function DividendChart() {
           const borderColors = [];
 
           for (let i = 0; i < 12; i++) {
-            let val;
-            let label;
             if (i <= currentMonth) {
-              val = currentYearData[i] - prevYearData[i];
-              label = `${currentYear} vs ${currentYear - 1}`;
+              const val = currentYearData[i] - prevYearData[i];
+              const label = `${currentYear} vs ${currentYear - 1}`;
+
+              diffData.push(val);
+              comparisonLabels.push(label);
+              if (val >= 0) {
+                bgColors.push('rgba(75, 192, 192, 0.7)');
+                borderColors.push('rgb(75, 192, 192)');
+              } else {
+                bgColors.push('rgba(255, 99, 132, 0.7)');
+                borderColors.push('rgb(255, 99, 132)');
+              }
             } else {
-              val = prevYearData[i] - prevPrevYearData[i];
-              label = `${currentYear - 1} vs ${currentYear - 2}`;
-            }
-            diffData.push(val);
-            comparisonLabels.push(label);
-            if (val >= 0) {
-              bgColors.push('rgba(75, 192, 192, 0.7)');
-              borderColors.push('rgb(75, 192, 192)');
-            } else {
-              bgColors.push('rgba(255, 99, 132, 0.7)');
-              borderColors.push('rgb(255, 99, 132)');
+              // 미래 월은 그리지 않음
+              diffData.push(null);
+              comparisonLabels.push('');
+              bgColors.push('transparent');
+              borderColors.push('transparent');
             }
           }
 
@@ -365,10 +366,9 @@ function DividendChart() {
 
         {comparisonChart && (
           <div style={{ marginTop: 48 }}>
-            <h4>전년 동월 대비 증감 (혼합 비교)</h4>
+            <h4>전년 동월 대비 증감 ({comparisonChart.currentYear} vs {comparisonChart.prevYear})</h4>
             <div style={{ fontSize: '0.9em', color: '#666', marginBottom: '10px' }}>
-              * 1월~{new Date().getMonth() + 1}월: {comparisonChart.currentYear} vs {comparisonChart.prevYear} <br />
-              * {new Date().getMonth() + 2}월~12월: {comparisonChart.prevYear} vs {comparisonChart.prevYear - 1}
+              * {comparisonChart.currentYear}년 누적 데이터 기준 (미래 월 제외)
             </div>
             <Bar
               data={comparisonChart}
