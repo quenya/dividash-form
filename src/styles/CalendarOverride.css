@@ -1,0 +1,76 @@
+/* Dark Mode Overrides for React Calendar */
+body.dark-mode .react-calendar {
+    background-color: var(--bg-secondary);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    font-family: inherit;
+}
+
+body.dark-mode .react-calendar__navigation button {
+    color: var(--text-primary);
+}
+
+body.dark-mode .react-calendar__navigation button:enabled:hover,
+body.dark-mode .react-calendar__navigation button:enabled:focus {
+    background-color: var(--bg-primary);
+}
+
+body.dark-mode .react-calendar__month-view__days__day:not(.react-calendar__month-view__days__day--weekend)+.react-calendar__month-view__days__day--weekend {
+    color: #e74c3c;
+}
+
+body.dark-mode .react-calendar__month-view__days__day--weekend {
+    color: #e74c3c;
+}
+
+body.dark-mode .react-calendar__tile:enabled:hover,
+body.dark-mode .react-calendar__tile:enabled:focus {
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+}
+
+body.dark-mode .react-calendar__tile--now {
+    background: var(--accent-color);
+    opacity: 0.5;
+    color: white;
+}
+
+body.dark-mode .react-calendar__tile--now:enabled:hover,
+body.dark-mode .react-calendar__tile--now:enabled:focus {
+    background: var(--accent-color);
+    opacity: 0.8;
+}
+
+body.dark-mode .react-calendar__tile--active {
+    background: var(--accent-color) !important;
+    color: white !important;
+}
+
+/* General Styling */
+.react-calendar {
+    width: 100%;
+    max-width: 100%;
+    border: none;
+    font-family: inherit;
+    line-height: 1.5em;
+}
+
+.dividend-marker {
+    display: block;
+    width: 6px;
+    height: 6px;
+    background-color: var(--accent-color);
+    border-radius: 50%;
+    margin: 2px auto 0;
+}
+
+.dividend-tile {
+    position: relative;
+}
+
+/* Light mode adjustments */
+.react-calendar {
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+}
