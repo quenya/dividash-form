@@ -2,9 +2,16 @@ import { supabase } from './supabaseClient';
 
 async function insertDividend(dividendData) {
   try {
+    const { data: authData, error: authError } = await supabase.auth.getUser();
+
+    if (authError || !authData.user) {
+      throw new Error('로그인이 필요합니다.');
+    }
+
     const { error } = await supabase
       .from('dividend_entries')
       .insert([{
+        user_id: authData.user.id,
         account_name: dividendData.account_name,
         account_type: dividendData.account_type || null,
         account_number: dividendData.account_number || null,

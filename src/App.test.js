@@ -43,14 +43,31 @@ jest.mock('./hooks/useDividendData', () => ({
     }))
 }));
 
+jest.mock('./api/supabaseClient', () => ({
+    supabase: {
+        auth: {
+            getSession: () => Promise.resolve({ data: { session: null } }),
+            onAuthStateChange: () => ({
+                data: {
+                    subscription: {
+                        unsubscribe: jest.fn()
+                    }
+                }
+            }),
+            signInWithPassword: () => Promise.resolve({ error: null }),
+            signUp: () => Promise.resolve({ error: null }),
+            signOut: () => Promise.resolve({ error: null })
+        }
+    }
+}));
+
 import { render, screen } from '@testing-library/react';
 import App from './App';
 
-test('renders App and Layout elements', () => {
+test('renders authentication gate before dashboard access', async () => {
     render(<App />);
-    const titleElements = screen.getAllByText(/Dividash/i);
-    expect(titleElements.length).toBeGreaterThan(0);
 
-    expect(screen.getByText(/대시보드/i)).toBeInTheDocument();
-    expect(screen.getByText(/입력/i)).toBeInTheDocument();
+    expect(await screen.findByText(/DiviDash 로그인/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/이메일/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/비밀번호/i)).toBeInTheDocument();
 });

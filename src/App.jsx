@@ -9,9 +9,11 @@ import PortfolioAnalysis from './components/PortfolioAnalysis';
 import DividendSimulator from './components/DividendSimulator';
 import Layout from './components/Layout';
 import { ThemeProvider } from './context/ThemeContext';
+import { AuthProvider } from './context/AuthContext';
+import AuthGate from './components/AuthGate';
 import './styles/App.css';
 
-function App() {
+function AppContent() {
   const [page, setPage] = useState('chart');
 
   const InputSection = () => (
@@ -71,30 +73,40 @@ function App() {
   );
 
   return (
+    <Layout currentPage={page} setPage={setPage}>
+      {page === 'chart' && <DividendChart />}
+
+      {page === 'data' && (
+        <div className="card">
+          <DividendData />
+        </div>
+      )}
+
+      {['form', 'ocr', 'text'].includes(page) && <InputSection />}
+
+      {page === 'calendar' && (
+        <DividendCalendar />
+      )}
+
+      {page === 'portfolio' && (
+        <PortfolioAnalysis />
+      )}
+
+      {page === 'simulator' && (
+        <DividendSimulator />
+      )}
+    </Layout>
+  );
+}
+
+function App() {
+  return (
     <ThemeProvider>
-      <Layout currentPage={page} setPage={setPage}>
-        {page === 'chart' && <DividendChart />}
-
-        {page === 'data' && (
-          <div className="card">
-            <DividendData />
-          </div>
-        )}
-
-        {['form', 'ocr', 'text'].includes(page) && <InputSection />}
-
-        {page === 'calendar' && (
-          <DividendCalendar />
-        )}
-
-        {page === 'portfolio' && (
-          <PortfolioAnalysis />
-        )}
-
-        {page === 'simulator' && (
-          <DividendSimulator />
-        )}
-      </Layout>
+      <AuthProvider>
+        <AuthGate>
+          <AppContent />
+        </AuthGate>
+      </AuthProvider>
     </ThemeProvider>
   );
 }

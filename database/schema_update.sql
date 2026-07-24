@@ -11,14 +11,14 @@ CREATE TABLE IF NOT EXISTS public.tickers (
 -- Enable RLS (Optional, depending on policy)
 ALTER TABLE public.tickers ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Enable read access for all users" ON public.tickers
-    FOR SELECT USING (true);
+CREATE POLICY "Enable read access for authenticated users" ON public.tickers
+    FOR SELECT TO authenticated USING (true);
 
-CREATE POLICY "Enable insert for all users" ON public.tickers
-    FOR INSERT WITH CHECK (true);
+CREATE POLICY "Enable insert for authenticated users" ON public.tickers
+    FOR INSERT TO authenticated WITH CHECK (auth.role() = 'authenticated');
 
-CREATE POLICY "Enable update for all users" ON public.tickers
-    FOR UPDATE USING (true);
+CREATE POLICY "Enable update for authenticated users" ON public.tickers
+    FOR UPDATE TO authenticated USING (auth.role() = 'authenticated');
 
 -- Seed Data (Sample)
 INSERT INTO tickers (ticker, sector, industry) VALUES 
@@ -48,6 +48,7 @@ ON CONFLICT (ticker) DO UPDATE SET
 
 -- Goal Persistence Table
 CREATE TABLE IF NOT EXISTS public.user_goals (
+    user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
     key TEXT PRIMARY KEY,
     value NUMERIC DEFAULT 0,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
@@ -57,14 +58,14 @@ CREATE TABLE IF NOT EXISTS public.user_goals (
 ALTER TABLE public.user_goals ENABLE ROW LEVEL SECURITY;
 
 -- Policies for user_goals
-CREATE POLICY "Enable read access for all" ON public.user_goals
-    FOR SELECT USING (true);
+CREATE POLICY "Enable read access for owner" ON public.user_goals
+    FOR SELECT TO authenticated USING (user_id = auth.uid());
 
-CREATE POLICY "Enable insert for all" ON public.user_goals
-    FOR INSERT WITH CHECK (true);
+CREATE POLICY "Enable insert for owner" ON public.user_goals
+    FOR INSERT TO authenticated WITH CHECK (user_id = auth.uid());
 
-CREATE POLICY "Enable update for all" ON public.user_goals
-    FOR UPDATE USING (true);
+CREATE POLICY "Enable update for owner" ON public.user_goals
+    FOR UPDATE TO authenticated USING (user_id = auth.uid()) WITH CHECK (user_id = auth.uid());
     
 -- Seed initial goal if not exists
 INSERT INTO public.user_goals (key, value) 
@@ -73,6 +74,7 @@ ON CONFLICT (key) DO NOTHING;
 
 -- Simulation Settings Persistence
 CREATE TABLE IF NOT EXISTS public.simulation_settings (
+    user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
     id INTEGER PRIMARY KEY DEFAULT 1,
     monthly_addition NUMERIC DEFAULT 1000000,
     expected_yield NUMERIC DEFAULT 4.0,
@@ -86,14 +88,14 @@ CREATE TABLE IF NOT EXISTS public.simulation_settings (
 ALTER TABLE public.simulation_settings ENABLE ROW LEVEL SECURITY;
 
 -- Policies for simulation_settings
-CREATE POLICY "Enable read for all" ON public.simulation_settings
-    FOR SELECT USING (true);
+CREATE POLICY "Enable read for owner" ON public.simulation_settings
+    FOR SELECT TO authenticated USING (user_id = auth.uid());
 
-CREATE POLICY "Enable insert for all" ON public.simulation_settings
-    FOR INSERT WITH CHECK (true);
+CREATE POLICY "Enable insert for owner" ON public.simulation_settings
+    FOR INSERT TO authenticated WITH CHECK (user_id = auth.uid());
 
-CREATE POLICY "Enable update for all" ON public.simulation_settings
-    FOR UPDATE USING (true);
+CREATE POLICY "Enable update for owner" ON public.simulation_settings
+    FOR UPDATE TO authenticated USING (user_id = auth.uid()) WITH CHECK (user_id = auth.uid());
 
 -- Seed initial settings if not exists
 INSERT INTO public.simulation_settings (id, monthly_addition, expected_yield, dividend_growth, reinvest)

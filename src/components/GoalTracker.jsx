@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Target, Edit2, Check, X, Loader2 } from 'lucide-react';
 import { supabase } from '../api/supabaseClient';
+import { useAuth } from '../context/AuthContext';
 
 function GoalTracker({ currentAmount }) {
+    const { user } = useAuth();
     const [goal, setGoal] = useState(1000000); // Default fallback
     const [isEditing, setIsEditing] = useState(false);
     const [tempGoal, setTempGoal] = useState(1000000);
@@ -15,6 +17,7 @@ function GoalTracker({ currentAmount }) {
             const { data, error } = await supabase
                 .from('user_goals')
                 .select('value')
+                .eq('user_id', user.id)
                 .eq('key', 'monthly_dividend_goal')
                 .single();
 
@@ -31,7 +34,7 @@ function GoalTracker({ currentAmount }) {
         } finally {
             setLoading(false);
         }
-    }, []);
+    }, [user.id]);
 
     useEffect(() => {
         fetchGoal();
@@ -46,10 +49,11 @@ function GoalTracker({ currentAmount }) {
             const { error } = await supabase
                 .from('user_goals')
                 .upsert({
+                    user_id: user.id,
                     key: 'monthly_dividend_goal',
                     value: newGoal,
                     updated_at: new Date().toISOString()
-                });
+                }, { onConflict: 'user_id,key' });
 
             if (error) throw error;
 

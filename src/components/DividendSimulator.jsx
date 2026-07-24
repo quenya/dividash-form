@@ -15,6 +15,7 @@ import ChartDataLabels from 'chartjs-plugin-datalabels';
 import { TrendingUp, Calculator, RefreshCw, Loader2, Save } from 'lucide-react';
 import { useDividendData } from '../hooks/useDividendData';
 import { supabase } from '../api/supabaseClient';
+import { useAuth } from '../context/AuthContext';
 
 ChartJS.register(
     CategoryScale,
@@ -30,6 +31,7 @@ ChartJS.register(
 
 function DividendSimulator() {
     const { data, exchangeRate, loading: dataLoading } = useDividendData();
+    const { user } = useAuth();
 
     // Simulation Inputs (Initial values are defaults)
     const [monthlyAddition, setMonthlyAddition] = useState(1000000);
@@ -47,6 +49,7 @@ function DividendSimulator() {
             const { data: settings, error } = await supabase
                 .from('simulation_settings')
                 .select('*')
+                .eq('user_id', user.id)
                 .eq('id', 1)
                 .single();
 
@@ -63,7 +66,7 @@ function DividendSimulator() {
         } finally {
             setSettingsLoading(false);
         }
-    }, []);
+    }, [user.id]);
 
     useEffect(() => {
         fetchSettings();
@@ -75,13 +78,14 @@ function DividendSimulator() {
             const { error } = await supabase
                 .from('simulation_settings')
                 .upsert({
+                    user_id: user.id,
                     id: 1,
                     monthly_addition: monthlyAddition,
                     expected_yield: expectedYield,
                     dividend_growth: dividendGrowth,
                     reinvest: reinvest,
                     updated_at: new Date().toISOString()
-                });
+                }, { onConflict: 'user_id,id' });
 
             if (error) throw error;
             alert('시뮬레이션 설정이 저장되었습니다.');

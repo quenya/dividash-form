@@ -1,6 +1,14 @@
 node_modules
+.env
+.env.*
+!.env.example
 sheet/ai-podcast-generator-*.json
+sheet/dividend_entries_rows.sql
+sheet/*.csv
+sheet/*.jpg
 .claude/settings.local.json
+.codex/
+.playwright-cli/
 build/
 npm-start.log
 npm-start.err

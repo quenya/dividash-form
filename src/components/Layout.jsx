@@ -9,14 +9,17 @@ import {
     Moon,
     Sun,
     PieChart,
-    LineChart
+    LineChart,
+    LogOut
 } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
+import { useAuth } from '../context/AuthContext';
 import NotificationCenter from './NotificationCenter';
 import '../styles/App.css';
 
 function Layout({ children, currentPage, setPage }) {
     const { isDarkMode, toggleTheme } = useTheme();
+    const { user, signOut } = useAuth();
     const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
     useEffect(() => {
@@ -73,6 +76,11 @@ function Layout({ children, currentPage, setPage }) {
             </div>
 
             <div style={{ padding: '12px', borderTop: '1px solid var(--border-color)' }}>
+                {user?.email && (
+                    <div style={{ marginBottom: '8px', color: 'var(--text-secondary)', fontSize: '0.85rem', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        {user.email}
+                    </div>
+                )}
                 <button
                     onClick={toggleTheme}
                     style={{
@@ -89,6 +97,23 @@ function Layout({ children, currentPage, setPage }) {
                 >
                     {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
                     <span>{isDarkMode ? '라이트 모드' : '다크 모드'}</span>
+                </button>
+                <button
+                    onClick={signOut}
+                    style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '12px',
+                        background: 'transparent',
+                        border: 'none',
+                        color: 'var(--text-secondary)',
+                        cursor: 'pointer',
+                        width: '100%',
+                        padding: '8px'
+                    }}
+                >
+                    <LogOut size={20} />
+                    <span>로그아웃</span>
                 </button>
             </div>
         </>
@@ -114,6 +139,9 @@ function Layout({ children, currentPage, setPage }) {
                         <NotificationCenter />
                         <button onClick={toggleTheme} style={{ background: 'transparent', color: 'var(--text-primary)', padding: 4, border: 'none' }}>
                             {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
+                        </button>
+                        <button onClick={signOut} style={{ background: 'transparent', color: 'var(--text-primary)', padding: 4, border: 'none' }}>
+                            <LogOut size={20} />
                         </button>
                     </div>
                 </div>
