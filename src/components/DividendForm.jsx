@@ -4,7 +4,10 @@ import { supabase } from '../api/supabaseClient';
 
 function getToday() {
   const d = new Date();
-  return d.toISOString().slice(0, 10);
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const date = String(d.getDate()).padStart(2, '0');
+  return `${year}-${month}-${date}`;
 }
 
 function formatAmount(amount, currency) {
@@ -118,7 +121,7 @@ function DividendForm() {
     };
     await insertDividend(payload);
     alert('배당금이 등록되었습니다!');
-    setForm({ account_name: '', stock: '', dividend_amount: '', payment_date: '', currency: 'KRW' });
+    setForm({ account_name: '', stock: '', dividend_amount: '', payment_date: getToday(), currency: 'KRW' });
     setCustomStock('');
   };
 

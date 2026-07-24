@@ -121,7 +121,14 @@ function Layout({ children, currentPage, setPage }) {
 
     if (isMobile) {
         return (
-            <div style={{ paddingBottom: '70px', minHeight: '100vh', background: 'var(--bg-primary)' }}>
+            <div style={{
+                display: 'grid',
+                gridTemplateRows: 'auto minmax(0, 1fr) auto',
+                minHeight: '100dvh',
+                maxHeight: '100dvh',
+                overflow: 'hidden',
+                background: 'var(--bg-primary)'
+            }}>
                 {/* Mobile Header */}
                 <div style={{
                     padding: '16px',
@@ -130,8 +137,6 @@ function Layout({ children, currentPage, setPage }) {
                     display: 'flex',
                     justifyContent: 'space-between',
                     alignItems: 'center',
-                    position: 'sticky',
-                    top: 0,
                     zIndex: 100
                 }}>
                     <h3 style={{ margin: 0 }}>Dividash</h3>
@@ -147,21 +152,17 @@ function Layout({ children, currentPage, setPage }) {
                 </div>
 
                 {/* Content */}
-                <main style={{ padding: '16px' }}>
+                <main style={{ padding: '16px', minHeight: 0, overflowY: 'auto' }}>
                     {children}
                 </main>
 
                 {/* Mobile Bottom Tab */}
                 <div style={{
-                    position: 'fixed',
-                    bottom: 0,
-                    left: 0,
-                    right: 0,
                     backgroundColor: 'var(--bg-secondary)',
                     borderTop: '1px solid var(--border-color)',
                     display: 'flex',
                     justifyContent: 'space-around',
-                    padding: '8px 0',
+                    padding: '8px 0 calc(8px + env(safe-area-inset-bottom))',
                     zIndex: 1000
                 }}>
                     {navItems.map(item => (

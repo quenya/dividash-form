@@ -43,6 +43,8 @@ body {
 
 /* Card Style Utility */
 .card {
+  box-sizing: border-box;
+  max-width: 100%;
   background-color: var(--bg-secondary);
   border-radius: 12px;
   box-shadow: var(--card-shadow);
