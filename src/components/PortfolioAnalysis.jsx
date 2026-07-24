@@ -189,35 +189,45 @@ function PortfolioAnalysis() {
 
             {/* Sector Chart */}
             <div className="card" style={{ display: 'flex', gap: '24px', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'center' }}>
-                <div style={{ flex: '0 0 auto', width: '100%', maxWidth: '380px', height: '240px', position: 'relative' }}>
-                    <h4 style={{ textAlign: 'center', marginBottom: '10px' }}>섹터별 배당 비중</h4>
-                    <Doughnut
-                        data={sectorChartData}
-                        options={{
-                            responsive: true,
-                            maintainAspectRatio: false,
-                            plugins: {
-                                legend: { position: 'right', labels: { boxWidth: 12, font: { size: 10 } } },
-                                tooltip: {
-                                    callbacks: {
-                                        label: (context) => {
-                                            const label = context.label || '';
-                                            const value = context.raw;
-                                            return ` ${label}: ₩${Math.round(value).toLocaleString()}`;
-                                        }
+                <div style={{ flex: '0 1 520px', width: '100%', minWidth: 'min(320px, 100%)' }}>
+                    <h4 style={{ textAlign: 'center', margin: '0 0 16px 0' }}>섹터별 배당 비중</h4>
+                    <div style={{ width: '100%', height: '360px', position: 'relative' }}>
+                        <Doughnut
+                            data={sectorChartData}
+                            options={{
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                layout: {
+                                    padding: {
+                                        top: 12,
+                                        right: 16,
+                                        bottom: 12,
+                                        left: 16
                                     }
                                 },
-                                datalabels: {
-                                    color: '#fff',
-                                    formatter: (value, ctx) => {
-                                        const dataset = ctx.chart.data.datasets[0];
-                                        const total = dataset.data.reduce((acc, curr) => acc + curr, 0);
-                                        return ((value / total) * 100).toFixed(1) + '%';
+                                plugins: {
+                                    legend: { position: 'right', labels: { boxWidth: 12, font: { size: 11 }, color: '#666' } },
+                                    tooltip: {
+                                        callbacks: {
+                                            label: (context) => {
+                                                const label = context.label || '';
+                                                const value = context.raw;
+                                                return ` ${label}: ₩${Math.round(value).toLocaleString()}`;
+                                            }
+                                        }
+                                    },
+                                    datalabels: {
+                                        color: '#fff',
+                                        formatter: (value, ctx) => {
+                                            const dataset = ctx.chart.data.datasets[0];
+                                            const total = dataset.data.reduce((acc, curr) => acc + curr, 0);
+                                            return ((value / total) * 100).toFixed(1) + '%';
+                                        }
                                     }
                                 }
-                            }
-                        }}
-                    />
+                            }}
+                        />
+                    </div>
                 </div>
                 <div style={{ flex: 1, minWidth: '250px', padding: '16px' }}>
                     <h4 style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><PieChart size={18} /> 포트폴리오 분석</h4>

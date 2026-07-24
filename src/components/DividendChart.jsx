@@ -5,19 +5,17 @@ import {
   CategoryScale,
   LinearScale,
   BarElement,
-  RadialLinearScale,
-  ArcElement,
   Title,
   Tooltip,
   Legend,
 } from 'chart.js';
-import { Bar, PolarArea } from 'react-chartjs-2';
+import { Bar } from 'react-chartjs-2';
 import ChartDataLabels from 'chartjs-plugin-datalabels';
 import { DollarSign, TrendingUp, Calendar } from 'lucide-react';
 import KPICard from './KPICard';
 import GoalTracker from './GoalTracker';
 
-ChartJS.register(CategoryScale, LinearScale, BarElement, RadialLinearScale, ArcElement, Title, Tooltip, Legend, ChartDataLabels);
+ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, ChartDataLabels);
 
 const MONTH_LABELS = [
   '1월', '2월', '3월', '4월', '5월', '6월',
@@ -223,10 +221,9 @@ function DividendChart() {
           }],
         });
 
-        // Stock Chart (Polar Area)
         let stockArr = Object.entries(stockMap);
         stockArr.sort((a, b) => b[1] - a[1]);
-        stockArr = stockArr.slice(0, 10); // Limit to top 10 for Polar Area
+        stockArr = stockArr.slice(0, 10);
 
         const colorPalette = [
           'rgba(255, 99, 132, 0.7)',
@@ -247,7 +244,10 @@ function DividendChart() {
             label: '종목별 배당금',
             data: stockArr.map(([, value]) => value),
             backgroundColor: colorPalette,
+            borderColor: colorPalette.map(color => color.replace('0.7', '1')),
             borderWidth: 1,
+            borderRadius: 4,
+            barThickness: 22,
           }]
         });
 
@@ -264,6 +264,14 @@ function DividendChart() {
   const chartOptions = (title, unit = '₩') => ({
     responsive: true,
     maintainAspectRatio: false,
+    layout: {
+      padding: {
+        top: 8,
+        right: 8,
+        bottom: 4,
+        left: 4
+      }
+    },
     plugins: {
       legend: { position: 'top', labels: { color: '#666' } },
       title: { display: true, text: title, color: '#666' },
@@ -286,6 +294,7 @@ function DividendChart() {
         color: '#666',
       },
       tooltip: {
+        yAlign: title.includes('전년 동월') ? 'bottom' : undefined,
         backgroundColor: 'rgba(0, 0, 0, 0.8)',
         titleColor: '#fff',
         bodyColor: '#fff',
@@ -307,6 +316,7 @@ function DividendChart() {
         grid: { color: 'rgba(0,0,0,0.05)' }
       },
       y: {
+        grace: title.includes('전년 동월') ? '20%' : undefined,
         ticks: { color: '#666' },
         grid: { color: 'rgba(0,0,0,0.05)' }
       }
@@ -338,37 +348,53 @@ function DividendChart() {
       </div>
 
       <div style={{ display: 'flex', gap: '24px', flexWrap: 'wrap' }}>
-        <div className="card" style={{ flex: 1, minWidth: '320px', height: '400px' }}>
+        <div className="card" style={{ flex: 1, minWidth: 'min(320px, 100%)', height: '400px' }}>
           {monthChart ? <Bar data={monthChart} options={chartOptions('월별 배당금 (연도별 비교)')} /> : <div>데이터 불러오는 중...</div>}
         </div>
 
         {comparisonChart && (
-          <div className="card" style={{ flex: 1, minWidth: '320px', height: '400px' }}>
+          <div className="card" style={{ flex: 1, minWidth: 'min(320px, 100%)', height: '400px' }}>
             <Bar data={comparisonChart} options={chartOptions(`전년 동월 대비 증감 (${comparisonChart.currentYear} vs ${comparisonChart.prevYear})`)} />
           </div>
         )}
       </div>
 
       <div style={{ display: 'flex', gap: '24px', flexWrap: 'wrap' }}>
-        <div className="card" style={{ flex: 1, minWidth: '320px', height: '400px' }}>
+        <div className="card" style={{ flex: 1, minWidth: 'min(320px, 100%)', height: '400px' }}>
           {yearChart ? <Bar data={yearChart} options={chartOptions('연도별 배당금 합계')} /> : <div>데이터 불러오는 중...</div>}
         </div>
 
-        <div className="card" style={{ flex: 1, minWidth: '320px', height: '400px' }}>
+        <div className="card" style={{ flex: 1, minWidth: 'min(320px, 100%)', height: '400px' }}>
           {accountChart ? <Bar data={accountChart} options={chartOptions('계좌별 배당금 합계')} /> : <div>데이터 불러오는 중...</div>}
         </div>
       </div>
 
-      <div className="card" style={{ height: '500px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+      <div className="card" style={{ height: '520px', display: 'flex', flexDirection: 'column' }}>
         <h4 style={{ margin: '0 0 20px 0', color: '#666' }}>종목별 배당금 (Top 10)</h4>
-        <div style={{ flex: 1, width: '100%', maxWidth: '500px', position: 'relative' }}>
+        <div style={{ flex: 1, width: '100%', minHeight: 0, position: 'relative' }}>
           {stockChart ? (
-            <PolarArea data={stockChart} options={{
+            <Bar data={stockChart} options={{
+              indexAxis: 'y',
               responsive: true,
               maintainAspectRatio: false,
+              layout: {
+                padding: {
+                  top: 8,
+                  right: 64,
+                  bottom: 4,
+                  left: 4
+                }
+              },
               plugins: {
-                legend: { position: 'right', labels: { color: '#666' } },
-                datalabels: { display: false },
+                legend: { display: false },
+                datalabels: {
+                  anchor: 'end',
+                  align: 'right',
+                  clamp: true,
+                  color: '#666',
+                  formatter: (value) => `₩${Math.round(value).toLocaleString()}`,
+                  font: { weight: 'bold', size: 11 }
+                },
                 tooltip: {
                   callbacks: {
                     label: (context) => {
@@ -379,9 +405,23 @@ function DividendChart() {
                 }
               },
               scales: {
-                r: {
-                  ticks: { display: false }, // Hide radial ticks for cleaner look
+                x: {
+                  beginAtZero: true,
+                  ticks: {
+                    color: '#666',
+                    callback: (value) => `₩${Number(value).toLocaleString()}`
+                  },
                   grid: { color: 'rgba(0,0,0,0.05)' }
+                },
+                y: {
+                  ticks: {
+                    color: '#666',
+                    callback: function(value) {
+                      const label = this.getLabelForValue(value);
+                      return label.length > 20 ? `${label.slice(0, 20)}...` : label;
+                    }
+                  },
+                  grid: { display: false }
                 }
               }
             }} />
