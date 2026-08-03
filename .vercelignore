@@ -1,0 +1,9 @@
+.codegraph/
+.omo/
+.playwright-cli/
+.codex/
+node_modules/
+build/
+.env
+.env.*
+!.env.example
