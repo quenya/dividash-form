@@ -77,9 +77,28 @@ function Layout({ children, currentPage, setPage }) {
 
             <div style={{ padding: '12px', borderTop: '1px solid var(--border-color)' }}>
                 {user?.email && (
-                    <div style={{ marginBottom: '8px', color: 'var(--text-secondary)', fontSize: '0.85rem', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                        {user.email}
-                    </div>
+                    <>
+                        <button
+                            type="button"
+                            aria-label="계정 설정"
+                            onClick={() => setPage('account')}
+                            style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '12px',
+                                background: 'transparent',
+                                border: 'none',
+                                color: 'var(--text-secondary)',
+                                cursor: 'pointer',
+                                width: '100%',
+                                padding: '8px',
+                                textAlign: 'left'
+                            }}
+                        >
+                            <Settings size={20} />
+                            <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{user.email}</span>
+                        </button>
+                    </>
                 )}
                 <button
                     onClick={toggleTheme}
@@ -142,6 +161,9 @@ function Layout({ children, currentPage, setPage }) {
                     <h3 style={{ margin: 0 }}>Dividash</h3>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
                         <NotificationCenter />
+                        <button type="button" aria-label="계정 설정" onClick={() => setPage('account')} style={{ background: 'transparent', color: 'var(--text-primary)', padding: 4, border: 'none' }}>
+                            <Settings size={20} />
+                        </button>
                         <button onClick={toggleTheme} style={{ background: 'transparent', color: 'var(--text-primary)', padding: 4, border: 'none' }}>
                             {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
                         </button>
@@ -200,6 +222,7 @@ function Layout({ children, currentPage, setPage }) {
                 backgroundColor: 'var(--bg-secondary)',
                 borderRight: '1px solid var(--border-color)',
                 padding: '24px',
+                boxSizing: 'border-box',
                 display: 'flex',
                 flexDirection: 'column',
                 position: 'sticky',

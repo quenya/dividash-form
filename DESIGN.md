@@ -1,46 +1,89 @@
 # DiviDash Design System
 
-## 1. Direction
+## 1. Atmosphere & Identity
 
-DiviDash is an operational finance dashboard. The UI should preserve the existing quiet app-shell pattern: restrained surfaces, clear data hierarchy, compact controls, and minimal decorative treatment.
+DiviDash is a calm financial command center: practical, readable, and low-noise. Its signature is a light dashboard surface with a single blue action accent, dark-mode parity, and modest card depth that keeps forms approachable without feeling decorative.
 
-## 2. Tokens
+## 2. Color
 
-- Background: `var(--bg-primary)`, `var(--bg-secondary)`, `var(--bg-card)`
-- Text: `var(--text-primary)`, `var(--text-secondary)`
-- Accent: `var(--accent-color)`
-- Border: `var(--border-color)`
-- Danger: `#dc3545`
-- Success: `#28a745`
+| Role | Token | Light | Dark | Usage |
+|------|-------|-------|------|-------|
+| Surface/primary | `--bg-primary` | `#f5f6fa` | `#1a1b1e` | App background |
+| Surface/secondary | `--bg-secondary` | `#ffffff` | `#25262b` | Cards and forms |
+| Text/primary | `--text-primary` | `#2d3436` | `#e0e0e0` | Headings and input text |
+| Text/secondary | `--text-secondary` | `#636e72` | `#a1a1aa` | Help text and metadata |
+| Border/default | `--border-color` | `#dfe6e9` | `#373a46` | Inputs and dividers |
+| Accent/primary | `--accent-color` | `#4f8cff` | `#5c7cfa` | Primary actions and focus |
+| Action/text | `--button-text` | `#ffffff` | `#ffffff` | Primary action labels |
+| Status/error | `--status-error` | `#b42318` | `#f97066` | Inline validation and errors |
+| Status/success | `--status-success` | `#18794e` | `#5dd39e` | Completion messages |
+
+Accent is reserved for interactive actions. Error and success colors are used only for inline status messages.
 
 ## 3. Typography
 
-- Base font: existing system sans-serif stack from `src/styles/App.css`
-- Page titles: existing dashboard heading scale
-- Form labels and helper text: compact, readable, no marketing copy
+- Primary: `Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif`
+- Body: 16px with a 1.6 line-height.
+- Secondary text: 14px with a 1.5 line-height.
+- Card titles: 22px, weight 600.
+- Login and account headings: 22px, weight 700.
 
-## 4. Spacing
+## 4. Spacing & Layout
 
-- Base spacing unit: 4px
-- Form/control gaps: 8px to 12px
-- Card padding: 16px to 24px
-- Desktop content padding: 32px
-- Mobile content padding: 16px
+All new spacing uses a 4px base unit.
 
-## 5. Primitives
+| Token | Value | Usage |
+|-------|-------|-------|
+| `--space-1` | `4px` | Icon-to-label spacing |
+| `--space-2` | `8px` | Compact control groups |
+| `--space-3` | `12px` | Field and button gaps |
+| `--space-4` | `16px` | Standard section spacing |
+| `--space-5` | `20px` | Card inner rhythm |
+| `--space-6` | `24px` | Card padding |
+| `--space-8` | `32px` | Page-level separation |
 
-- App shell: fixed desktop sidebar, mobile top header plus bottom nav
-- Card: single-level framed surface only, no nested decorative cards
-- Button: visible focus, explicit disabled state, command text only
-- Form field: label plus input/select/textarea, full-width in narrow panels
-- Status message: bordered tonal block for success/error
+The authentication surface is a centered `cover` layout. The account surface is a `content-limiter` inside the existing fixed-sidenav shell; the main content remains the only vertical scroll owner.
 
-## 6. Accessibility
+## 5. Components
 
-- Every auth input must have a label and autocomplete attribute.
-- Buttons that submit remote actions must expose disabled/loading state.
-- Security messages should be factual and avoid exposing internal error payloads unless needed for debugging.
+### Card
 
-## 7. Accepted Debt
+- **Structure**: bordered surface with heading, content stack, and optional actions.
+- **Variants**: dashboard, authentication, account.
+- **Spacing**: `--space-5` to `--space-6` padding.
+- **States**: default and content-stress reflow.
+- **Accessibility**: semantic headings and labeled controls.
 
-- Existing components still contain inline styles and raw colors. Security hardening preserves that structure to avoid mixing a broad design refactor into this change.
+### Form field
+
+- **Structure**: label above input, optional inline error or help text below.
+- **Variants**: email, password, confirmation.
+- **Spacing**: `--space-2` label gap and `--space-3` field gap.
+- **States**: default, focus, disabled, loading, error.
+- **Accessibility**: explicit labels, visible focus, `aria-live` for status.
+
+### Password form
+
+- **Structure**: heading, password and confirmation fields, primary submit action, inline status.
+- **Variants**: recovery and account change.
+- **Spacing**: card stack using `--space-3` and `--space-4`.
+- **States**: default, submitting, mismatch, API error, success.
+- **Accessibility**: keyboard reachable, autocomplete values, status announced inline.
+
+## 6. Motion & Interaction
+
+No new animation is required for password flows. Existing button hover and pressed states remain in place. Focus indicators must be visible, and `prefers-reduced-motion` continues to disable non-essential motion.
+
+## 7. Depth & Surface
+
+The project uses a mixed strategy: `--border-color` for structure and `--card-shadow` for card elevation. New authentication and account cards use the existing `.card` treatment and do not introduce a second radius or shadow scale.
+
+## 8. Accessibility Constraints & Accepted Debt
+
+- WCAG 2.2 AA target.
+- Body and helper text must remain readable in both light and dark themes.
+- Every input has a visible label and focus state.
+- Error and success messages use `role="status"` or `role="alert"` as appropriate.
+- Password fields use `autocomplete="new-password"` during reset/change and `autocomplete="current-password"` only for sign-in.
+
+Accepted debt: existing dashboard components use inline styles and some legacy raw CSS values. New password surfaces use the documented tokens and do not expand that legacy pattern.

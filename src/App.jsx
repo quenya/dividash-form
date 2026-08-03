@@ -8,6 +8,7 @@ import DividendCalendar from './components/DividendCalendar';
 import PortfolioAnalysis from './components/PortfolioAnalysis';
 import DividendSimulator from './components/DividendSimulator';
 import Layout from './components/Layout';
+import AccountSettings from './components/AccountSettings';
 import { ThemeProvider } from './context/ThemeContext';
 import { AuthProvider } from './context/AuthContext';
 import AuthGate from './components/AuthGate';
@@ -75,6 +76,8 @@ function AppContent() {
   return (
     <Layout currentPage={page} setPage={setPage}>
       {page === 'chart' && <DividendChart />}
+
+      {page === 'account' && <AccountSettings onBack={() => setPage('chart')} />}
 
       {page === 'data' && (
         <div className="card">
