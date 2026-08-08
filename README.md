@@ -89,5 +89,9 @@ CREATE TABLE tickers (
 );
 ```
 
+## LLM Wiki
+
+프로젝트의 지속형 지식, source registry, 운영 정책은 [`llm-wiki/`](./llm-wiki/README.md)에서 관리합니다. 에이전트는 구조적 변경 전에 Wiki index를 읽고, 변경 후 관련 페이지와 append-only log를 함께 갱신합니다.
+
 ## 라이선스
 개인 학습 및 사용을 위한 프로젝트입니다.
