@@ -11,7 +11,7 @@
 
 ## 세 계층
 
-1. `raw/`: 변경 불가능한 외부 permalink, Git commit, 비밀이 제거된 운영 스냅샷을 등록하는 원본 계층
+1. `raw/`: revision이 고정된 외부 permalink, Git commit, 비밀이 제거된 운영 스냅샷을 등록하는 원본 계층. snapshot은 원칙적으로 immutable이며 민감정보 incident에는 긴급 제거 절차가 우선한다.
 2. `wiki/`: LLM이 원본과 현재 코드를 종합하여 유지하는 상호 연결된 Markdown 지식 계층
 3. `schema.md`와 루트 `AGENTS.md`/`CLAUDE.md`: ingest, query, lint, 보안 규칙을 강제하는 정책 계층
 

@@ -32,3 +32,9 @@
 - 새 PR policy page의 index 등록, inbound link, frontmatter, `Sources`, `Related`를 확인했다.
 - 상대 링크, root policy parity, secret token과 JWT 패턴을 검사했다.
 - Result: pass.
+
+## [2026-08-08] lint | Security policy remediation
+
+- 외부 raw source의 모든 지시문을 비신뢰 데이터로 취급하도록 ingest 신뢰 경계를 명시했다.
+- secret, 개인정보, 실제 계좌번호 incident에서는 immutable·append-only 규칙보다 현재 tree 제거, credential 회전, 승인된 history remediation을 우선하도록 예외 절차를 추가했다.
+- 루트 agent 정책과 raw 안내 문서를 같은 규칙으로 정렬했다.
