@@ -34,3 +34,11 @@
 - Captured: 2026-08-08
 - Scope: default branch, merge settings, repository policy files, observed PR convention
 - Status: point-in-time; GitHub settings require revalidation before publish
+
+## S005 - YTD KPI Comparison Change
+
+- Type: local code change and regression-test snapshot
+- Snapshot: [2026-08-09-kpi-ytd-comparison.md](./2026-08-09-kpi-ytd-comparison.md)
+- Captured: 2026-08-09
+- Scope: Dashboard cumulative-dividend KPI and same-month prior-year comparison
+- Status: active

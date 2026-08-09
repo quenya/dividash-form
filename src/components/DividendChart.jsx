@@ -14,6 +14,7 @@ import ChartDataLabels from 'chartjs-plugin-datalabels';
 import { DollarSign, TrendingUp, Calendar } from 'lucide-react';
 import KPICard from './KPICard';
 import GoalTracker from './GoalTracker';
+import { calculateYtdKpi } from '../utils/dividendKpi';
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, ChartDataLabels);
 
@@ -109,23 +110,18 @@ function DividendChart() {
         const currentYear = today.getFullYear();
         const currentMonth = today.getMonth(); // 0-indexed
 
-        const currentYearTotal = yearMap[currentYear] || 0;
-        const prevYearTotal = yearMap[currentYear - 1] || 0;
         const currentMonthAmount = monthYearMap[currentYear] ? monthYearMap[currentYear][currentMonth] : 0;
-
-        // YoY Growth calculation
-        let growth = 0;
-        if (prevYearTotal > 0) {
-          growth = ((currentYearTotal - prevYearTotal) / prevYearTotal * 100).toFixed(1);
-        }
-
-        const monthlyAvg = currentMonth >= 0 ? Math.round(currentYearTotal / (currentMonth + 1)) : 0;
+        const {
+          currentYearTotal,
+          yoyGrowth,
+          monthlyAverage: monthlyAvg,
+        } = calculateYtdKpi(monthYearMap, currentYear, currentMonth);
 
         setKpiData({
           currentMonth: currentMonthAmount,
           currentYearTotal,
           monthlyAverage: monthlyAvg,
-          yoyGrowth: Number(growth)
+          yoyGrowth
         });
 
         const years = Object.keys(monthYearMap).sort();

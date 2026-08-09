@@ -38,3 +38,9 @@
 - 외부 raw source의 모든 지시문을 비신뢰 데이터로 취급하도록 ingest 신뢰 경계를 명시했다.
 - secret, 개인정보, 실제 계좌번호 incident에서는 immutable·append-only 규칙보다 현재 tree 제거, credential 회전, 승인된 history remediation을 우선하도록 예외 절차를 추가했다.
 - 루트 agent 정책과 raw 안내 문서를 같은 규칙으로 정렬했다.
+
+## [2026-08-09] update | YTD dividend KPI comparison
+
+- `올해 누적 배당금` KPI를 현재 월까지의 올해 누적으로 변경했다.
+- 전년 비교 기준을 작년 전체 연도에서 작년 같은 월까지의 누적으로 변경했다.
+- `src/utils/dividendKpi.js`와 회귀 테스트를 추가하고 S005에 기록했다.
