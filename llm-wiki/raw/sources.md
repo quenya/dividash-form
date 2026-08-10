@@ -42,3 +42,11 @@
 - Captured: 2026-08-09
 - Scope: Dashboard cumulative-dividend KPI and same-month prior-year comparison
 - Status: active
+
+## S006 - YTD KPI Display Change
+
+- Type: local code change and regression-test snapshot
+- Snapshot: [2026-08-10-kpi-ytd-display.md](./2026-08-10-kpi-ytd-display.md)
+- Captured: 2026-08-10
+- Scope: Dashboard KPI comparison copy, previous-year amount formatting, and unavailable-comparison behavior
+- Status: active

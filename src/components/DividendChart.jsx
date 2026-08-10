@@ -32,8 +32,9 @@ function DividendChart() {
   const [kpiData, setKpiData] = useState({
     currentMonth: 0,
     currentYearTotal: 0,
+    previousYearTotal: null,
     monthlyAverage: 0,
-    yoyGrowth: 0
+    yoyGrowth: null
   });
 
   useEffect(() => {
@@ -113,6 +114,7 @@ function DividendChart() {
         const currentMonthAmount = monthYearMap[currentYear] ? monthYearMap[currentYear][currentMonth] : 0;
         const {
           currentYearTotal,
+          previousYearTotal,
           yoyGrowth,
           monthlyAverage: monthlyAvg,
         } = calculateYtdKpi(monthYearMap, currentYear, currentMonth);
@@ -120,6 +122,7 @@ function DividendChart() {
         setKpiData({
           currentMonth: currentMonthAmount,
           currentYearTotal,
+          previousYearTotal,
           monthlyAverage: monthlyAvg,
           yoyGrowth
         });
@@ -333,6 +336,7 @@ function DividendChart() {
           title="올해 누적 배당금"
           value={`₩ ${kpiData.currentYearTotal.toLocaleString()}`}
           change={kpiData.yoyGrowth}
+          comparisonValue={kpiData.previousYearTotal}
           icon={TrendingUp}
         />
         <KPICard
