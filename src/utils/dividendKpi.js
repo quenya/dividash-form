@@ -12,7 +12,7 @@ export function calculateYtdKpi(monthYearMap, currentYear, currentMonthIndex) {
 
   const yoyGrowth = previousYearTotal > 0
     ? Number(((currentYearTotal - previousYearTotal) / previousYearTotal * 100).toFixed(1))
-    : 0;
+    : null;
 
   return {
     currentYearTotal,

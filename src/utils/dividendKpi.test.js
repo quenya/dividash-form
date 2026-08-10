@@ -15,11 +15,11 @@ describe('calculateYtdKpi', () => {
     expect(result.yoyGrowth).toBe(100);
   });
 
-  test('returns zero growth when the comparable previous-year total is zero', () => {
+  test('does not calculate growth when the comparable previous-year total is zero', () => {
     const result = calculateYtdKpi({ 2026: [100, 200] }, 2026, 1);
 
     expect(result.currentYearTotal).toBe(300);
     expect(result.previousYearTotal).toBe(0);
-    expect(result.yoyGrowth).toBe(0);
+    expect(result.yoyGrowth).toBeNull();
   });
 });

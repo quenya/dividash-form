@@ -2,8 +2,8 @@
 title: DiviDash Overview
 type: overview
 status: current
-updated: 2026-08-09
-source_refs: [S002, S005]
+updated: 2026-08-10
+source_refs: [S002, S005, S006]
 tags: [product, navigation, react]
 ---
 
@@ -15,7 +15,7 @@ DiviDash는 인증된 사용자가 배당금 내역을 입력하고, 월·연·�
 
 [`Layout.jsx`](../../src/components/Layout.jsx)는 여섯 개의 상위 navigation surface를 제공한다.
 
-1. 대시보드: KPI와 월별·연도별·계좌별·종목별 시각화. 올해 누적 KPI의 전년 비교는 작년 같은 월까지의 누적값을 사용한다.
+1. 대시보드: KPI와 월별·연도별·계좌별·종목별 시각화. 올해 누적 KPI의 전년 비교는 작년 같은 월까지의 누적값을 사용하며, 비교 가능한 전년 동기 누적값이 있을 때만 변화율과 금액을 표시한다.
 2. 캘린더: 지급일 중심의 배당 내역 탐색
 3. 포트폴리오: ticker metadata와 배당 데이터를 결합한 섹터 분석
 4. 시뮬레이터: 월 적립액, 예상 수익률, 배당 성장률, 재투자 설정 기반 장기 추정
@@ -44,3 +44,5 @@ DiviDash는 인증된 사용자가 배당금 내역을 입력하고, 월·연·�
 - [`src/App.jsx`](../../src/App.jsx)
 - [`src/components/Layout.jsx`](../../src/components/Layout.jsx)
 - [`README.md`](../../README.md)
+- [S005 YTD KPI comparison change](../raw/2026-08-09-kpi-ytd-comparison.md)
+- [S006 YTD KPI display change](../raw/2026-08-10-kpi-ytd-display.md)
