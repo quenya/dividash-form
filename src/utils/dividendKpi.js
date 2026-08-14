@@ -14,6 +14,10 @@ export function calculateYtdKpi(monthYearMap, currentYear, currentMonthIndex) {
   const previousYearTotal = previousYearData
     .slice(0, monthCount)
     .reduce((total, amount) => total + (Number(amount) || 0), 0);
+  const monthlyAverage = Math.round(currentYearTotal / monthCount);
+  const previousMonthlyAverage = previousYearTotal > 0
+    ? Math.round(previousYearTotal / monthCount)
+    : null;
 
   const yoyGrowth = previousYearTotal > 0
     ? Number(((currentYearTotal - previousYearTotal) / previousYearTotal * 100).toFixed(1))
@@ -21,12 +25,17 @@ export function calculateYtdKpi(monthYearMap, currentYear, currentMonthIndex) {
   const monthlyYoyGrowth = previousMonthAmount !== null
     ? Number(((currentMonthAmount - previousMonthAmount) / previousMonthAmount * 100).toFixed(1))
     : null;
+  const monthlyAverageYoyGrowth = previousMonthlyAverage !== null
+    ? Number(((monthlyAverage - previousMonthlyAverage) / previousMonthlyAverage * 100).toFixed(1))
+    : null;
 
   return {
     currentYearTotal,
     previousYearTotal,
-    monthlyAverage: Math.round(currentYearTotal / monthCount),
+    monthlyAverage,
+    previousMonthlyAverage,
     yoyGrowth,
+    monthlyAverageYoyGrowth,
     previousMonthAmount,
     monthlyYoyGrowth,
   };

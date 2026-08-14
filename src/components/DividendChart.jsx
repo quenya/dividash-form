@@ -34,7 +34,9 @@ function DividendChart() {
     currentYearTotal: 0,
     previousYearTotal: null,
     monthlyAverage: 0,
-    yoyGrowth: null
+    previousMonthlyAverage: null,
+    yoyGrowth: null,
+    monthlyAverageYoyGrowth: null
   });
 
   useEffect(() => {
@@ -116,6 +118,8 @@ function DividendChart() {
           currentYearTotal,
           previousYearTotal,
           yoyGrowth,
+          previousMonthlyAverage,
+          monthlyAverageYoyGrowth,
           previousMonthAmount,
           monthlyYoyGrowth,
           monthlyAverage: monthlyAvg,
@@ -126,6 +130,8 @@ function DividendChart() {
           currentYearTotal,
           previousYearTotal,
           monthlyAverage: monthlyAvg,
+          previousMonthlyAverage,
+          monthlyAverageYoyGrowth,
           yoyGrowth,
           previousMonthAmount,
           monthlyYoyGrowth
@@ -326,6 +332,8 @@ function DividendChart() {
     }
   });
 
+  const currentMonthNumber = new Date().getMonth() + 1;
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
 
@@ -348,8 +356,12 @@ function DividendChart() {
           icon={TrendingUp}
         />
         <KPICard
-          title="월 평균 배당금"
+          title={`월 평균 배당금 (올해 1~${currentMonthNumber}월)`}
           value={`₩ ${kpiData.monthlyAverage.toLocaleString()}`}
+          change={kpiData.monthlyAverageYoyGrowth}
+          comparisonValue={kpiData.previousMonthlyAverage}
+          comparisonLabel="전년 동기 대비"
+          comparisonPeriodLabel={`작년 1~${currentMonthNumber}월 평균`}
           icon={Calendar}
         />
         <GoalTracker currentAmount={kpiData.monthlyAverage} />

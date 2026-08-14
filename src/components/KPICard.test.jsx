@@ -30,4 +30,10 @@ describe('KPICard comparison', () => {
 
     expect(screen.getByText('작년 동월 대비 ▲25% (작년 동월 ₩ 1,600)')).toBeInTheDocument();
   });
+
+  test('shows the previous year average for the same elapsed-month period', () => {
+    render(<KPICard title="월 평균 배당금" value="₩ 2,000" change={25} comparisonValue={1600} comparisonPeriodLabel="작년 1~8월 평균" />);
+
+    expect(screen.getByText('전년 동기 대비 ▲25% (작년 1~8월 평균 ₩ 1,600)')).toBeInTheDocument();
+  });
 });
