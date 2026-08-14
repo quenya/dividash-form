@@ -12,7 +12,9 @@ describe('calculateYtdKpi', () => {
     expect(result.currentYearTotal).toBe(1600);
     expect(result.previousYearTotal).toBe(800);
     expect(result.monthlyAverage).toBe(200);
+    expect(result.previousMonthlyAverage).toBe(100);
     expect(result.yoyGrowth).toBe(100);
+    expect(result.monthlyAverageYoyGrowth).toBe(100);
     expect(result.previousMonthAmount).toBe(100);
     expect(result.monthlyYoyGrowth).toBe(100);
   });
@@ -23,6 +25,8 @@ describe('calculateYtdKpi', () => {
     expect(result.currentYearTotal).toBe(300);
     expect(result.previousYearTotal).toBe(0);
     expect(result.yoyGrowth).toBeNull();
+    expect(result.previousMonthlyAverage).toBeNull();
+    expect(result.monthlyAverageYoyGrowth).toBeNull();
     expect(result.previousMonthAmount).toBeNull();
     expect(result.monthlyYoyGrowth).toBeNull();
   });
@@ -35,5 +39,7 @@ describe('calculateYtdKpi', () => {
 
     expect(result.previousMonthAmount).toBeNull();
     expect(result.monthlyYoyGrowth).toBeNull();
+    expect(result.previousMonthlyAverage).toBe(50);
+    expect(result.monthlyAverageYoyGrowth).toBe(400);
   });
 });
