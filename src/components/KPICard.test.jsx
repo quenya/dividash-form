@@ -24,4 +24,10 @@ describe('KPICard comparison', () => {
 
     expect(comparison.parentElement).toHaveStyle({ color: '#e74c3c' });
   });
+
+  test('supports a month-specific comparison label', () => {
+    render(<KPICard title="이번 달 배당금" value="₩ 2,000" change={25} comparisonValue={1600} comparisonLabel="작년 동월 대비" comparisonPeriodLabel="작년 동월" />);
+
+    expect(screen.getByText('작년 동월 대비 ▲25% (작년 동월 ₩ 1,600)')).toBeInTheDocument();
+  });
 });
