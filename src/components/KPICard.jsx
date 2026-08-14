@@ -1,6 +1,6 @@
 import React from 'react';
 
-function KPICard({ title, value, change, comparisonValue, format = 'text', icon: Icon }) {
+function KPICard({ title, value, change, comparisonValue, comparisonLabel = '전년 동기 대비', comparisonPeriodLabel = '작년 동기', format = 'text', icon: Icon }) {
     const hasComparison = typeof change === 'number'
         && Number.isFinite(change)
         && typeof comparisonValue === 'number'
@@ -30,8 +30,8 @@ function KPICard({ title, value, change, comparisonValue, format = 'text', icon:
                     lineHeight: 1.4
                 }}>
                     <span>
-                        전년 동기 대비 {isPositive ? '▲' : '▼'}{Math.abs(change)}%
-                        {' '}(작년 동기 ₩ {comparisonValue.toLocaleString()})
+                        {comparisonLabel} {isPositive ? '▲' : '▼'}{Math.abs(change)}%
+                        {' '}({comparisonPeriodLabel} ₩ {comparisonValue.toLocaleString()})
                     </span>
                 </div>
             )}

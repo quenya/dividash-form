@@ -116,6 +116,8 @@ function DividendChart() {
           currentYearTotal,
           previousYearTotal,
           yoyGrowth,
+          previousMonthAmount,
+          monthlyYoyGrowth,
           monthlyAverage: monthlyAvg,
         } = calculateYtdKpi(monthYearMap, currentYear, currentMonth);
 
@@ -124,7 +126,9 @@ function DividendChart() {
           currentYearTotal,
           previousYearTotal,
           monthlyAverage: monthlyAvg,
-          yoyGrowth
+          yoyGrowth,
+          previousMonthAmount,
+          monthlyYoyGrowth
         });
 
         const years = Object.keys(monthYearMap).sort();
@@ -330,6 +334,10 @@ function DividendChart() {
         <KPICard
           title="이번 달 배당금"
           value={`₩ ${kpiData.currentMonth.toLocaleString()}`}
+          change={kpiData.monthlyYoyGrowth}
+          comparisonValue={kpiData.previousMonthAmount}
+          comparisonLabel="작년 동월 대비"
+          comparisonPeriodLabel="작년 동월"
           icon={DollarSign}
         />
         <KPICard
