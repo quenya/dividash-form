@@ -77,7 +77,7 @@ npm start
 ```
 
 ### 4. 데이터베이스 설정 (Supabase)
-`database/schema_update.sql` 파일을 실행하여 `tickers` 테이블을 생성하고 초기 데이터를 설정하세요. 이후 [`database/ticker_matching.sql`](./database/ticker_matching.sql)을 실행하여 원본 입력값 보존형 종목 매칭, 검증 근거, 확정·수동 확인 상태를 설정하세요. 이 매칭 migration에는 확인된 종목만 `confirmed`로 포함되며, 불확실한 입력값은 수동 확인 상태로 남습니다.
+다음 순서로 실행하세요: (1) `database/schema_update.sql`, (2) 실제 Supabase Auth owner UUID로 placeholder를 교체한 [`database/security_hardening.sql`](./database/security_hardening.sql), (3) [`database/ticker_matching.sql`](./database/ticker_matching.sql). `security_hardening.sql`은 placeholder UUID 상태로 실행하면 의도적으로 실패합니다. 마지막 matching migration은 원본 입력값 보존형 종목 매칭, 검증 근거, 확정·수동 확인 상태를 설정하며, 확인된 종목만 `confirmed`로 포함하고 불확실한 입력값은 수동 확인 상태로 남깁니다.
 
 ```sql
 -- tickers 테이블 생성 예시

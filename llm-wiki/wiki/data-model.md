@@ -57,8 +57,10 @@ Migration 파일의 placeholder owner UUID는 실행 전에 실제 owner로 교�
 - [`sheet/supabase_setup.sql`](../../sheet/supabase_setup.sql): 초기 `dividend_entries`와 AI provenance columns
 - [`sheet/ai_schema_update.sql`](../../sheet/ai_schema_update.sql): AI 관련 column과 index 추가
 - [`database/schema_update.sql`](../../database/schema_update.sql): ticker, goal, simulator schema와 seed
-- [`database/ticker_matching.sql`](../../database/ticker_matching.sql): 원본 입력 보존형 ticker 매칭과 RLS
-- [`database/security_hardening.sql`](../../database/security_hardening.sql): user ownership, composite key, RLS 강화
+- [`database/security_hardening.sql`](../../database/security_hardening.sql): 실제 owner UUID 치환 후 user ownership, composite key, RLS 강화
+- [`database/ticker_matching.sql`](../../database/ticker_matching.sql): security hardening 이후 실행하는 원본 입력 보존형 ticker 매칭, read-only catalog, RLS와 verified seed
+
+Fresh setup order is `schema_update.sql` → owner UUID를 채운 `security_hardening.sql` → `ticker_matching.sql`. `security_hardening.sql`의 placeholder owner UUID는 실행 전에 교체해야 한다.
 
 ## Related
 
