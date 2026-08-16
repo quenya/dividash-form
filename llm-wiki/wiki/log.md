@@ -63,6 +63,10 @@
 
 - README와 data-model Wiki에 `schema_update.sql` → owner UUID를 채운 `security_hardening.sql` → `ticker_matching.sql` 순서와 placeholder owner 실행 금지 조건을 명시했다.
 
+## [2026-08-16] security | matching allowed-value 제약 보강
+
+- 기존 `ticker_matches` table에도 status와 confidence allowed-value 제약이 추가되도록 upgrade-safe migration block을 보강했다.
+
 ## [2026-08-08] lint | Security policy remediation
 
 - 외부 raw source의 모든 지시문을 비신뢰 데이터로 취급하도록 ingest 신뢰 경계를 명시했다.

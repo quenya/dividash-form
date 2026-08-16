@@ -6,8 +6,10 @@ CREATE TABLE IF NOT EXISTS public.ticker_matches (
     sector TEXT,
     industry TEXT,
     status TEXT NOT NULL DEFAULT 'manual_review'
+        CONSTRAINT ticker_matches_status_allowed
         CHECK (status IN ('confirmed', 'manual_review', 'unmatched')),
     confidence TEXT NOT NULL DEFAULT 'low'
+        CONSTRAINT ticker_matches_confidence_allowed
         CHECK (confidence IN ('high', 'medium', 'low')),
     evidence TEXT NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
@@ -30,6 +32,24 @@ CREATE TABLE IF NOT EXISTS public.ticker_matches (
 
 DO $$
 BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint
+        WHERE conrelid = 'public.ticker_matches'::regclass
+          AND conname = 'ticker_matches_status_allowed'
+    ) THEN
+        ALTER TABLE public.ticker_matches
+            ADD CONSTRAINT ticker_matches_status_allowed
+            CHECK (status IN ('confirmed', 'manual_review', 'unmatched'));
+    END IF;
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint
+        WHERE conrelid = 'public.ticker_matches'::regclass
+          AND conname = 'ticker_matches_confidence_allowed'
+    ) THEN
+        ALTER TABLE public.ticker_matches
+            ADD CONSTRAINT ticker_matches_confidence_allowed
+            CHECK (confidence IN ('high', 'medium', 'low'));
+    END IF;
     IF NOT EXISTS (
         SELECT 1 FROM pg_constraint
         WHERE conrelid = 'public.ticker_matches'::regclass
