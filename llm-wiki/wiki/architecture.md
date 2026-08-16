@@ -41,6 +41,7 @@ React screens --> Supabase client --> Auth + PostgreSQL/RLS
 - Goal과 simulator 설정은 각 component가 user-scoped upsert를 수행한다.
 - `tickers`는 migration이 관리하는 검증된 read-only catalog로 읽는다.
 - Portfolio의 미분류 입력값은 원본을 보존한 채 `ticker_matches`에서 근거·신뢰 수준·검토 상태를 기록한다. 검증된 migration의 `confirmed` 상태만 canonical ticker로 분류·집계하고, 입력 폼의 종목 목록에도 반영한다. 화면에서 새로 입력한 후보는 `manual_review` 또는 `unmatched`로만 저장된다.
+- 입력 매칭 map은 원본 alias를 공백·대소문자 기준으로 정규화하며, 같은 정규화 key가 여러 row에 나타나면 임의 row를 선택하지 않고 검색·alias 해석·집계 모두에서 보류한다.
 
 ## External dependencies
 

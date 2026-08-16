@@ -118,3 +118,9 @@
 - legacy row가 `confirmed` 상태만 가지고 있더라도 실제 종목명·티커·시장·분류·근거와 high confidence가 모두 없으면 검색 목록과 alias resolver에서 제외한다.
 - 불완전한 기존 row는 migration의 `NOT VALID` upgrade 제약과 함께 Unknown 또는 수동 확인 대상으로 남긴다.
 - 근거: [`src/utils/tickerMatching.js`](../../src/utils/tickerMatching.js), [`src/components/DividendForm.jsx`](../../src/components/DividendForm.jsx)
+
+## [2026-08-16] security | 정규화 alias 충돌 보류
+
+- 공백·대소문자 정규화 후 같은 원본 alias를 가진 match row가 여러 개면 임의 row가 덮어써지지 않도록 map을 보류 값으로 만들었다.
+- 검색 선택지와 포트폴리오 alias resolver가 같은 fail-closed map을 사용해 충돌 입력을 수동 확인 대상으로 남긴다.
+- 근거: [`src/utils/tickerMatching.js`](../../src/utils/tickerMatching.js), [`src/components/DividendForm.jsx`](../../src/components/DividendForm.jsx), [`src/components/DividendForm.test.jsx`](../../src/components/DividendForm.test.jsx)
