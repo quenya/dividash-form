@@ -54,6 +54,11 @@
 
 - `schema_update.sql`과 `security_hardening.sql`에서도 ticker insert/update policy를 재생성하지 않도록 정렬해 migration 실행 순서에 따른 쓰기 재개를 막았다.
 
+## [2026-08-16] fix | 입력 목록의 확정 항목 경계
+
+- 수동 검토·최근 입력값이 종목 선택 목록에 다시 노출되지 않도록 `DividendForm`의 목록을 `confirmed` match의 원본·실제 종목명·티커 alias로 제한했다.
+- 새 미확인 값은 기존 custom 입력으로 계속 기록하고, 확정 전 분류·집계에는 사용하지 않는다.
+
 ## [2026-08-08] lint | Security policy remediation
 
 - 외부 raw source의 모든 지시문을 비신뢰 데이터로 취급하도록 ingest 신뢰 경계를 명시했다.

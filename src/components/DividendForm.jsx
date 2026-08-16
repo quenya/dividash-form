@@ -44,30 +44,17 @@ function DividendForm() {
         console.error('Supabase distinct 쿼리 에러:', error);
         return;
       }
-      // 최신순 정렬 후 중복 제거 (종목명)
-      const sortedCompanies = (data || [])
-        .filter(item => item.payment_date >= oneYearAgoStr)
-        .sort((a, b) => b.payment_date.localeCompare(a.payment_date));
-      const recentCompanies = [];
-      const seenCompanies = new Set();
-      for (const item of sortedCompanies) {
-        const name = item.company_name && item.company_name.trim();
-        if (name && !seenCompanies.has(name)) {
-          recentCompanies.push(name);
-          seenCompanies.add(name);
-        }
-      }
       const { data: matchData, error: matchError } = await supabase
         .from('ticker_matches')
         .select('source_input, matched_company_name, matched_ticker, status');
       if (matchError) {
-        setCompanyNames(recentCompanies);
+        setCompanyNames([]);
       } else {
         const confirmedMatches = (matchData || [])
           .filter((match) => match.status === 'confirmed')
           .flatMap((match) => [match.source_input, match.matched_company_name, match.matched_ticker])
           .filter(Boolean);
-        setCompanyNames([...new Set([...recentCompanies, ...confirmedMatches])]);
+        setCompanyNames([...new Set(confirmedMatches)]);
       }
       // 최신순 정렬 후 중복 제거 (계좌명)
       const sortedAccounts = (data || [])
