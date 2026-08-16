@@ -45,6 +45,16 @@ export function buildTickerMatchesMap(matches) {
   return matchMap;
 }
 
+export function getPortfolioDisplayName(row) {
+  const companyName = String(row?.companyName ?? '').trim();
+  if (row?.isConfirmed === true && companyName) return companyName;
+
+  const sourceInput = String(row?.sourceInput ?? '').trim();
+  const ticker = normalizeTickerInput(row?.ticker);
+  const fallback = sourceInput || ticker;
+  return fallback ? `${fallback} (확인 대기)` : '종목명 확인 대기';
+}
+
 function getBlockedSourceKeys(tickerMatchesMap) {
   return tickerMatchesMap?.__blockedSourceKeys instanceof Set
     ? tickerMatchesMap.__blockedSourceKeys
@@ -164,6 +174,7 @@ export function buildPortfolioSummary({ data, tickerMatchesMap, tickersMap, exch
         ticker,
         amount,
         companyName,
+        isConfirmed: resolution.isConfirmed,
         sector,
         industry,
         market: resolution.isBlocked

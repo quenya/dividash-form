@@ -3,7 +3,7 @@ import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
 import { Doughnut } from 'react-chartjs-2';
 import ChartDataLabels from 'chartjs-plugin-datalabels';
 import { useDividendData } from '../hooks/useDividendData';
-import { buildPortfolioSummary, MATCH_STATUS } from '../utils/tickerMatching';
+import { buildPortfolioSummary, getPortfolioDisplayName, MATCH_STATUS } from '../utils/tickerMatching';
 import { PieChart, AlertCircle, X } from 'lucide-react';
 import { supabase } from '../api/supabaseClient';
 
@@ -229,8 +229,8 @@ function PortfolioAnalysis() {
             {/* Top 20 Table */}
             <div className="card">
                 <h4>종목별 기여도 Top 20</h4>
-                <div style={{ overflowX: 'auto' }}>
-                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.9rem' }}>
+                <div className="portfolio-table-scroll" style={{ overflowX: 'auto' }}>
+                    <table className="portfolio-table" style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.9rem' }}>
                         <thead>
                             <tr style={{ borderBottom: '2px solid var(--border-color)', textAlign: 'left' }}>
                                 <th style={{ padding: '12px' }}>종목</th>
@@ -244,9 +244,16 @@ function PortfolioAnalysis() {
                             {sectorTableData.slice(0, 20).map((row, idx) => {
                                 const total = sectorTableData.reduce((sum, r) => sum + r.amount, 0);
                                 const percent = ((row.amount / total) * 100).toFixed(1);
+                                const displayName = getPortfolioDisplayName(row);
+                                const displayTicker = row.isConfirmed ? row.ticker : '';
                                 return (
                                     <tr key={idx} style={{ borderBottom: '1px solid var(--border-color)' }}>
-                                        <td style={{ padding: '12px', fontWeight: 'bold' }}>{row.ticker}</td>
+                                        <td className="portfolio-security-cell" style={{ padding: '12px', fontWeight: 'bold' }}>
+                                            <span className="portfolio-security-name">{displayName}</span>
+                                            {displayTicker && displayTicker !== displayName && (
+                                                <small className="portfolio-security-ticker">{displayTicker}</small>
+                                            )}
+                                        </td>
                                         <td style={{ padding: '12px' }}>
                                             <span style={{
                                                 padding: '2px 8px', borderRadius: '12px',
@@ -274,8 +281,8 @@ function PortfolioAnalysis() {
                         <AlertCircle color="#e74a3b" size={20} />
                         <h4 style={{ margin: 0, color: '#e74a3b' }}>분류 미확인 종목 정보 보완</h4>
                     </div>
-                    <div style={{ overflowX: 'auto' }}>
-                        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.9rem' }}>
+                    <div className="portfolio-table-scroll" style={{ overflowX: 'auto' }}>
+                        <table className="portfolio-table" style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.9rem' }}>
                             <thead>
                                 <tr style={{ borderBottom: '2px solid var(--border-color)', textAlign: 'left' }}>
                                     <th style={{ padding: '12px' }}>원본 입력값</th>

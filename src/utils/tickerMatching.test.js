@@ -1,4 +1,4 @@
-import { buildPortfolioSummary, buildTickerMatchesMap } from './tickerMatching';
+import { buildPortfolioSummary, buildTickerMatchesMap, getPortfolioDisplayName } from './tickerMatching';
 
 describe('buildPortfolioSummary', () => {
   test('fails closed when normalized source aliases collide', () => {
@@ -271,6 +271,7 @@ describe('buildPortfolioSummary', () => {
     expect(result.unknownItems).toEqual([
       expect.objectContaining({ ticker: 'LEGACY', sector: 'Unknown', matchStatus: 'confirmed' }),
     ]);
+    expect(getPortfolioDisplayName(result.sectorTableData[0])).toBe('LEGACY (확인 대기)');
   });
 
   test('ignores incomplete confirmed aliases when resolving a verified alias', () => {
@@ -331,5 +332,48 @@ describe('buildPortfolioSummary', () => {
       expect.objectContaining({ ticker: 'AAPL', amount: 50, sector: 'Unknown', matchStatus: 'manual_review' }),
     ]));
     expect(result.unknownItems).toHaveLength(1);
+  });
+
+  test('displays the verified company name before its canonical ticker', () => {
+    const result = buildPortfolioSummary({
+      data: [{ ticker: 'LEGACY FUND', dividend_amount: 100, currency: 'KRW' }],
+      exchangeRate: 1300,
+      tickerMatchesMap: {
+        'LEGACY FUND': {
+          status: 'confirmed',
+          confidence: 'high',
+          matched_ticker: 'AAPL',
+          matched_company_name: 'Apple Inc.',
+          market: 'NASDAQ',
+          sector: 'Technology',
+          industry: 'Consumer Electronics',
+          evidence: 'Issuer verified',
+        },
+      },
+      tickersMap: {},
+    });
+
+    expect(getPortfolioDisplayName(result.sectorTableData[0])).toBe('Apple Inc.');
+    expect(result.sectorTableData[0].ticker).toBe('AAPL');
+  });
+
+  test('keeps an unconfirmed input visible without presenting its candidate as verified', () => {
+    const result = buildPortfolioSummary({
+      data: [{ ticker: 'UNVERIFIED FUND', dividend_amount: 100, currency: 'KRW' }],
+      exchangeRate: 1300,
+      tickerMatchesMap: {
+        'UNVERIFIED FUND': {
+          status: 'manual_review',
+          confidence: 'low',
+          matched_ticker: 'MSFT',
+          matched_company_name: 'Possible match',
+          evidence: 'Name similarity only',
+        },
+      },
+      tickersMap: {},
+    });
+
+    expect(getPortfolioDisplayName(result.sectorTableData[0])).toBe('UNVERIFIED FUND (확인 대기)');
+    expect(getPortfolioDisplayName({ ticker: '', sourceInput: '' })).toBe('종목명 확인 대기');
   });
 });

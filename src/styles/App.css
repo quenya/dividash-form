@@ -52,6 +52,37 @@ body {
   border: 1px solid var(--border-color);
 }
 
+.portfolio-table {
+  min-width: 720px;
+}
+
+.portfolio-table th,
+.portfolio-table td {
+  word-break: keep-all;
+}
+
+.portfolio-security-cell {
+  max-width: 220px;
+  min-width: 150px;
+  width: 220px;
+  overflow-wrap: break-word;
+  word-break: keep-all;
+}
+
+.portfolio-security-name,
+.portfolio-security-ticker {
+  display: block;
+  overflow-wrap: break-word;
+  word-break: keep-all;
+}
+
+.portfolio-security-ticker {
+  color: var(--text-secondary);
+  font-size: 0.75rem;
+  font-weight: normal;
+  margin-top: 4px;
+}
+
 /* Form Elements */
 input, select, textarea {
   background-color: var(--bg-secondary);
