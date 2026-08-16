@@ -264,7 +264,7 @@ CREATE TEMP TABLE ticker_matching_verified_seed (
     status TEXT NOT NULL,
     confidence TEXT NOT NULL,
     evidence TEXT NOT NULL
-) ON COMMIT DROP;
+);
 
 INSERT INTO pg_temp.ticker_matching_verified_seed (
     source_input,
@@ -368,3 +368,5 @@ SET matched_ticker = EXCLUDED.matched_ticker,
     managed_by = EXCLUDED.managed_by,
     updated_at = NOW()
 WHERE public.ticker_matches.managed_by = 'migration_seed';
+
+DROP TABLE pg_temp.ticker_matching_verified_seed;
