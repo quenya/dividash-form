@@ -2,7 +2,7 @@
 title: Application Architecture
 type: architecture
 status: current
-updated: 2026-08-06
+updated: 2026-08-16
 source_refs: [S002]
 tags: [react, supabase, auth, data-flow]
 ---
@@ -29,7 +29,7 @@ React screens --> Supabase client --> Auth + PostgreSQL/RLS
 
 ## Read paths
 
-- [`useDividendData.js`](../../src/hooks/useDividendData.js): `dividend_entries`와 `tickers`를 조회하고 USD/KRW 환율을 결합한다.
+- [`useDividendData.js`](../../src/hooks/useDividendData.js): `dividend_entries`, `tickers`, `ticker_matches`를 조회하고 USD/KRW 환율을 결합한다.
 - [`DividendData.jsx`](../../src/components/DividendData.jsx): count를 포함한 server-side pagination query를 수행한다.
 - Dashboard, calendar, portfolio, notifications는 배당 데이터를 목적별로 재구성한다.
 - Goal과 simulator는 각각 `user_goals`, `simulation_settings`를 현재 user ID로 조회한다.
@@ -39,7 +39,9 @@ React screens --> Supabase client --> Auth + PostgreSQL/RLS
 - 배당 입력은 manual, OCR, text 화면에서 [`insertDividend.js`](../../src/api/insertDividend.js)로 수렴한다.
 - `insertDividend`는 `supabase.auth.getUser()`로 현재 user를 다시 확인하고 row의 `user_id`를 설정한다.
 - Goal과 simulator 설정은 각 component가 user-scoped upsert를 수행한다.
-- Portfolio의 미등록 ticker는 authenticated 사용자가 `tickers`에 추가할 수 있다.
+- `tickers`는 migration이 관리하는 검증된 read-only catalog로 읽는다.
+- Portfolio의 미분류 입력값은 원본을 보존한 채 `ticker_matches`에서 근거·신뢰 수준·검토 상태를 기록한다. 검증된 migration의 `confirmed` 상태만 canonical ticker로 분류·집계하고, 입력 폼의 종목 목록에도 반영한다. 화면에서 새로 입력한 후보는 `manual_review` 또는 `unmatched`로만 저장된다.
+- 입력 매칭 map은 원본·실제 종목명·티커 alias를 공백·대소문자 기준으로 정규화하며, 같은 key가 여러 row 또는 여러 canonical ticker에 나타나면 임의 row를 선택하지 않고 검색·alias 해석·집계 모두에서 보류한다.
 
 ## External dependencies
 

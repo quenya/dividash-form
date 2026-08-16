@@ -109,15 +109,6 @@ CREATE POLICY "tickers_select_authenticated" ON public.tickers
   FOR SELECT TO authenticated
   USING (true);
 
-CREATE POLICY "tickers_insert_authenticated" ON public.tickers
-  FOR INSERT TO authenticated
-  WITH CHECK (auth.role() = 'authenticated');
-
-CREATE POLICY "tickers_update_authenticated" ON public.tickers
-  FOR UPDATE TO authenticated
-  USING (auth.role() = 'authenticated')
-  WITH CHECK (auth.role() = 'authenticated');
-
 CREATE POLICY "user_goals_select_own" ON public.user_goals
   FOR SELECT TO authenticated
   USING (user_id = auth.uid());

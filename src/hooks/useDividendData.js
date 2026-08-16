@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../api/supabaseClient';
+import { buildTickerMatchesMap } from '../utils/tickerMatching';
 
 export function useDividendData() {
     const [data, setData] = useState([]);
@@ -7,6 +8,7 @@ export function useDividendData() {
     const [error, setError] = useState(null);
     const [exchangeRate, setExchangeRate] = useState(1300);
     const [tickersMap, setTickersMap] = useState({});
+    const [tickerMatchesMap, setTickerMatchesMap] = useState({});
 
     const fetchExchangeRate = async () => {
         try {
@@ -48,6 +50,16 @@ export function useDividendData() {
             });
             setTickersMap(tMap);
 
+            const { data: matchData, error: matchError } = await supabase
+                .from('ticker_matches')
+                .select('source_input, matched_company_name, matched_ticker, market, sector, industry, evidence, confidence, status');
+            if (matchError) {
+                console.warn('종목 매칭 정보 조회 오류:', matchError.message);
+                setTickerMatchesMap({});
+            } else {
+                setTickerMatchesMap(buildTickerMatchesMap(matchData));
+            }
+
         } catch (err) {
             console.error('Error fetching dividend data:', err);
             setError(err);
@@ -60,5 +72,5 @@ export function useDividendData() {
         fetchData();
     }, [fetchData]);
 
-    return { data, loading, error, exchangeRate, tickersMap, refetch: fetchData };
+    return { data, loading, error, exchangeRate, tickersMap, tickerMatchesMap, refetch: fetchData };
 }

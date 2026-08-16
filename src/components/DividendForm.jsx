@@ -1,6 +1,22 @@
 import React, { useState, useEffect } from 'react';
 import insertDividend from '../api/insertDividend';
 import { supabase } from '../api/supabaseClient';
+import { buildTickerMatchesMap, getVerifiedMatchAliasKeys, isVerifiedMatch, normalizeTickerInput } from '../utils/tickerMatching';
+
+export function getVerifiedMatchChoices(matchData) {
+  const matchMap = buildTickerMatchesMap(matchData);
+  const verifiedMatches = Object.values(matchMap).filter(isVerifiedMatch);
+  const verifiedAliases = getVerifiedMatchAliasKeys(matchMap);
+
+  return [...new Set(
+    verifiedMatches
+      .flatMap((match) => [match.source_input, match.matched_company_name, match.matched_ticker])
+      .filter((alias) => {
+        const aliasKey = normalizeTickerInput(alias);
+        return aliasKey && verifiedAliases.has(aliasKey);
+      })
+  )];
+}
 
 function getToday() {
   const d = new Date();
@@ -44,20 +60,14 @@ function DividendForm() {
         console.error('Supabase distinct 쿼리 에러:', error);
         return;
       }
-      // 최신순 정렬 후 중복 제거 (종목명)
-      const sortedCompanies = (data || [])
-        .filter(item => item.payment_date >= oneYearAgoStr)
-        .sort((a, b) => b.payment_date.localeCompare(a.payment_date));
-      const recentCompanies = [];
-      const seenCompanies = new Set();
-      for (const item of sortedCompanies) {
-        const name = item.company_name && item.company_name.trim();
-        if (name && !seenCompanies.has(name)) {
-          recentCompanies.push(name);
-          seenCompanies.add(name);
-        }
+      const { data: matchData, error: matchError } = await supabase
+        .from('ticker_matches')
+        .select('source_input, matched_company_name, matched_ticker, market, sector, industry, evidence, confidence, status');
+      if (matchError) {
+        setCompanyNames([]);
+      } else {
+        setCompanyNames(getVerifiedMatchChoices(matchData));
       }
-      setCompanyNames(recentCompanies);
       // 최신순 정렬 후 중복 제거 (계좌명)
       const sortedAccounts = (data || [])
         .filter(item => item.payment_date >= oneYearAgoStr)
