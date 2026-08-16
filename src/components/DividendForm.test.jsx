@@ -83,6 +83,36 @@ test('does not expose normalized-colliding aliases in the input choices', () => 
   expect(choices).toEqual([]);
 });
 
+test('does not expose a company alias shared by different canonical tickers', () => {
+  const choices = getVerifiedMatchChoices([
+    {
+      source_input: 'Source A',
+      matched_company_name: 'Shared Issuer',
+      matched_ticker: 'AAPL',
+      market: 'NASDAQ',
+      sector: 'Technology',
+      industry: 'Consumer Electronics',
+      evidence: 'Issuer verified',
+      confidence: 'high',
+      status: 'confirmed'
+    },
+    {
+      source_input: 'Source B',
+      matched_company_name: 'Shared Issuer',
+      matched_ticker: 'MSFT',
+      market: 'NASDAQ',
+      sector: 'Technology',
+      industry: 'Software',
+      evidence: 'Issuer verified',
+      confidence: 'high',
+      status: 'confirmed'
+    }
+  ]);
+
+  expect(choices).toEqual(expect.arrayContaining(['Source A', 'Source B', 'AAPL', 'MSFT']));
+  expect(choices).not.toContain('Shared Issuer');
+});
+
 test('keeps payment date set to today after submitting a dividend', async () => {
   jest.useFakeTimers();
   jest.setSystemTime(new Date(2026, 6, 24, 9, 0, 0));

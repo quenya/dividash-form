@@ -1,15 +1,31 @@
 import React, { useState, useEffect } from 'react';
 import insertDividend from '../api/insertDividend';
 import { supabase } from '../api/supabaseClient';
-import { buildTickerMatchesMap, isVerifiedMatch } from '../utils/tickerMatching';
+import { buildTickerMatchesMap, isVerifiedMatch, normalizeTickerInput } from '../utils/tickerMatching';
 
 export function getVerifiedMatchChoices(matchData) {
   const matchMap = buildTickerMatchesMap(matchData);
+  const verifiedMatches = Object.values(matchMap).filter(isVerifiedMatch);
+  const aliasTickers = new Map();
+
+  verifiedMatches.forEach((match) => {
+    const matchedTicker = normalizeTickerInput(match.matched_ticker);
+    [match.source_input, match.matched_company_name, match.matched_ticker].forEach((alias) => {
+      const aliasKey = normalizeTickerInput(alias);
+      if (!aliasKey) return;
+      const tickers = aliasTickers.get(aliasKey) || new Set();
+      tickers.add(matchedTicker);
+      aliasTickers.set(aliasKey, tickers);
+    });
+  });
+
   return [...new Set(
-    Object.values(matchMap)
-      .filter(isVerifiedMatch)
+    verifiedMatches
       .flatMap((match) => [match.source_input, match.matched_company_name, match.matched_ticker])
-      .filter(Boolean)
+      .filter((alias) => {
+        const aliasKey = normalizeTickerInput(alias);
+        return aliasKey && aliasTickers.get(aliasKey)?.size === 1;
+      })
   )];
 }
 
