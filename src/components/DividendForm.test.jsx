@@ -6,7 +6,7 @@ jest.mock('../api/insertDividend', () => jest.fn(() => Promise.resolve({ success
 
 jest.mock('../api/supabaseClient', () => ({
   supabase: {
-    from: () => ({
+    from: (table) => ({
       select: (columns) => {
         if (columns === '*') {
           return {
@@ -14,6 +14,25 @@ jest.mock('../api/supabaseClient', () => ({
               limit: () => Promise.resolve({ data: [], error: null })
             })
           };
+        }
+
+        if (table === 'ticker_matches') {
+          return Promise.resolve({
+            data: [
+              {
+                source_input: '삼성전자',
+                matched_company_name: '삼성전자',
+                matched_ticker: '005930',
+                market: 'KRX',
+                sector: 'Technology',
+                industry: 'Semiconductors',
+                evidence: 'test evidence',
+                confidence: 'high',
+                status: 'confirmed'
+              }
+            ],
+            error: null
+          });
         }
 
         return Promise.resolve({

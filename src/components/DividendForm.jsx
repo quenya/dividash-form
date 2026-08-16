@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import insertDividend from '../api/insertDividend';
 import { supabase } from '../api/supabaseClient';
+import { isVerifiedMatch } from '../utils/tickerMatching';
 
 function getToday() {
   const d = new Date();
@@ -51,7 +52,7 @@ function DividendForm() {
         setCompanyNames([]);
       } else {
         const confirmedMatches = (matchData || [])
-          .filter((match) => match.status === 'confirmed')
+          .filter(isVerifiedMatch)
           .flatMap((match) => [match.source_input, match.matched_company_name, match.matched_ticker])
           .filter(Boolean);
         setCompanyNames([...new Set(confirmedMatches)]);

@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../api/supabaseClient';
+import { buildTickerMatchesMap } from '../utils/tickerMatching';
 
 export function useDividendData() {
     const [data, setData] = useState([]);
@@ -56,11 +57,7 @@ export function useDividendData() {
                 console.warn('종목 매칭 정보 조회 오류:', matchError.message);
                 setTickerMatchesMap({});
             } else {
-                const matchMap = {};
-                (matchData || []).forEach(match => {
-                    if (match.source_input) matchMap[match.source_input.toUpperCase().trim()] = match;
-                });
-                setTickerMatchesMap(matchMap);
+                setTickerMatchesMap(buildTickerMatchesMap(matchData));
             }
 
         } catch (err) {

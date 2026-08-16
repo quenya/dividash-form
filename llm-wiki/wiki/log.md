@@ -112,3 +112,9 @@
 - 9개 Wiki 페이지의 index 등록, inbound link, 상대 링크, frontmatter, `Sources`, `Related`, source reference를 검사했다.
 - 매칭 근거에 실제 계좌번호·개인정보·secret이 포함되지 않았음을 확인했다.
 - Result: pass.
+
+## [2026-08-16] fix | 불완전한 확정 alias 보류
+
+- legacy row가 `confirmed` 상태만 가지고 있더라도 실제 종목명·티커·시장·분류·근거와 high confidence가 모두 없으면 검색 목록과 alias resolver에서 제외한다.
+- 불완전한 기존 row는 migration의 `NOT VALID` upgrade 제약과 함께 Unknown 또는 수동 확인 대상으로 남긴다.
+- 근거: [`src/utils/tickerMatching.js`](../../src/utils/tickerMatching.js), [`src/components/DividendForm.jsx`](../../src/components/DividendForm.jsx)

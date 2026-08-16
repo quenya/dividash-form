@@ -8,6 +8,37 @@ export function normalizeTickerInput(value) {
   return typeof value === 'string' ? value.trim().toUpperCase() : '';
 }
 
+export function isVerifiedMatch(match) {
+  return match?.status === MATCH_STATUS.CONFIRMED
+    && match?.confidence === 'high'
+    && Boolean(normalizeTickerInput(match?.matched_ticker))
+    && [
+      match?.matched_company_name,
+      match?.market,
+      match?.sector,
+      match?.industry,
+      match?.evidence,
+    ].every((value) => Boolean(String(value || '').trim()));
+}
+
+export function buildTickerMatchesMap(matches) {
+  const matchMap = {};
+
+  (matches || []).forEach((match) => {
+    const sourceKey = normalizeTickerInput(match?.source_input);
+    if (!sourceKey) return;
+
+    if (Object.prototype.hasOwnProperty.call(matchMap, sourceKey)) {
+      matchMap[sourceKey] = null;
+      return;
+    }
+
+    matchMap[sourceKey] = match;
+  });
+
+  return matchMap;
+}
+
 function getSourceInput(item) {
   return String(item.ticker || item.company_name || '').trim();
 }
@@ -18,7 +49,7 @@ function getMatch(item, tickerMatchesMap) {
   if (directMatch) return directMatch;
 
   const aliasMatches = Object.values(tickerMatchesMap).filter((match) => (
-    match.status === MATCH_STATUS.CONFIRMED
+    isVerifiedMatch(match)
     && [match.matched_ticker, match.matched_company_name]
       .some((alias) => normalizeTickerInput(alias) === sourceKey)
   ));
@@ -31,17 +62,7 @@ export function resolveInstrument(item, tickerMatchesMap, tickersMap) {
   const sourceKey = normalizeTickerInput(sourceInput);
   const match = getMatch(item, tickerMatchesMap);
   const matchedTicker = normalizeTickerInput(match?.matched_ticker);
-  const hasVerifiedDetails = [
-    match?.matched_company_name,
-    match?.market,
-    match?.sector,
-    match?.industry,
-    match?.evidence,
-  ].every((value) => Boolean(String(value || '').trim()));
-  const isConfirmed = match?.status === MATCH_STATUS.CONFIRMED
-    && match?.confidence === 'high'
-    && Boolean(matchedTicker)
-    && hasVerifiedDetails;
+  const isConfirmed = isVerifiedMatch(match);
   const isBlocked = !isConfirmed;
   const resolvedTicker = isConfirmed ? matchedTicker : sourceKey || 'UNKNOWN';
   const metadata = isConfirmed ? tickersMap[resolvedTicker] || null : null;

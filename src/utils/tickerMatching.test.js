@@ -1,6 +1,45 @@
-import { buildPortfolioSummary } from './tickerMatching';
+import { buildPortfolioSummary, buildTickerMatchesMap } from './tickerMatching';
 
 describe('buildPortfolioSummary', () => {
+  test('fails closed when normalized source aliases collide', () => {
+    const tickerMatchesMap = buildTickerMatchesMap([
+      {
+        source_input: 'Source Name',
+        matched_ticker: 'AAPL',
+        matched_company_name: 'Apple Inc.',
+        market: 'NASDAQ',
+        sector: 'Technology',
+        industry: 'Consumer Electronics',
+        status: 'confirmed',
+        confidence: 'high',
+        evidence: 'Issuer verified',
+      },
+      {
+        source_input: ' source name ',
+        matched_ticker: 'MSFT',
+        matched_company_name: 'Microsoft Corporation',
+        market: 'NASDAQ',
+        sector: 'Technology',
+        industry: 'Software',
+        status: 'confirmed',
+        confidence: 'high',
+        evidence: 'Issuer verified',
+      },
+    ]);
+
+    const result = buildPortfolioSummary({
+      data: [{ ticker: 'SOURCE NAME', company_name: 'Source Name', dividend_amount: 100, currency: 'KRW' }],
+      exchangeRate: 1300,
+      tickerMatchesMap,
+      tickersMap: {},
+    });
+
+    expect(tickerMatchesMap['SOURCE NAME']).toBeNull();
+    expect(result.unknownItems).toEqual([
+      expect.objectContaining({ ticker: 'SOURCE NAME', sector: 'Unknown' }),
+    ]);
+  });
+
   test('uses only confirmed matches for canonical aggregation', () => {
     const result = buildPortfolioSummary({
       data: [
@@ -149,6 +188,29 @@ describe('buildPortfolioSummary', () => {
     expect(result.unknownItems).toEqual([
       expect.objectContaining({ ticker: 'LEGACY', sector: 'Unknown', matchStatus: 'confirmed' }),
     ]);
+  });
+
+  test('ignores incomplete confirmed aliases when resolving a verified alias', () => {
+    const result = buildPortfolioSummary({
+      data: [{ company_name: 'Apple Inc.', dividend_amount: 100, currency: 'KRW' }],
+      exchangeRate: 1300,
+      tickerMatchesMap: {
+        LEGACY: { status: 'confirmed', matched_ticker: 'AAPL', confidence: 'high', evidence: '' },
+        VERIFIED: {
+          status: 'confirmed',
+          matched_ticker: 'AAPL',
+          matched_company_name: 'Apple Inc.',
+          market: 'NASDAQ',
+          sector: 'Technology',
+          industry: 'Consumer Electronics',
+          confidence: 'high',
+          evidence: 'Issuer verified',
+        },
+      },
+      tickersMap: {},
+    });
+
+    expect(result.sectorTableData[0]).toEqual(expect.objectContaining({ ticker: 'AAPL', sector: 'Technology' }));
   });
 
   test('does not merge an unconfirmed source into a confirmed canonical ticker', () => {

@@ -2,7 +2,7 @@
 title: Known Gaps and Open Risks
 type: risk
 status: current
-updated: 2026-08-06
+updated: 2026-08-16
 source_refs: [S002, S003]
 tags: [risk, drift, follow-up]
 ---
