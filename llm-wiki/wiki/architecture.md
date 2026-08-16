@@ -40,7 +40,7 @@ React screens --> Supabase client --> Auth + PostgreSQL/RLS
 - `insertDividend`는 `supabase.auth.getUser()`로 현재 user를 다시 확인하고 row의 `user_id`를 설정한다.
 - Goal과 simulator 설정은 각 component가 user-scoped upsert를 수행한다.
 - Portfolio의 미등록 ticker는 authenticated 사용자가 `tickers`에 추가할 수 있다.
-- Portfolio의 미분류 입력값은 원본을 보존한 채 `ticker_matches`에서 근거·신뢰 수준·검토 상태를 기록한다. `confirmed` 상태만 canonical ticker로 분류·집계하고, 입력 폼의 종목 목록에도 반영한다.
+- Portfolio의 미분류 입력값은 원본을 보존한 채 `ticker_matches`에서 근거·신뢰 수준·검토 상태를 기록한다. 검증된 migration의 `confirmed` 상태만 canonical ticker로 분류·집계하고, 입력 폼의 종목 목록에도 반영한다. 화면에서 새로 입력한 후보는 `manual_review` 또는 `unmatched`로만 저장된다.
 
 ## External dependencies
 

@@ -70,4 +70,26 @@ describe('buildPortfolioSummary', () => {
     expect(result.sectorTableData[0].ticker).toBe('UNVERIFIED FUND');
     expect(result.sectorTableData[0].sector).toBe('Unknown');
   });
+
+  test('does not classify manual-review input from existing ticker metadata', () => {
+    const result = buildPortfolioSummary({
+      data: [{ ticker: 'AMBIGUOUS', company_name: 'Ambiguous', dividend_amount: 100, currency: 'KRW' }],
+      exchangeRate: 1300,
+      tickerMatchesMap: {
+        AMBIGUOUS: {
+          status: 'manual_review',
+          matched_ticker: 'AMBIGUOUS',
+          confidence: 'medium',
+          evidence: 'Needs confirmation',
+        },
+      },
+      tickersMap: {
+        AMBIGUOUS: { ticker: 'AMBIGUOUS', sector: 'Should remain hidden', industry: 'Should remain hidden' },
+      },
+    });
+
+    expect(result.unknownItems).toEqual([
+      expect.objectContaining({ ticker: 'AMBIGUOUS', sector: 'Unknown', industry: '-' }),
+    ]);
+  });
 });

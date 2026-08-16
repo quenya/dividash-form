@@ -59,10 +59,14 @@ export function buildPortfolioSummary({ data, tickerMatchesMap, tickersMap, exch
     .map(({ ticker, amount, sourceInputs, sourceCompanyNames, resolution }) => {
       const match = resolution.match;
       const metadata = resolution.metadata;
-      const sector = metadata?.sector || (resolution.isConfirmed ? match?.sector : null) || 'Unknown';
-      const industry = metadata?.industry || (resolution.isConfirmed ? match?.industry : null) || '-';
+      const sector = resolution.isConfirmed
+        ? metadata?.sector || match?.sector || 'Unknown'
+        : 'Unknown';
+      const industry = resolution.isConfirmed
+        ? metadata?.industry || match?.industry || '-'
+        : '-';
       const companyName = (resolution.isConfirmed && match?.matched_company_name)
-        || metadata?.company_name_kr
+        || (resolution.isConfirmed && metadata?.company_name_kr)
         || [...sourceCompanyNames][0]
         || ticker;
 
@@ -72,7 +76,7 @@ export function buildPortfolioSummary({ data, tickerMatchesMap, tickersMap, exch
         companyName,
         sector,
         industry,
-        market: metadata?.exchange || (resolution.isConfirmed ? match?.market : null) || '-',
+        market: resolution.isConfirmed ? metadata?.exchange || match?.market || '-' : '-',
         sourceInput: [...sourceInputs][0] || '',
         sourceInputs: [...sourceInputs],
         sourceCompanyNames: [...sourceCompanyNames],

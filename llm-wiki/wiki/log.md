@@ -33,6 +33,12 @@
 - 상대 링크, root policy parity, secret token과 JWT 패턴을 검사했다.
 - Result: pass.
 
+## [2026-08-16] update | 확정 매칭 쓰기 경계 강화
+
+- 수동 검토 입력이 기존 `tickers` metadata를 우연히 공유해도 `Unknown`을 벗어나지 않도록 집계 resolver를 수정했다.
+- authenticated client는 `manual_review`·`unmatched`만 저장할 수 있고, `confirmed`는 검증된 migration seed와 완전한 근거·분류 필드를 요구하도록 했다.
+- 기존 `dividend_entries`는 계속 수정하지 않는다.
+
 ## [2026-08-08] lint | Security policy remediation
 
 - 외부 raw source의 모든 지시문을 비신뢰 데이터로 취급하도록 ingest 신뢰 경계를 명시했다.

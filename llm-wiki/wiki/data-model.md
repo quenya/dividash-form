@@ -37,6 +37,8 @@ tags: [supabase, postgres, rls, migrations]
 
 매칭 row에는 `matched_company_name`, `market`, `sector`, `industry`, `evidence`, `confidence`를 함께 기록한다. 매칭 저장은 기존 `dividend_entries` row를 수정하지 않는다.
 
+`confirmed` row는 migration의 검증된 seed로만 생성되며, authenticated client의 RLS insert/update는 `manual_review`·`unmatched` 상태만 허용한다. 따라서 화면에서 입력한 후보 정보는 기록되지만 확정 전에는 분류·집계에 사용되지 않는다.
+
 [`sheet/supabase_setup.sql`](../../sheet/supabase_setup.sql)의 초기 schema는 `stock` 중심이고, 현재 application은 `ticker`와 `company_name`을 사용한다. 이 차이는 migration을 순서 없는 단일 source of truth로 사용할 수 없다는 신호다.
 
 ## RLS model

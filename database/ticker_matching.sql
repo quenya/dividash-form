@@ -15,7 +15,17 @@ CREATE TABLE IF NOT EXISTS public.ticker_matches (
     CONSTRAINT confirmed_match_requires_ticker
         CHECK (status <> 'confirmed' OR NULLIF(BTRIM(matched_ticker), '') IS NOT NULL),
     CONSTRAINT confirmed_match_requires_high_confidence
-        CHECK (status <> 'confirmed' OR confidence = 'high')
+        CHECK (status <> 'confirmed' OR confidence = 'high'),
+    CONSTRAINT match_evidence_requires_value
+        CHECK (NULLIF(BTRIM(evidence), '') IS NOT NULL),
+    CONSTRAINT confirmed_match_requires_details
+        CHECK (
+            status <> 'confirmed'
+            OR NULLIF(BTRIM(matched_company_name), '') IS NOT NULL
+            AND NULLIF(BTRIM(market), '') IS NOT NULL
+            AND NULLIF(BTRIM(sector), '') IS NOT NULL
+            AND NULLIF(BTRIM(industry), '') IS NOT NULL
+        )
 );
 
 ALTER TABLE public.ticker_matches ENABLE ROW LEVEL SECURITY;
@@ -28,11 +38,13 @@ CREATE POLICY "Enable read access for authenticated users" ON public.ticker_matc
     FOR SELECT TO authenticated USING (true);
 
 CREATE POLICY "Enable insert for authenticated users" ON public.ticker_matches
-    FOR INSERT TO authenticated WITH CHECK (auth.role() = 'authenticated');
+    FOR INSERT TO authenticated
+    WITH CHECK (auth.role() = 'authenticated' AND status <> 'confirmed');
 
 CREATE POLICY "Enable update for authenticated users" ON public.ticker_matches
-    FOR UPDATE TO authenticated USING (auth.role() = 'authenticated')
-    WITH CHECK (auth.role() = 'authenticated');
+    FOR UPDATE TO authenticated
+    USING (auth.role() = 'authenticated' AND status <> 'confirmed')
+    WITH CHECK (auth.role() = 'authenticated' AND status <> 'confirmed');
 
 CREATE INDEX IF NOT EXISTS idx_ticker_matches_status
     ON public.ticker_matches(status);
