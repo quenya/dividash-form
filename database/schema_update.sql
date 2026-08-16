@@ -14,12 +14,6 @@ ALTER TABLE public.tickers ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Enable read access for authenticated users" ON public.tickers
     FOR SELECT TO authenticated USING (true);
 
-CREATE POLICY "Enable insert for authenticated users" ON public.tickers
-    FOR INSERT TO authenticated WITH CHECK (auth.role() = 'authenticated');
-
-CREATE POLICY "Enable update for authenticated users" ON public.tickers
-    FOR UPDATE TO authenticated USING (auth.role() = 'authenticated');
-
 -- Seed Data (Sample)
 INSERT INTO tickers (ticker, sector, industry) VALUES 
 ('AAPL', 'Technology', 'Consumer Electronics'),

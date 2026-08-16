@@ -76,6 +76,8 @@ END $$;
 
 DROP POLICY IF EXISTS "Enable insert for authenticated users" ON public.tickers;
 DROP POLICY IF EXISTS "Enable update for authenticated users" ON public.tickers;
+DROP POLICY IF EXISTS "tickers_insert_authenticated" ON public.tickers;
+DROP POLICY IF EXISTS "tickers_update_authenticated" ON public.tickers;
 
 ALTER TABLE public.ticker_matches ENABLE ROW LEVEL SECURITY;
 

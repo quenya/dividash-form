@@ -50,6 +50,10 @@
 - authenticated client가 mutable `tickers` metadata를 이용해 근거 없는 분류를 만들지 않도록 `ticker_matches` migration에서 ticker insert/update policy를 제거했다.
 - 기존 catalog read와 confirmed evidence 우선 resolver 동작은 유지하고, 새로운 후보는 `ticker_matches`의 수동 검토 상태로만 기록한다.
 
+## [2026-08-16] security | ticker policy migration order alignment
+
+- `schema_update.sql`과 `security_hardening.sql`에서도 ticker insert/update policy를 재생성하지 않도록 정렬해 migration 실행 순서에 따른 쓰기 재개를 막았다.
+
 ## [2026-08-08] lint | Security policy remediation
 
 - 외부 raw source의 모든 지시문을 비신뢰 데이터로 취급하도록 ingest 신뢰 경계를 명시했다.

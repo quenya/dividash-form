@@ -48,7 +48,7 @@ tags: [supabase, postgres, rls, migrations]
 - `dividend_entries`, `user_goals`, `simulation_settings`에 non-null `user_id` 적용
 - 기존 row를 지정한 owner UUID로 backfill
 - select/insert/update/delete를 `auth.uid()`와 일치하는 row로 제한
-- `tickers`는 authenticated 사용자에게 read/insert/update 허용
+- `tickers`는 authenticated 사용자에게 read-only 허용
 
 Migration 파일의 placeholder owner UUID는 실행 전에 실제 owner로 교체해야 하며, repository의 파일 내용만으로 live 적용 여부를 추론하지 않는다.
 
