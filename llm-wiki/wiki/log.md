@@ -121,6 +121,6 @@
 
 ## [2026-08-16] security | 정규화 alias 충돌 보류
 
-- 공백·대소문자 정규화 후 같은 원본 alias를 가진 match row가 여러 개면 임의 row가 덮어써지지 않도록 map을 보류 값으로 만들었다.
-- 검색 선택지와 포트폴리오 alias resolver가 같은 fail-closed map을 사용해 충돌 입력을 수동 확인 대상으로 남긴다.
+- 공백·대소문자 정규화 후 같은 원본 alias를 가진 match row가 여러 개이거나 실제 종목명·티커 alias가 여러 canonical ticker를 가리키면 임의 row가 선택되지 않도록 보류한다.
+- 검색 선택지와 포트폴리오 alias resolver가 같은 canonical alias 집합을 사용해 충돌 입력을 수동 확인 대상으로 남긴다.
 - 근거: [`src/utils/tickerMatching.js`](../../src/utils/tickerMatching.js), [`src/components/DividendForm.jsx`](../../src/components/DividendForm.jsx), [`src/components/DividendForm.test.jsx`](../../src/components/DividendForm.test.jsx)

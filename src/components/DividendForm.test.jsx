@@ -77,10 +77,22 @@ test('does not expose normalized-colliding aliases in the input choices', () => 
       evidence: 'Issuer verified',
       confidence: 'high',
       status: 'confirmed'
+    },
+    {
+      source_input: 'Third Source',
+      matched_company_name: 'Source Name',
+      matched_ticker: 'GOOG',
+      market: 'NASDAQ',
+      sector: 'Technology',
+      industry: 'Internet Content',
+      evidence: 'Issuer verified',
+      confidence: 'high',
+      status: 'confirmed'
     }
   ]);
 
-  expect(choices).toEqual([]);
+  expect(choices).toEqual(expect.arrayContaining(['Third Source', 'GOOG']));
+  expect(choices).not.toContain('Source Name');
 });
 
 test('does not expose a company alias shared by different canonical tickers', () => {

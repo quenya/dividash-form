@@ -40,6 +40,89 @@ describe('buildPortfolioSummary', () => {
     ]);
   });
 
+  test('does not let a third alias re-enter a quarantined source collision', () => {
+    const tickerMatchesMap = buildTickerMatchesMap([
+      {
+        source_input: 'Alias',
+        matched_ticker: 'AAPL',
+        matched_company_name: 'Apple Inc.',
+        market: 'NASDAQ',
+        sector: 'Technology',
+        industry: 'Consumer Electronics',
+        status: 'confirmed',
+        confidence: 'high',
+        evidence: 'Issuer verified',
+      },
+      {
+        source_input: ' alias ',
+        matched_ticker: 'MSFT',
+        matched_company_name: 'Microsoft Corporation',
+        market: 'NASDAQ',
+        sector: 'Technology',
+        industry: 'Software',
+        status: 'confirmed',
+        confidence: 'high',
+        evidence: 'Issuer verified',
+      },
+      {
+        source_input: 'THIRD',
+        matched_ticker: 'ALIAS',
+        matched_company_name: 'Third Corporation',
+        market: 'NASDAQ',
+        sector: 'Technology',
+        industry: 'Software',
+        status: 'confirmed',
+        confidence: 'high',
+        evidence: 'Issuer verified',
+      },
+    ]);
+
+    const result = buildPortfolioSummary({
+      data: [{ company_name: 'Alias', dividend_amount: 100, currency: 'KRW' }],
+      exchangeRate: 1300,
+      tickerMatchesMap,
+      tickersMap: {},
+    });
+
+    expect(result.unknownItems).toHaveLength(1);
+    expect(result.sectorTableData[0].ticker).toBe('ALIAS');
+  });
+
+  test('does not resolve a direct alias shared across canonical tickers', () => {
+    const result = buildPortfolioSummary({
+      data: [{ ticker: 'SHARED', company_name: 'Shared', dividend_amount: 100, currency: 'KRW' }],
+      exchangeRate: 1300,
+      tickerMatchesMap: {
+        SHARED: {
+          source_input: 'SHARED',
+          matched_ticker: 'AAPL',
+          matched_company_name: 'Apple Inc.',
+          market: 'NASDAQ',
+          sector: 'Technology',
+          industry: 'Consumer Electronics',
+          status: 'confirmed',
+          confidence: 'high',
+          evidence: 'Issuer verified',
+        },
+        OTHER: {
+          source_input: 'OTHER',
+          matched_ticker: 'MSFT',
+          matched_company_name: 'SHARED',
+          market: 'NASDAQ',
+          sector: 'Technology',
+          industry: 'Software',
+          status: 'confirmed',
+          confidence: 'high',
+          evidence: 'Issuer verified',
+        },
+      },
+      tickersMap: {},
+    });
+
+    expect(result.unknownItems).toHaveLength(1);
+    expect(result.sectorTableData[0].ticker).toBe('SHARED');
+  });
+
   test('uses only confirmed matches for canonical aggregation', () => {
     const result = buildPortfolioSummary({
       data: [

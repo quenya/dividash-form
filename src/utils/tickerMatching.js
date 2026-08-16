@@ -23,6 +23,7 @@ export function isVerifiedMatch(match) {
 
 export function buildTickerMatchesMap(matches) {
   const matchMap = {};
+  const blockedSourceKeys = new Set();
 
   (matches || []).forEach((match) => {
     const sourceKey = normalizeTickerInput(match?.source_input);
@@ -30,13 +31,46 @@ export function buildTickerMatchesMap(matches) {
 
     if (Object.prototype.hasOwnProperty.call(matchMap, sourceKey)) {
       matchMap[sourceKey] = null;
+      blockedSourceKeys.add(sourceKey);
       return;
     }
 
     matchMap[sourceKey] = match;
   });
 
+  Object.defineProperty(matchMap, '__blockedSourceKeys', {
+    value: blockedSourceKeys,
+    enumerable: false,
+  });
   return matchMap;
+}
+
+function getBlockedSourceKeys(tickerMatchesMap) {
+  return tickerMatchesMap?.__blockedSourceKeys instanceof Set
+    ? tickerMatchesMap.__blockedSourceKeys
+    : new Set();
+}
+
+export function getVerifiedMatchAliasKeys(tickerMatchesMap) {
+  const aliasTickers = new Map();
+
+  Object.entries(tickerMatchesMap).filter(([, match]) => isVerifiedMatch(match)).forEach(([sourceKey, match]) => {
+    const matchedTicker = normalizeTickerInput(match.matched_ticker);
+    [sourceKey, match.source_input, match.matched_company_name, match.matched_ticker].forEach((alias) => {
+      const aliasKey = normalizeTickerInput(alias);
+      if (!aliasKey) return;
+      const tickers = aliasTickers.get(aliasKey) || new Set();
+      tickers.add(matchedTicker);
+      aliasTickers.set(aliasKey, tickers);
+    });
+  });
+
+  const blockedSourceKeys = getBlockedSourceKeys(tickerMatchesMap);
+  return new Set(
+    [...aliasTickers.entries()]
+      .filter(([aliasKey, tickers]) => tickers.size === 1 && !blockedSourceKeys.has(aliasKey))
+      .map(([aliasKey]) => aliasKey)
+  );
 }
 
 function getSourceInput(item) {
@@ -46,13 +80,19 @@ function getSourceInput(item) {
 function getMatch(item, tickerMatchesMap) {
   const sourceKey = normalizeTickerInput(getSourceInput(item));
   const directMatch = tickerMatchesMap[sourceKey];
-  if (directMatch) return directMatch;
+  if (directMatch && !isVerifiedMatch(directMatch)) return directMatch;
+
+  const verifiedAliases = getVerifiedMatchAliasKeys(tickerMatchesMap);
+  if (!verifiedAliases.has(sourceKey)) return null;
 
   const aliasMatches = Object.values(tickerMatchesMap).filter((match) => (
     isVerifiedMatch(match)
-    && [match.matched_ticker, match.matched_company_name]
+    && [match.source_input, match.matched_ticker, match.matched_company_name]
       .some((alias) => normalizeTickerInput(alias) === sourceKey)
   ));
+  if (directMatch && isVerifiedMatch(directMatch) && !aliasMatches.includes(directMatch)) {
+    aliasMatches.push(directMatch);
+  }
   const matchedTickers = [...new Set(aliasMatches.map((match) => normalizeTickerInput(match.matched_ticker)).filter(Boolean))];
   return matchedTickers.length === 1 ? aliasMatches[0] : null;
 }

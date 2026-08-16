@@ -52,7 +52,7 @@ export function useDividendData() {
 
             const { data: matchData, error: matchError } = await supabase
                 .from('ticker_matches')
-                .select('*');
+                .select('source_input, matched_company_name, matched_ticker, market, sector, industry, evidence, confidence, status');
             if (matchError) {
                 console.warn('종목 매칭 정보 조회 오류:', matchError.message);
                 setTickerMatchesMap({});
