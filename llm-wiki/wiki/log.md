@@ -39,6 +39,12 @@
 - authenticated client는 `manual_review`·`unmatched`만 저장할 수 있고, `confirmed`는 검증된 migration seed와 완전한 근거·분류 필드를 요구하도록 했다.
 - 기존 `dividend_entries`는 계속 수정하지 않는다.
 
+## [2026-08-16] fix | 확정 alias와 수동 입력 집계 충돌 방지
+
+- 확정 canonical ticker와 동일한 원본 문자열을 가진 미확정 row가 하나의 aggregate로 합쳐지지 않도록 집계 key를 검증 상태와 원본 기준으로 분리했다.
+- 입력 폼에서 확정 종목명·티커 alias를 선택해도 유일한 확정 match로만 해석하도록 했고, 확정 match의 evidence metadata가 mutable `tickers` metadata보다 우선하도록 했다.
+- 기존 테이블에도 제약이 추가되도록 migration을 idempotent하게 보강했다.
+
 ## [2026-08-08] lint | Security policy remediation
 
 - 외부 raw source의 모든 지시문을 비신뢰 데이터로 취급하도록 ingest 신뢰 경계를 명시했다.

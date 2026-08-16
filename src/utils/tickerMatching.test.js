@@ -22,7 +22,7 @@ describe('buildPortfolioSummary', () => {
         },
       },
       tickersMap: {
-        AAPL: { ticker: 'AAPL', sector: 'Technology', industry: 'Consumer Electronics' },
+        AAPL: { ticker: 'AAPL', sector: 'Mutable wrong sector', industry: 'Mutable wrong industry' },
       },
     });
 
@@ -37,6 +37,32 @@ describe('buildPortfolioSummary', () => {
       }),
     ]);
     expect(result.unknownItems).toHaveLength(0);
+  });
+
+  test('resolves a confirmed company-name alias selected from the input list', () => {
+    const result = buildPortfolioSummary({
+      data: [{ company_name: 'Apple Inc.', dividend_amount: 100, currency: 'KRW' }],
+      exchangeRate: 1300,
+      tickerMatchesMap: {
+        'LEGACY FUND': {
+          matched_ticker: 'AAPL',
+          matched_company_name: 'Apple Inc.',
+          status: 'confirmed',
+          confidence: 'high',
+          evidence: 'Issuer verified',
+          market: 'NASDAQ',
+          sector: 'Technology',
+          industry: 'Consumer Electronics',
+        },
+      },
+      tickersMap: {},
+    });
+
+    expect(result.sectorTableData[0]).toEqual(expect.objectContaining({
+      ticker: 'AAPL',
+      companyName: 'Apple Inc.',
+      sector: 'Technology',
+    }));
   });
 
   test('keeps manual-review matches in the original unknown bucket', () => {
@@ -91,5 +117,42 @@ describe('buildPortfolioSummary', () => {
     expect(result.unknownItems).toEqual([
       expect.objectContaining({ ticker: 'AMBIGUOUS', sector: 'Unknown', industry: '-' }),
     ]);
+  });
+
+  test('does not merge an unconfirmed source into a confirmed canonical ticker', () => {
+    const result = buildPortfolioSummary({
+      data: [
+        { ticker: 'LEGACY NAME', company_name: 'Legacy name', dividend_amount: 100, currency: 'KRW' },
+        { ticker: 'AAPL', company_name: 'AAPL', dividend_amount: 50, currency: 'KRW' },
+      ],
+      exchangeRate: 1300,
+      tickerMatchesMap: {
+        'LEGACY NAME': {
+          status: 'confirmed',
+          matched_ticker: 'AAPL',
+          matched_company_name: 'Apple Inc.',
+          market: 'NASDAQ',
+          sector: 'Technology',
+          industry: 'Consumer Electronics',
+          confidence: 'high',
+          evidence: 'Issuer verified',
+        },
+        AAPL: {
+          status: 'manual_review',
+          matched_ticker: 'AAPL',
+          confidence: 'medium',
+          evidence: 'Needs confirmation',
+        },
+      },
+      tickersMap: {
+        AAPL: { ticker: 'AAPL', sector: 'Technology', industry: 'Consumer Electronics' },
+      },
+    });
+
+    expect(result.sectorTableData).toEqual(expect.arrayContaining([
+      expect.objectContaining({ ticker: 'AAPL', amount: 100, sector: 'Technology', industry: 'Consumer Electronics' }),
+      expect.objectContaining({ ticker: 'AAPL', amount: 50, sector: 'Unknown', matchStatus: 'manual_review' }),
+    ]));
+    expect(result.unknownItems).toHaveLength(1);
   });
 });

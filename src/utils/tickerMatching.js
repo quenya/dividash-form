@@ -13,7 +13,17 @@ function getSourceInput(item) {
 }
 
 function getMatch(item, tickerMatchesMap) {
-  return tickerMatchesMap[normalizeTickerInput(getSourceInput(item))] || null;
+  const sourceKey = normalizeTickerInput(getSourceInput(item));
+  const directMatch = tickerMatchesMap[sourceKey];
+  if (directMatch) return directMatch;
+
+  const aliasMatches = Object.values(tickerMatchesMap).filter((match) => (
+    match.status === MATCH_STATUS.CONFIRMED
+    && [match.matched_ticker, match.matched_company_name]
+      .some((alias) => normalizeTickerInput(alias) === sourceKey)
+  ));
+  const matchedTickers = [...new Set(aliasMatches.map((match) => normalizeTickerInput(match.matched_ticker)).filter(Boolean))];
+  return matchedTickers.length === 1 ? aliasMatches[0] : null;
 }
 
 export function resolveInstrument(item, tickerMatchesMap, tickersMap) {
@@ -22,6 +32,7 @@ export function resolveInstrument(item, tickerMatchesMap, tickersMap) {
   const match = getMatch(item, tickerMatchesMap);
   const matchedTicker = normalizeTickerInput(match?.matched_ticker);
   const isConfirmed = match?.status === MATCH_STATUS.CONFIRMED && Boolean(matchedTicker);
+  const isBlocked = Boolean(match) && !isConfirmed;
   const resolvedTicker = isConfirmed ? matchedTicker : sourceKey || 'UNKNOWN';
   const metadata = tickersMap[resolvedTicker] || null;
 
@@ -30,6 +41,7 @@ export function resolveInstrument(item, tickerMatchesMap, tickersMap) {
     sourceKey,
     match,
     isConfirmed,
+    isBlocked,
     resolvedTicker,
     metadata,
   };
@@ -41,7 +53,10 @@ export function buildPortfolioSummary({ data, tickerMatchesMap, tickersMap, exch
   data.forEach((item) => {
     const amount = (Number(item.dividend_amount) || 0) * (item.currency === 'USD' ? exchangeRate : 1);
     const resolution = resolveInstrument(item, tickerMatchesMap, tickersMap);
-    const current = tickerAggregates.get(resolution.resolvedTicker) || {
+    const aggregationKey = resolution.isBlocked
+      ? `unconfirmed:${resolution.sourceKey || 'UNKNOWN'}`
+      : `instrument:${resolution.resolvedTicker}`;
+    const current = tickerAggregates.get(aggregationKey) || {
       ticker: resolution.resolvedTicker,
       amount: 0,
       sourceInputs: new Set(),
@@ -52,21 +67,25 @@ export function buildPortfolioSummary({ data, tickerMatchesMap, tickersMap, exch
     current.amount += amount;
     if (resolution.sourceInput) current.sourceInputs.add(resolution.sourceInput);
     if (item.company_name) current.sourceCompanyNames.add(item.company_name);
-    tickerAggregates.set(resolution.resolvedTicker, current);
+    tickerAggregates.set(aggregationKey, current);
   });
 
   const tableData = [...tickerAggregates.values()]
     .map(({ ticker, amount, sourceInputs, sourceCompanyNames, resolution }) => {
       const match = resolution.match;
       const metadata = resolution.metadata;
-      const sector = resolution.isConfirmed
-        ? metadata?.sector || match?.sector || 'Unknown'
-        : 'Unknown';
-      const industry = resolution.isConfirmed
-        ? metadata?.industry || match?.industry || '-'
-        : '-';
+      const sector = resolution.isBlocked
+        ? 'Unknown'
+        : resolution.isConfirmed
+          ? match?.sector || metadata?.sector || 'Unknown'
+          : metadata?.sector || 'Unknown';
+      const industry = resolution.isBlocked
+        ? '-'
+        : resolution.isConfirmed
+          ? match?.industry || metadata?.industry || '-'
+          : metadata?.industry || '-';
       const companyName = (resolution.isConfirmed && match?.matched_company_name)
-        || (resolution.isConfirmed && metadata?.company_name_kr)
+        || metadata?.company_name_kr
         || [...sourceCompanyNames][0]
         || ticker;
 
@@ -76,7 +95,11 @@ export function buildPortfolioSummary({ data, tickerMatchesMap, tickersMap, exch
         companyName,
         sector,
         industry,
-        market: resolution.isConfirmed ? metadata?.exchange || match?.market || '-' : '-',
+        market: resolution.isBlocked
+          ? '-'
+          : resolution.isConfirmed
+            ? match?.market || metadata?.exchange || '-'
+            : metadata?.exchange || '-',
         sourceInput: [...sourceInputs][0] || '',
         sourceInputs: [...sourceInputs],
         sourceCompanyNames: [...sourceCompanyNames],

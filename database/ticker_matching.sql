@@ -25,8 +25,54 @@ CREATE TABLE IF NOT EXISTS public.ticker_matches (
             AND NULLIF(BTRIM(market), '') IS NOT NULL
             AND NULLIF(BTRIM(sector), '') IS NOT NULL
             AND NULLIF(BTRIM(industry), '') IS NOT NULL
-        )
+    )
 );
+
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint
+        WHERE conrelid = 'public.ticker_matches'::regclass
+          AND conname = 'confirmed_match_requires_ticker'
+    ) THEN
+        ALTER TABLE public.ticker_matches
+            ADD CONSTRAINT confirmed_match_requires_ticker
+            CHECK (status <> 'confirmed' OR NULLIF(BTRIM(matched_ticker), '') IS NOT NULL);
+    END IF;
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint
+        WHERE conrelid = 'public.ticker_matches'::regclass
+          AND conname = 'confirmed_match_requires_high_confidence'
+    ) THEN
+        ALTER TABLE public.ticker_matches
+            ADD CONSTRAINT confirmed_match_requires_high_confidence
+            CHECK (status <> 'confirmed' OR confidence = 'high');
+    END IF;
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint
+        WHERE conrelid = 'public.ticker_matches'::regclass
+          AND conname = 'match_evidence_requires_value'
+    ) THEN
+        ALTER TABLE public.ticker_matches
+            ADD CONSTRAINT match_evidence_requires_value
+            CHECK (NULLIF(BTRIM(evidence), '') IS NOT NULL);
+    END IF;
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint
+        WHERE conrelid = 'public.ticker_matches'::regclass
+          AND conname = 'confirmed_match_requires_details'
+    ) THEN
+        ALTER TABLE public.ticker_matches
+            ADD CONSTRAINT confirmed_match_requires_details
+            CHECK (
+                status <> 'confirmed'
+                OR NULLIF(BTRIM(matched_company_name), '') IS NOT NULL
+                AND NULLIF(BTRIM(market), '') IS NOT NULL
+                AND NULLIF(BTRIM(sector), '') IS NOT NULL
+                AND NULLIF(BTRIM(industry), '') IS NOT NULL
+            );
+    END IF;
+END $$;
 
 ALTER TABLE public.ticker_matches ENABLE ROW LEVEL SECURITY;
 
