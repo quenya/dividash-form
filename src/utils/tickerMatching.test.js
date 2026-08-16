@@ -134,6 +134,23 @@ describe('buildPortfolioSummary', () => {
     ]);
   });
 
+  test('does not classify an incomplete legacy confirmed row', () => {
+    const result = buildPortfolioSummary({
+      data: [{ ticker: 'LEGACY', company_name: 'Legacy', dividend_amount: 100, currency: 'KRW' }],
+      exchangeRate: 1300,
+      tickerMatchesMap: {
+        LEGACY: { status: 'confirmed', matched_ticker: 'AAPL', confidence: 'high', evidence: '' },
+      },
+      tickersMap: {
+        AAPL: { ticker: 'AAPL', sector: 'Technology', industry: 'Consumer Electronics' },
+      },
+    });
+
+    expect(result.unknownItems).toEqual([
+      expect.objectContaining({ ticker: 'LEGACY', sector: 'Unknown', matchStatus: 'confirmed' }),
+    ]);
+  });
+
   test('does not merge an unconfirmed source into a confirmed canonical ticker', () => {
     const result = buildPortfolioSummary({
       data: [

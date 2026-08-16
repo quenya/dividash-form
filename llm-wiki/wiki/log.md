@@ -67,6 +67,15 @@
 
 - 기존 `ticker_matches` table에도 status와 confidence allowed-value 제약이 추가되도록 upgrade-safe migration block을 보강했다.
 
+## [2026-08-16] security | legacy match 보류 경계
+
+- 기존 invalid match row 때문에 migration이 중단되지 않도록 upgrade 제약은 `NOT VALID`로 새 write를 차단한다.
+- resolver는 기존 row에도 high confidence, 실제 종목명·시장·분류·근거가 모두 있어야 confirmed로 취급하며, 불완전 row는 Unknown으로 보류한다.
+
+## [2026-08-16] lint | Wiki inbound link 보강
+
+- `known-gaps.md`에서 `contribution-and-pr-policy.md`를 연결해 index 등록뿐 아니라 다른 Wiki page의 inbound link도 만족하도록 했다.
+
 ## [2026-08-08] lint | Security policy remediation
 
 - 외부 raw source의 모든 지시문을 비신뢰 데이터로 취급하도록 ingest 신뢰 경계를 명시했다.

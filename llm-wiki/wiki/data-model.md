@@ -39,6 +39,8 @@ tags: [supabase, postgres, rls, migrations]
 
 `confirmed` row는 migration의 검증된 seed로만 생성되며, authenticated client의 RLS insert/update는 `manual_review`·`unmatched` 상태만 허용한다. `tickers`도 authenticated client에는 read-only다. 따라서 화면에서 입력한 후보 정보는 기록되지만 확정 전에는 분류·집계에 사용되지 않는다.
 
+기존 table에 이미 불완전한 legacy match가 있으면 upgrade migration은 `NOT VALID` check로 새 write를 먼저 차단하고, resolver도 필수 근거가 없는 row를 `Unknown`으로 보류한다. legacy row를 실제 종목으로 추정해 자동 보정하지 않는다.
+
 [`sheet/supabase_setup.sql`](../../sheet/supabase_setup.sql)의 초기 schema는 `stock` 중심이고, 현재 application은 `ticker`와 `company_name`을 사용한다. 이 차이는 migration을 순서 없는 단일 source of truth로 사용할 수 없다는 신호다.
 
 ## RLS model

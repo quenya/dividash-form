@@ -39,7 +39,7 @@ BEGIN
     ) THEN
         ALTER TABLE public.ticker_matches
             ADD CONSTRAINT ticker_matches_status_allowed
-            CHECK (status IN ('confirmed', 'manual_review', 'unmatched'));
+            CHECK (status IN ('confirmed', 'manual_review', 'unmatched')) NOT VALID;
     END IF;
     IF NOT EXISTS (
         SELECT 1 FROM pg_constraint
@@ -48,7 +48,7 @@ BEGIN
     ) THEN
         ALTER TABLE public.ticker_matches
             ADD CONSTRAINT ticker_matches_confidence_allowed
-            CHECK (confidence IN ('high', 'medium', 'low'));
+            CHECK (confidence IN ('high', 'medium', 'low')) NOT VALID;
     END IF;
     IF NOT EXISTS (
         SELECT 1 FROM pg_constraint
@@ -57,7 +57,7 @@ BEGIN
     ) THEN
         ALTER TABLE public.ticker_matches
             ADD CONSTRAINT confirmed_match_requires_ticker
-            CHECK (status <> 'confirmed' OR NULLIF(BTRIM(matched_ticker), '') IS NOT NULL);
+            CHECK (status <> 'confirmed' OR NULLIF(BTRIM(matched_ticker), '') IS NOT NULL) NOT VALID;
     END IF;
     IF NOT EXISTS (
         SELECT 1 FROM pg_constraint
@@ -66,7 +66,7 @@ BEGIN
     ) THEN
         ALTER TABLE public.ticker_matches
             ADD CONSTRAINT confirmed_match_requires_high_confidence
-            CHECK (status <> 'confirmed' OR confidence = 'high');
+            CHECK (status <> 'confirmed' OR confidence = 'high') NOT VALID;
     END IF;
     IF NOT EXISTS (
         SELECT 1 FROM pg_constraint
@@ -75,7 +75,7 @@ BEGIN
     ) THEN
         ALTER TABLE public.ticker_matches
             ADD CONSTRAINT match_evidence_requires_value
-            CHECK (NULLIF(BTRIM(evidence), '') IS NOT NULL);
+            CHECK (NULLIF(BTRIM(evidence), '') IS NOT NULL) NOT VALID;
     END IF;
     IF NOT EXISTS (
         SELECT 1 FROM pg_constraint
@@ -90,7 +90,7 @@ BEGIN
                 AND NULLIF(BTRIM(market), '') IS NOT NULL
                 AND NULLIF(BTRIM(sector), '') IS NOT NULL
                 AND NULLIF(BTRIM(industry), '') IS NOT NULL
-            );
+            ) NOT VALID;
     END IF;
 END $$;
 

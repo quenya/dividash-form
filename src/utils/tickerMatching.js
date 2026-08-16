@@ -31,7 +31,17 @@ export function resolveInstrument(item, tickerMatchesMap, tickersMap) {
   const sourceKey = normalizeTickerInput(sourceInput);
   const match = getMatch(item, tickerMatchesMap);
   const matchedTicker = normalizeTickerInput(match?.matched_ticker);
-  const isConfirmed = match?.status === MATCH_STATUS.CONFIRMED && Boolean(matchedTicker);
+  const hasVerifiedDetails = [
+    match?.matched_company_name,
+    match?.market,
+    match?.sector,
+    match?.industry,
+    match?.evidence,
+  ].every((value) => Boolean(String(value || '').trim()));
+  const isConfirmed = match?.status === MATCH_STATUS.CONFIRMED
+    && match?.confidence === 'high'
+    && Boolean(matchedTicker)
+    && hasVerifiedDetails;
   const isBlocked = !isConfirmed;
   const resolvedTicker = isConfirmed ? matchedTicker : sourceKey || 'UNKNOWN';
   const metadata = isConfirmed ? tickersMap[resolvedTicker] || null : null;
