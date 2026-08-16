@@ -47,7 +47,7 @@ function DividendForm() {
       }
       const { data: matchData, error: matchError } = await supabase
         .from('ticker_matches')
-        .select('source_input, matched_company_name, matched_ticker, status');
+        .select('source_input, matched_company_name, matched_ticker, market, sector, industry, evidence, confidence, status');
       if (matchError) {
         setCompanyNames([]);
       } else {

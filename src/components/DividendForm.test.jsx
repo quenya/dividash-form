@@ -17,6 +17,10 @@ jest.mock('../api/supabaseClient', () => ({
         }
 
         if (table === 'ticker_matches') {
+          if (columns !== 'source_input, matched_company_name, matched_ticker, market, sector, industry, evidence, confidence, status') {
+            return Promise.resolve({ data: null, error: new Error('incomplete match projection') });
+          }
+
           return Promise.resolve({
             data: [
               {
@@ -59,6 +63,7 @@ test('keeps payment date set to today after submitting a dividend', async () => 
     render(<DividendForm />);
 
     fireEvent.change(await screen.findByLabelText(/계좌명/i), { target: { value: 'IRP' } });
+    expect(await screen.findByRole('option', { name: '삼성전자' })).toBeInTheDocument();
     fireEvent.change(screen.getByLabelText(/종목명/i), { target: { value: '삼성전자' } });
     fireEvent.change(screen.getByPlaceholderText('금액'), { target: { value: '12000' } });
 
