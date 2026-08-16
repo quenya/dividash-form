@@ -119,6 +119,21 @@ describe('buildPortfolioSummary', () => {
     ]);
   });
 
+  test('does not classify an input without a match from existing ticker metadata', () => {
+    const result = buildPortfolioSummary({
+      data: [{ ticker: 'CATALOG ONLY', company_name: 'Catalog only', dividend_amount: 100, currency: 'KRW' }],
+      exchangeRate: 1300,
+      tickerMatchesMap: {},
+      tickersMap: {
+        'CATALOG ONLY': { ticker: 'CATALOG ONLY', sector: 'Mutable sector', industry: 'Mutable industry' },
+      },
+    });
+
+    expect(result.unknownItems).toEqual([
+      expect.objectContaining({ ticker: 'CATALOG ONLY', sector: 'Unknown', industry: '-' }),
+    ]);
+  });
+
   test('does not merge an unconfirmed source into a confirmed canonical ticker', () => {
     const result = buildPortfolioSummary({
       data: [

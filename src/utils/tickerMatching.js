@@ -32,9 +32,9 @@ export function resolveInstrument(item, tickerMatchesMap, tickersMap) {
   const match = getMatch(item, tickerMatchesMap);
   const matchedTicker = normalizeTickerInput(match?.matched_ticker);
   const isConfirmed = match?.status === MATCH_STATUS.CONFIRMED && Boolean(matchedTicker);
-  const isBlocked = Boolean(match) && !isConfirmed;
+  const isBlocked = !isConfirmed;
   const resolvedTicker = isConfirmed ? matchedTicker : sourceKey || 'UNKNOWN';
-  const metadata = tickersMap[resolvedTicker] || null;
+  const metadata = isConfirmed ? tickersMap[resolvedTicker] || null : null;
 
   return {
     sourceInput,
