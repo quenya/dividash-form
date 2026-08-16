@@ -1,7 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import insertDividend from '../api/insertDividend';
 import { supabase } from '../api/supabaseClient';
-import { isVerifiedMatch } from '../utils/tickerMatching';
+import { buildTickerMatchesMap, isVerifiedMatch } from '../utils/tickerMatching';
+
+export function getVerifiedMatchChoices(matchData) {
+  const matchMap = buildTickerMatchesMap(matchData);
+  return [...new Set(
+    Object.values(matchMap)
+      .filter(isVerifiedMatch)
+      .flatMap((match) => [match.source_input, match.matched_company_name, match.matched_ticker])
+      .filter(Boolean)
+  )];
+}
 
 function getToday() {
   const d = new Date();
@@ -51,11 +61,7 @@ function DividendForm() {
       if (matchError) {
         setCompanyNames([]);
       } else {
-        const confirmedMatches = (matchData || [])
-          .filter(isVerifiedMatch)
-          .flatMap((match) => [match.source_input, match.matched_company_name, match.matched_ticker])
-          .filter(Boolean);
-        setCompanyNames([...new Set(confirmedMatches)]);
+        setCompanyNames(getVerifiedMatchChoices(matchData));
       }
       // 최신순 정렬 후 중복 제거 (계좌명)
       const sortedAccounts = (data || [])

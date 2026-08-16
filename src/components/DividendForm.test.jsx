@@ -1,5 +1,5 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import DividendForm from './DividendForm';
+import DividendForm, { getVerifiedMatchChoices } from './DividendForm';
 import insertDividend from '../api/insertDividend';
 
 jest.mock('../api/insertDividend', () => jest.fn(() => Promise.resolve({ success: true })));
@@ -53,6 +53,35 @@ jest.mock('../api/supabaseClient', () => ({
     })
   }
 }));
+
+test('does not expose normalized-colliding aliases in the input choices', () => {
+  const choices = getVerifiedMatchChoices([
+    {
+      source_input: 'Source Name',
+      matched_company_name: 'Apple Inc.',
+      matched_ticker: 'AAPL',
+      market: 'NASDAQ',
+      sector: 'Technology',
+      industry: 'Consumer Electronics',
+      evidence: 'Issuer verified',
+      confidence: 'high',
+      status: 'confirmed'
+    },
+    {
+      source_input: ' source name ',
+      matched_company_name: 'Microsoft Corporation',
+      matched_ticker: 'MSFT',
+      market: 'NASDAQ',
+      sector: 'Technology',
+      industry: 'Software',
+      evidence: 'Issuer verified',
+      confidence: 'high',
+      status: 'confirmed'
+    }
+  ]);
+
+  expect(choices).toEqual([]);
+});
 
 test('keeps payment date set to today after submitting a dividend', async () => {
   jest.useFakeTimers();
