@@ -124,3 +124,14 @@
 - 공백·대소문자 정규화 후 같은 원본 alias를 가진 match row가 여러 개이거나 실제 종목명·티커 alias가 여러 canonical ticker를 가리키면 임의 row가 선택되지 않도록 보류한다.
 - 검색 선택지와 포트폴리오 alias resolver가 같은 canonical alias 집합을 사용해 충돌 입력을 수동 확인 대상으로 남긴다.
 - 근거: [`src/utils/tickerMatching.js`](../../src/utils/tickerMatching.js), [`src/components/DividendForm.jsx`](../../src/components/DividendForm.jsx), [`src/components/DividendForm.test.jsx`](../../src/components/DividendForm.test.jsx)
+
+## [2026-08-16] fix | ticker matching seed upgrade 수렴 정책
+
+- `ticker_matching.sql`에 기존 `ticker_matches` table의 누락 column을 보강하는 idempotent upgrade path와 `source_input` key fail-fast check를 추가했다.
+- `managed_by`로 migration seed와 사용자 row를 구분하고, seed 소유 row만 verified 값으로 갱신한다. pre-provenance row는 전체 seed payload가 일치할 때만 data 변경 없이 seed ownership을 채택하고, 그 외 ownership을 알 수 없는 legacy row는 user-owned로 보호해 manual review data를 덮어쓰지 않는다.
+- 근거: [`database/ticker_matching.sql`](../../database/ticker_matching.sql), [`wiki/data-model.md`](./data-model.md)
+
+## [2026-08-16] lint | ticker matching seed upgrade 문서 무결성
+
+- Wiki index coverage, 상대 링크, frontmatter source reference를 다시 검사했다.
+- Result: pass.

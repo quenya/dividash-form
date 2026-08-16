@@ -37,11 +37,11 @@ tags: [supabase, postgres, rls, migrations]
 
 매칭 row에는 `matched_company_name`, `market`, `sector`, `industry`, `evidence`, `confidence`를 함께 기록한다. 매칭 저장은 기존 `dividend_entries` row를 수정하지 않는다.
 
-`confirmed` row는 migration의 검증된 seed로만 생성되며, authenticated client의 RLS insert/update는 `manual_review`·`unmatched` 상태만 허용한다. `tickers`도 authenticated client에는 read-only다. 따라서 화면에서 입력한 후보 정보는 기록되지만 확정 전에는 분류·집계에 사용되지 않는다.
+`confirmed` row는 migration의 검증된 seed로만 생성되며, authenticated client의 RLS insert/update는 `manual_review`·`unmatched` 상태와 `managed_by = 'user'`만 허용한다. `managed_by = 'migration_seed'`인 seed row만 같은 migration을 다시 실행할 때 최신 verified 값으로 수렴한다. pre-provenance legacy row는 전체 seed payload가 변경 없이 일치할 때만 ownership metadata를 seed로 채택하고, 그 외에는 user로 보호한다. `tickers`도 authenticated client에는 read-only다. 따라서 화면에서 입력한 후보 정보는 기록되지만 확정 전에는 분류·집계에 사용되지 않는다.
 
 애플리케이션은 `source_input`, 실제 종목명, 티커 alias를 공백·대소문자 기준으로 정규화해 조회한다. 정규화 후 여러 match row 또는 여러 canonical ticker가 같은 key를 차지하면 어느 row도 검색 선택지나 canonical 해석에 사용하지 않고 수동 확인 대상으로 남긴다.
 
-기존 table에 이미 불완전한 legacy match가 있으면 upgrade migration은 `NOT VALID` check로 새 write를 먼저 차단하고, resolver도 필수 근거가 없는 row를 `Unknown`으로 보류한다. legacy row를 실제 종목으로 추정해 자동 보정하지 않는다.
+기존 table에 이미 불완전한 legacy match가 있으면 upgrade migration은 필요한 column을 `ADD COLUMN IF NOT EXISTS`로 보강하고 `NOT VALID` check로 새 write를 먼저 차단한다. 근거가 없는 기존 `confirmed` row는 `manual_review`로 낮춰 `Unknown`으로 보류하며, pre-provenance row는 전체 payload가 일치하는 경우에만 data 변경 없이 seed ownership을 채택한다.
 
 [`sheet/supabase_setup.sql`](../../sheet/supabase_setup.sql)의 초기 schema는 `stock` 중심이고, 현재 application은 `ticker`와 `company_name`을 사용한다. 이 차이는 migration을 순서 없는 단일 source of truth로 사용할 수 없다는 신호다.
 

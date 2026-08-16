@@ -1,3 +1,7 @@
+-- Seed ownership is explicit: only rows marked migration_seed may be refreshed by
+-- this migration. Existing rows from before managed_by was introduced default to
+-- user ownership; an unchanged full seed payload may be adopted without changing
+-- its data, while any ambiguous or edited row remains protected.
 CREATE TABLE IF NOT EXISTS public.ticker_matches (
     source_input TEXT PRIMARY KEY,
     matched_ticker TEXT,
@@ -12,6 +16,9 @@ CREATE TABLE IF NOT EXISTS public.ticker_matches (
         CONSTRAINT ticker_matches_confidence_allowed
         CHECK (confidence IN ('high', 'medium', 'low')),
     evidence TEXT NOT NULL,
+    managed_by TEXT NOT NULL DEFAULT 'user'
+        CONSTRAINT ticker_matches_managed_by_allowed
+        CHECK (managed_by IN ('migration_seed', 'user')),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     CONSTRAINT confirmed_match_requires_ticker
@@ -29,6 +36,78 @@ CREATE TABLE IF NOT EXISTS public.ticker_matches (
             AND NULLIF(BTRIM(industry), '') IS NOT NULL
     )
 );
+
+-- Supported upgrades retain source_input as the existing row key. A table that
+-- lacks it is ambiguous and must be repaired explicitly instead of guessing.
+DO $$
+DECLARE
+    source_input_attnum SMALLINT;
+BEGIN
+    SELECT attnum
+    INTO source_input_attnum
+    FROM pg_attribute
+    WHERE attrelid = 'public.ticker_matches'::regclass
+      AND attname = 'source_input'
+      AND NOT attisdropped;
+
+    IF source_input_attnum IS NULL THEN
+        RAISE EXCEPTION 'ticker_matches upgrade requires the existing source_input key column';
+    END IF;
+
+    IF NOT EXISTS (
+        SELECT 1
+        FROM pg_index
+        WHERE indrelid = 'public.ticker_matches'::regclass
+          AND indisunique
+          AND indisvalid
+          AND indnatts = 1
+          AND indkey[0] = source_input_attnum
+    ) THEN
+        RAISE EXCEPTION 'ticker_matches upgrade requires a unique source_input key';
+    END IF;
+END $$;
+
+-- CREATE TABLE IF NOT EXISTS does not alter an existing table. These additions
+-- make the migration safe for the supported older table shape before any later
+-- constraints, policies, indexes, or seed writes refer to the columns.
+ALTER TABLE public.ticker_matches
+    ADD COLUMN IF NOT EXISTS matched_ticker TEXT,
+    ADD COLUMN IF NOT EXISTS matched_company_name TEXT,
+    ADD COLUMN IF NOT EXISTS market TEXT,
+    ADD COLUMN IF NOT EXISTS sector TEXT,
+    ADD COLUMN IF NOT EXISTS industry TEXT,
+    ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'manual_review',
+    ADD COLUMN IF NOT EXISTS confidence TEXT DEFAULT 'low',
+    ADD COLUMN IF NOT EXISTS evidence TEXT,
+    ADD COLUMN IF NOT EXISTS managed_by TEXT DEFAULT 'user',
+    ADD COLUMN IF NOT EXISTS created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW();
+
+-- Legacy rows with no evidence are not eligible for confirmation. Preserve them
+-- as review data and give them a non-empty audit note so the new NOT NULL shape
+-- can be applied without turning an unverified row into a verified match.
+UPDATE public.ticker_matches
+SET status = 'manual_review'
+WHERE status = 'confirmed'
+  AND NULLIF(BTRIM(evidence), '') IS NULL;
+
+UPDATE public.ticker_matches
+SET status = COALESCE(NULLIF(BTRIM(status), ''), 'manual_review'),
+    confidence = COALESCE(NULLIF(BTRIM(confidence), ''), 'low'),
+    evidence = COALESCE(NULLIF(BTRIM(evidence), ''), 'Legacy row requires manual verification'),
+    managed_by = COALESCE(NULLIF(BTRIM(managed_by), ''), 'user'),
+    created_at = COALESCE(created_at, NOW()),
+    updated_at = COALESCE(updated_at, NOW());
+
+ALTER TABLE public.ticker_matches
+    ALTER COLUMN source_input SET NOT NULL,
+    ALTER COLUMN status SET DEFAULT 'manual_review',
+    ALTER COLUMN status SET NOT NULL,
+    ALTER COLUMN confidence SET DEFAULT 'low',
+    ALTER COLUMN confidence SET NOT NULL,
+    ALTER COLUMN evidence SET NOT NULL,
+    ALTER COLUMN managed_by SET DEFAULT 'user',
+    ALTER COLUMN managed_by SET NOT NULL;
 
 DO $$
 BEGIN
@@ -92,6 +171,15 @@ BEGIN
                 AND NULLIF(BTRIM(industry), '') IS NOT NULL
             ) NOT VALID;
     END IF;
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint
+        WHERE conrelid = 'public.ticker_matches'::regclass
+          AND conname = 'ticker_matches_managed_by_allowed'
+    ) THEN
+        ALTER TABLE public.ticker_matches
+            ADD CONSTRAINT ticker_matches_managed_by_allowed
+            CHECK (managed_by IN ('migration_seed', 'user')) NOT VALID;
+    END IF;
 END $$;
 
 DROP POLICY IF EXISTS "Enable insert for authenticated users" ON public.tickers;
@@ -110,12 +198,24 @@ CREATE POLICY "Enable read access for authenticated users" ON public.ticker_matc
 
 CREATE POLICY "Enable insert for authenticated users" ON public.ticker_matches
     FOR INSERT TO authenticated
-    WITH CHECK (auth.role() = 'authenticated' AND status <> 'confirmed');
+    WITH CHECK (
+        auth.role() = 'authenticated'
+        AND status <> 'confirmed'
+        AND managed_by = 'user'
+    );
 
 CREATE POLICY "Enable update for authenticated users" ON public.ticker_matches
     FOR UPDATE TO authenticated
-    USING (auth.role() = 'authenticated' AND status <> 'confirmed')
-    WITH CHECK (auth.role() = 'authenticated' AND status <> 'confirmed');
+    USING (
+        auth.role() = 'authenticated'
+        AND status <> 'confirmed'
+        AND managed_by = 'user'
+    )
+    WITH CHECK (
+        auth.role() = 'authenticated'
+        AND status <> 'confirmed'
+        AND managed_by = 'user'
+    );
 
 CREATE INDEX IF NOT EXISTS idx_ticker_matches_status
     ON public.ticker_matches(status);
@@ -152,7 +252,21 @@ VALUES
     ('SPHD', 'Invesco S&P 500 High Dividend Low Volatility ETF', 'NYSE ARCA', 'ETF', 'High Dividend Low Volatility')
 ON CONFLICT (ticker) DO NOTHING;
 
-INSERT INTO public.ticker_matches (
+DROP TABLE IF EXISTS pg_temp.ticker_matching_verified_seed;
+
+CREATE TEMP TABLE ticker_matching_verified_seed (
+    source_input TEXT PRIMARY KEY,
+    matched_ticker TEXT,
+    matched_company_name TEXT,
+    market TEXT,
+    sector TEXT,
+    industry TEXT,
+    status TEXT NOT NULL,
+    confidence TEXT NOT NULL,
+    evidence TEXT NOT NULL
+) ON COMMIT DROP;
+
+INSERT INTO pg_temp.ticker_matching_verified_seed (
     source_input,
     matched_ticker,
     matched_company_name,
@@ -200,5 +314,57 @@ VALUES
     ('SPDR', NULL, NULL, NULL, NULL, NULL, 'manual_review', 'low', 'SPDR is an issuer or brand label rather than a unique security ticker.'),
     ('JP MORGAN', NULL, NULL, NULL, NULL, NULL, 'manual_review', 'low', 'JP MORGAN is an issuer or brand label and does not uniquely identify a security.'),
     ('CREDIT SWISS', NULL, NULL, NULL, NULL, NULL, 'manual_review', 'low', 'CREDIT SWISS is an issuer or legacy brand label and does not uniquely identify a security.'),
-    ('ATVI', NULL, NULL, NULL, NULL, NULL, 'manual_review', 'medium', 'ATVI is a historical ticker and the source name is abbreviated; do not link acquired or delisted history without statement-date confirmation.')
-ON CONFLICT (source_input) DO NOTHING;
+    ('ATVI', NULL, NULL, NULL, NULL, NULL, 'manual_review', 'medium', 'ATVI is a historical ticker and the source name is abbreviated; do not link acquired or delisted history without statement-date confirmation.');
+
+-- Adopt only an unchanged row from the pre-provenance migration. This changes
+-- ownership metadata, not user data, and lets the guarded upsert converge it.
+UPDATE public.ticker_matches AS existing
+SET managed_by = 'migration_seed',
+    updated_at = NOW()
+FROM pg_temp.ticker_matching_verified_seed AS seed
+WHERE existing.managed_by = 'user'
+  AND existing.source_input = seed.source_input
+  AND existing.matched_ticker IS NOT DISTINCT FROM seed.matched_ticker
+  AND existing.matched_company_name IS NOT DISTINCT FROM seed.matched_company_name
+  AND existing.market IS NOT DISTINCT FROM seed.market
+  AND existing.sector IS NOT DISTINCT FROM seed.sector
+  AND existing.industry IS NOT DISTINCT FROM seed.industry
+  AND existing.status IS NOT DISTINCT FROM seed.status
+  AND existing.confidence IS NOT DISTINCT FROM seed.confidence
+  AND existing.evidence IS NOT DISTINCT FROM seed.evidence;
+
+INSERT INTO public.ticker_matches (
+    source_input,
+    matched_ticker,
+    matched_company_name,
+    market,
+    sector,
+    industry,
+    status,
+    confidence,
+    evidence,
+    managed_by
+)
+SELECT seed.source_input,
+    seed.matched_ticker,
+    seed.matched_company_name,
+    seed.market,
+    seed.sector,
+    seed.industry,
+    seed.status,
+    seed.confidence,
+    seed.evidence,
+    'migration_seed'
+FROM pg_temp.ticker_matching_verified_seed AS seed
+ON CONFLICT (source_input) DO UPDATE
+SET matched_ticker = EXCLUDED.matched_ticker,
+    matched_company_name = EXCLUDED.matched_company_name,
+    market = EXCLUDED.market,
+    sector = EXCLUDED.sector,
+    industry = EXCLUDED.industry,
+    status = EXCLUDED.status,
+    confidence = EXCLUDED.confidence,
+    evidence = EXCLUDED.evidence,
+    managed_by = EXCLUDED.managed_by,
+    updated_at = NOW()
+WHERE public.ticker_matches.managed_by = 'migration_seed';
