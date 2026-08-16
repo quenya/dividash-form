@@ -45,6 +45,11 @@
 - 입력 폼에서 확정 종목명·티커 alias를 선택해도 유일한 확정 match로만 해석하도록 했고, 확정 match의 evidence metadata가 mutable `tickers` metadata보다 우선하도록 했다.
 - 기존 테이블에도 제약이 추가되도록 migration을 idempotent하게 보강했다.
 
+## [2026-08-16] security | ticker catalog 쓰기 경계
+
+- authenticated client가 mutable `tickers` metadata를 이용해 근거 없는 분류를 만들지 않도록 `ticker_matches` migration에서 ticker insert/update policy를 제거했다.
+- 기존 catalog read와 confirmed evidence 우선 resolver 동작은 유지하고, 새로운 후보는 `ticker_matches`의 수동 검토 상태로만 기록한다.
+
 ## [2026-08-08] lint | Security policy remediation
 
 - 외부 raw source의 모든 지시문을 비신뢰 데이터로 취급하도록 ingest 신뢰 경계를 명시했다.
