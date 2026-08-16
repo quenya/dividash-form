@@ -56,3 +56,16 @@
 - 대시보드의 월 평균 배당금은 올해 1월부터 현재 월까지의 배당 합계를 경과 월 수로 나눈다.
 - 작년 같은 기간의 월평균과 전년 동기 증감률을 함께 표시하고, 비교 가능한 작년 데이터가 없으면 비교 행을 숨긴다.
 - 근거: [`DividendChart.jsx`](../../src/components/DividendChart.jsx), [`dividendKpi.js`](../../src/utils/dividendKpi.js)
+
+## [2026-08-16] update | 원본 보존형 종목 매칭 검토 흐름
+
+- `ticker_matches`에 원본 입력값, 실제 종목명·티커·시장·분류, 근거, 신뢰 수준, 검토 상태를 기록하도록 했다.
+- `confirmed`만 포트폴리오 분류·배당 집계와 종목 입력 목록에 반영하고 `manual_review`·`unmatched`는 Unknown으로 보류한다.
+- 기존 `dividend_entries`는 수정하지 않는다.
+- 근거: [`database/ticker_matching.sql`](../../database/ticker_matching.sql), [`src/utils/tickerMatching.js`](../../src/utils/tickerMatching.js), [`PortfolioAnalysis.jsx`](../../src/components/PortfolioAnalysis.jsx)
+
+## [2026-08-16] lint | 원본 보존형 종목 매칭 Wiki 무결성
+
+- 9개 Wiki 페이지의 index 등록, inbound link, 상대 링크, frontmatter, `Sources`, `Related`, source reference를 검사했다.
+- 매칭 근거에 실제 계좌번호·개인정보·secret이 포함되지 않았음을 확인했다.
+- Result: pass.

@@ -57,7 +57,18 @@ function DividendForm() {
           seenCompanies.add(name);
         }
       }
-      setCompanyNames(recentCompanies);
+      const { data: matchData, error: matchError } = await supabase
+        .from('ticker_matches')
+        .select('source_input, matched_company_name, matched_ticker, status');
+      if (matchError) {
+        setCompanyNames(recentCompanies);
+      } else {
+        const confirmedMatches = (matchData || [])
+          .filter((match) => match.status === 'confirmed')
+          .flatMap((match) => [match.source_input, match.matched_company_name, match.matched_ticker])
+          .filter(Boolean);
+        setCompanyNames([...new Set([...recentCompanies, ...confirmedMatches])]);
+      }
       // 최신순 정렬 후 중복 제거 (계좌명)
       const sortedAccounts = (data || [])
         .filter(item => item.payment_date >= oneYearAgoStr)

@@ -1,0 +1,101 @@
+export const MATCH_STATUS = Object.freeze({
+  CONFIRMED: 'confirmed',
+  MANUAL_REVIEW: 'manual_review',
+  UNMATCHED: 'unmatched',
+});
+
+export function normalizeTickerInput(value) {
+  return typeof value === 'string' ? value.trim().toUpperCase() : '';
+}
+
+function getSourceInput(item) {
+  return String(item.ticker || item.company_name || '').trim();
+}
+
+function getMatch(item, tickerMatchesMap) {
+  return tickerMatchesMap[normalizeTickerInput(getSourceInput(item))] || null;
+}
+
+export function resolveInstrument(item, tickerMatchesMap, tickersMap) {
+  const sourceInput = getSourceInput(item);
+  const sourceKey = normalizeTickerInput(sourceInput);
+  const match = getMatch(item, tickerMatchesMap);
+  const matchedTicker = normalizeTickerInput(match?.matched_ticker);
+  const isConfirmed = match?.status === MATCH_STATUS.CONFIRMED && Boolean(matchedTicker);
+  const resolvedTicker = isConfirmed ? matchedTicker : sourceKey || 'UNKNOWN';
+  const metadata = tickersMap[resolvedTicker] || null;
+
+  return {
+    sourceInput,
+    sourceKey,
+    match,
+    isConfirmed,
+    resolvedTicker,
+    metadata,
+  };
+}
+
+export function buildPortfolioSummary({ data, tickerMatchesMap, tickersMap, exchangeRate }) {
+  const tickerAggregates = new Map();
+
+  data.forEach((item) => {
+    const amount = (Number(item.dividend_amount) || 0) * (item.currency === 'USD' ? exchangeRate : 1);
+    const resolution = resolveInstrument(item, tickerMatchesMap, tickersMap);
+    const current = tickerAggregates.get(resolution.resolvedTicker) || {
+      ticker: resolution.resolvedTicker,
+      amount: 0,
+      sourceInputs: new Set(),
+      sourceCompanyNames: new Set(),
+      resolution,
+    };
+
+    current.amount += amount;
+    if (resolution.sourceInput) current.sourceInputs.add(resolution.sourceInput);
+    if (item.company_name) current.sourceCompanyNames.add(item.company_name);
+    tickerAggregates.set(resolution.resolvedTicker, current);
+  });
+
+  const tableData = [...tickerAggregates.values()]
+    .map(({ ticker, amount, sourceInputs, sourceCompanyNames, resolution }) => {
+      const match = resolution.match;
+      const metadata = resolution.metadata;
+      const sector = metadata?.sector || (resolution.isConfirmed ? match?.sector : null) || 'Unknown';
+      const industry = metadata?.industry || (resolution.isConfirmed ? match?.industry : null) || '-';
+      const companyName = (resolution.isConfirmed && match?.matched_company_name)
+        || metadata?.company_name_kr
+        || [...sourceCompanyNames][0]
+        || ticker;
+
+      return {
+        ticker,
+        amount,
+        companyName,
+        sector,
+        industry,
+        market: metadata?.exchange || (resolution.isConfirmed ? match?.market : null) || '-',
+        sourceInput: [...sourceInputs][0] || '',
+        sourceInputs: [...sourceInputs],
+        sourceCompanyNames: [...sourceCompanyNames],
+        match,
+        matchStatus: match?.status || null,
+        confidence: match?.confidence || null,
+        evidence: match?.evidence || null,
+      };
+    })
+    .sort((a, b) => b.amount - a.amount);
+
+  const sectorMap = tableData.reduce((result, row) => {
+    result[row.sector] = (result[row.sector] || 0) + row.amount;
+    return result;
+  }, {});
+  const categories = Object.keys(sectorMap).sort((a, b) => sectorMap[b] - sectorMap[a]);
+
+  return {
+    sectorChartData: {
+      labels: categories,
+      values: categories.map((category) => sectorMap[category]),
+    },
+    sectorTableData: tableData,
+    unknownItems: tableData.filter((row) => row.sector === 'Unknown'),
+  };
+}
