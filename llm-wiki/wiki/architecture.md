@@ -31,7 +31,7 @@ React screens --> Supabase client --> Auth + PostgreSQL/RLS
 
 - [`useDividendData.js`](../../src/hooks/useDividendData.js): `dividend_entries`, `tickers`, `ticker_matches`를 조회하고 USD/KRW 환율을 결합한다.
 - [`DividendData.jsx`](../../src/components/DividendData.jsx): count를 포함한 server-side pagination query를 수행한다.
-- Dashboard, calendar, portfolio, notifications는 배당 데이터를 목적별로 재구성한다.
+- Dashboard, calendar, portfolio, notifications는 배당 데이터를 목적별로 재구성한다. Portfolio의 종목별 기여도 표는 `confirmed` 매칭의 검증된 실제 종목명을 우선 표시하고, 미확인 항목은 원본 입력값과 확인 대기 상태를 표시한다.
 - Goal과 simulator는 각각 `user_goals`, `simulation_settings`를 현재 user ID로 조회한다.
 
 ## Write paths

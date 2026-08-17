@@ -107,6 +107,12 @@
 - 기존 `dividend_entries`는 수정하지 않는다.
 - 근거: [`database/ticker_matching.sql`](../../database/ticker_matching.sql), [`src/utils/tickerMatching.js`](../../src/utils/tickerMatching.js), [`PortfolioAnalysis.jsx`](../../src/components/PortfolioAnalysis.jsx)
 
+## [2026-08-16] fix | 종목별 기여도 표의 종목명 표시
+
+- `confirmed` 매칭은 검증된 실제 종목명을 우선 표시하고, 미확인 항목은 원본 입력값과 확인 대기 상태를 표시하도록 했다.
+- 확정 항목의 canonical ticker는 보조 텍스트로 유지하고 긴 종목명은 표 셀 안에서 줄바꿈한다.
+- 근거: [`PortfolioAnalysis.jsx`](../../src/components/PortfolioAnalysis.jsx), [`src/utils/tickerMatching.js`](../../src/utils/tickerMatching.js)
+
 ## [2026-08-16] lint | 원본 보존형 종목 매칭 Wiki 무결성
 
 - 9개 Wiki 페이지의 index 등록, inbound link, 상대 링크, frontmatter, `Sources`, `Related`, source reference를 검사했다.
