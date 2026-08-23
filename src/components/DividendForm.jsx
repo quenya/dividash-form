@@ -27,11 +27,12 @@ export function getVerifiedMatchChoices(matchData) {
 
 export function getCompanyNameChoices(entryData = [], matchData = [], matchError = null) {
   const matchedNames = matchError ? [] : getVerifiedMatchChoices(matchData);
-  const entryNames = entryData
-    .map((entry) => entry.company_name?.trim())
-    .filter(Boolean);
+  const entryNames = [...entryData]
+    .filter((entry) => entry.company_name?.trim())
+    .sort((a, b) => String(b.payment_date || '').localeCompare(String(a.payment_date || '')))
+    .map((entry) => entry.company_name.trim());
 
-  return [...new Set([...matchedNames, ...entryNames])];
+  return [...new Set([...entryNames, ...matchedNames])];
 }
 
 export function maskAccountNumber(value = '') {
