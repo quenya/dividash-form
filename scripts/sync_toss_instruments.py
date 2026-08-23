@@ -46,11 +46,17 @@ def load_market(token, market):
 
 
 def psql_args():
+    user = os.environ.get("SUPABASE_DB_USER_FULL") or os.environ["SUPABASE_DB_USER"]
+    if user == "postgres":
+        project_url = os.environ.get("REACT_APP_SUPABASE_URL", "")
+        project_ref = project_url.split("//", 1)[-1].split(".", 1)[0]
+        if project_ref:
+            user = f"postgres.{project_ref}"
     return [
         os.environ.get("PSQL_BIN", "/opt/homebrew/opt/libpq/bin/psql"),
         "-h", os.environ["SUPABASE_DB_HOST"],
         "-p", os.environ.get("SUPABASE_DB_PORT", "5432"),
-        "-U", os.environ["SUPABASE_DB_USER"],
+        "-U", user,
         "-d", os.environ.get("SUPABASE_DB_NAME", "postgres"),
         "-v", "ON_ERROR_STOP=1",
     ]
