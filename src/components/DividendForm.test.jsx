@@ -1,6 +1,6 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import DividendForm, { getCompanyNameChoices, getVerifiedMatchChoices } from './DividendForm';
+import DividendForm, { getCompanyNameChoices, getVerifiedMatchChoices, maskAccountNumber } from './DividendForm';
 import insertDividend from '../api/insertDividend';
 
 jest.mock('../api/insertDividend', () => jest.fn(() => Promise.resolve({ success: true })));
@@ -86,6 +86,11 @@ jest.mock('../api/supabaseClient', () => ({
     }
   }
 }));
+
+test('masks unmasked account number segments before saving', () => {
+  expect(maskAccountNumber('788-8096-5074-0')).toBe('788-****-****-0');
+  expect(maskAccountNumber('788-****-****-0')).toBe('788-****-****-0');
+});
 
 test('falls back to existing dividend company names when ticker matches are unavailable', () => {
   const choices = getCompanyNameChoices(
