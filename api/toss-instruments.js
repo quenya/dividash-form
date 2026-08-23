@@ -64,7 +64,7 @@ function marketsForQuery(query) {
 }
 
 function normalize(value) {
-  return String(value || '').trim().toLocaleLowerCase('ko-KR');
+  return String(value || '').trim().toLocaleLowerCase('ko-KR').replace(/\s+/g, '');
 }
 
 export default async function handler(req, res) {
