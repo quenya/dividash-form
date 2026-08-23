@@ -21,6 +21,12 @@ tags: [manual, ocr, text-parsing, confidence]
 
 [`DividendForm.jsx`](../../src/components/DividendForm.jsx)는 과거 row에서 회사명과 계좌명을 가져와 입력을 보조한다. Submit 시 공통 insert service를 사용하고 성공 후 최근 내역을 다시 읽는다.
 
+## Account master
+
+`database/accounts_migration.sql` adds a user-owned `accounts` master and nullable `dividend_entries.account_id` link. The migration keeps `account_name` for compatibility and backfills links only when `dividend_entries.user_id` is available. The application stores only `account_number_masked`; a full account number must not be entered or persisted.
+
+The manual form uses the account master when the migration is available. Before migration, it falls back to the legacy recent-entry list and local compatibility names so existing input is not blocked.
+
 ## OCR
 
 [`ocrService.js`](../../src/api/ocrService.js)는 Google Vision `TEXT_DETECTION` 요청과 한국 증권사 텍스트 parsing을 구현한다. 하지만 Google project ID가 없으면 즉시 mock data를 반환하며, ID가 있어도 현재 `getGoogleCloudApiKey()`가 server-side 인증 필요 오류를 발생시켜 catch에서 mock으로 fallback한다.

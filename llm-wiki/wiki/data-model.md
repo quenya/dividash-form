@@ -16,6 +16,7 @@ tags: [supabase, postgres, rls, migrations]
 | Table | Responsibility | Ownership |
 |---|---|---|
 | `dividend_entries` | 계좌, 종목, 금액, 지급일, 통화, 입력 방식과 confidence 저장 | `user_id = auth.uid()` |
+| `accounts` | 사용자별 계좌 표시명, 증권사, 계좌 유형, 마스킹 계좌번호와 활성 상태 | `user_id = auth.uid()` |
 | `tickers` | 검증된 ticker별 sector, industry, exchange, 한글명 metadata | authenticated read-only catalog |
 | `ticker_matches` | 원본 입력값과 실제 종목 후보, 시장, 근거, 신뢰 수준, 검토 상태 저장 | authenticated 사용자 공유 |
 | `user_goals` | 사용자별 `monthly_dividend_goal` 등 key/value 목표 | composite key `(user_id, key)` |

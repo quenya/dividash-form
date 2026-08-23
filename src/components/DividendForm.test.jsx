@@ -6,7 +6,18 @@ jest.mock('../api/insertDividend', () => jest.fn(() => Promise.resolve({ success
 
 jest.mock('../api/supabaseClient', () => ({
   supabase: {
-    from: (table) => ({
+    from: (table) => {
+      if (table === 'accounts') {
+        return {
+          select: () => ({
+            eq: () => ({
+              order: () => Promise.resolve({ data: [], error: new Error('accounts migration not applied') })
+            })
+          })
+        };
+      }
+
+      return {
       select: (columns) => {
         if (columns === '*') {
           return {
@@ -50,7 +61,8 @@ jest.mock('../api/supabaseClient', () => ({
           error: null
         });
       }
-    })
+      };
+    }
   }
 }));
 

@@ -141,3 +141,10 @@
 
 - Wiki index coverage, 상대 링크, frontmatter source reference를 다시 검사했다.
 - Result: pass.
+
+## [2026-08-23] change | Account master for manual dividend input
+
+- `accounts` 사용자별 계좌 마스터와 `dividend_entries.account_id` 연결 migration을 추가했다.
+- 계좌 표시명, 증권사, 유형, 마스킹 계좌번호를 지원하고 전체 계좌번호 저장을 금지했다.
+- 수동 입력은 migration 적용 시 계좌 마스터를 사용하고, 미적용 환경에서는 기존 계좌명 방식으로 fallback한다.
+- 운영 DB 적용 결과 9개 계좌, 491개 배당 내역 중 490개 연결을 확인했다.
