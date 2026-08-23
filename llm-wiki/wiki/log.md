@@ -148,3 +148,25 @@
 - 계좌 표시명, 증권사, 유형, 마스킹 계좌번호를 지원하고 전체 계좌번호 저장을 금지했다.
 - 수동 입력은 migration 적용 시 계좌 마스터를 사용하고, 미적용 환경에서는 기존 계좌명 방식으로 fallback한다.
 - 운영 DB 적용 결과 9개 계좌, 491개 배당 내역 중 490개 연결을 확인했다.
+
+## [2026-08-23] ingest | OMO UI and authentication evidence
+
+- `.omo/evidence/`의 chart, manual-date, responsive shell, KPI, accessibility, security review를 sanitized snapshot S007로 등록했다.
+- 중간 REJECT/FAIL은 current defect로 단정하지 않고 UTC date, branch drift, fixed navigation overlay, unauthenticated capture 같은 재사용 regression case로 종합했다.
+- Current `main`의 chart, form, layout, test source와 대조해 현재 불변조건과 QA workflow를 `ui-quality-and-behavior.md`에 기록했다.
+- Password recovery와 account settings screenshot·prototype을 S008로 등록하되 unmerged branch이며 current capability가 아님을 `authentication-ux.md`와 `known-gaps.md`에 명시했다.
+- Screenshot image와 표시된 email·계좌·배당 값은 Wiki에 복사하지 않았다.
+- 재사용 지식 편입 후 `.omo/` source artifact는 제거하고, 이후 `.omo/`는 transient evidence로 Git에서 제외하기로 했다.
+
+## [2026-08-23] lint | OMO evidence Wiki integration
+
+- 22개 LLM Wiki Markdown, 162개 상대 링크, 11개 Wiki page, 8개 source ID를 검사했다.
+- 모든 지식 page의 index coverage, inbound link, frontmatter, `Sources`, `Related`, source reference가 통과했다.
+- Current UI claim을 현재 source와 main ancestry로 확인하고 password recovery prototype이 main에 merge되지 않았음을 확인했다.
+- 변경 문서에서 token, private key, JWT, email value, 실제 계좌번호 패턴이 검출되지 않았다.
+- Result: pass.
+
+## [2026-08-23] fix | Archived OMO review completeness
+
+- 삭제된 Issue 16 gate의 KPI 방향 기호, percentage, 동기간 label, prior KRW amount, shared typography·색상 기준을 S007과 UI QA page에 보강했다.
+- `known-gaps.md`가 사용하는 S007/S008을 Wiki index source 목록에도 반영했다.

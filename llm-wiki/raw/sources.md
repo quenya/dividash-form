@@ -50,3 +50,19 @@
 - Captured: 2026-08-10
 - Scope: Dashboard KPI comparison copy, previous-year amount formatting, and unavailable-comparison behavior
 - Status: active
+
+## S007 - OMO UI and QA Evidence
+
+- Type: sanitized local evidence snapshot with current-code revalidation
+- Snapshot: [2026-08-23-omo-ui-qa-evidence.md](./2026-08-23-omo-ui-qa-evidence.md)
+- Captured: 2026-08-23
+- Scope: chart layout, local-date reset, responsive navigation, KPI, chart accessibility, and reusable QA failure modes
+- Status: active; visual claims remain point-in-time and require fresh runtime verification after UI changes
+
+## S008 - OMO Password and Account UX Prototype
+
+- Type: sanitized prototype and visual-evidence snapshot
+- Snapshot: [2026-08-23-omo-password-auth-evidence.md](./2026-08-23-omo-password-auth-evidence.md)
+- Captured: 2026-08-23
+- Scope: password-reset request/recovery, account settings, responsive auth acceptance criteria, and current-vs-prototype status
+- Status: needs-review; implementation exists only on an unmerged branch and is not current `main` behavior

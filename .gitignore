@@ -13,3 +13,4 @@ build/
 npm-start.log
 npm-start.err
 .vercel/
+.omo/

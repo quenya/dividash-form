@@ -13,6 +13,8 @@ tags: [react, supabase, auth, data-flow]
 
 `src/index.jsx`가 React application을 시작하고 [`App.jsx`](../../src/App.jsx)가 `ThemeProvider → AuthProvider → AuthGate → AppContent` 순서로 runtime tree를 구성한다. 별도의 router package 없이 `page` state가 화면을 선택한다.
 
+Current authentication surface는 email/password sign-in과 sign-up, sign-out만 제공한다. Password recovery와 account settings는 unmerged prototype 지식으로만 존재하며 current runtime capability로 간주하지 않는다. 자세한 경계는 [Authentication UX](./authentication-ux.md)를 따른다.
+
 ## Data boundary
 
 [`supabaseClient.js`](../../src/api/supabaseClient.js)가 `REACT_APP_SUPABASE_URL`과 `REACT_APP_SUPABASE_ANON_KEY`로 browser client를 한 번 생성한다. Component와 hook은 이 client를 공유한다.
@@ -56,6 +58,8 @@ React screens --> Supabase client --> Auth + PostgreSQL/RLS
 - [Data model](./data-model.md)
 - [Input pipelines](./input-pipelines.md)
 - [Deployment and security](./deployment-and-security.md)
+- [UI behavior and QA](./ui-quality-and-behavior.md)
+- [Authentication UX](./authentication-ux.md)
 
 ## Sources
 

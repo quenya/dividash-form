@@ -3,7 +3,7 @@ title: DiviDash Overview
 type: overview
 status: current
 updated: 2026-08-14
-source_refs: [S002, S005, S006]
+source_refs: [S002, S005, S006, S007]
 tags: [product, navigation, react]
 ---
 
@@ -30,12 +30,16 @@ DiviDash는 인증된 사용자가 배당금 내역을 입력하고, 월·연·�
 - 금액은 KRW와 USD를 지원하고, 조회 화면은 외부 USD/KRW 환율 실패 시 기본값을 사용한다.
 - 배당 row는 `input_method`와 선택적인 `confidence_score`로 유입 경로를 추적한다.
 - 사용자별 데이터 격리는 client filter만이 아니라 Supabase RLS에 의존한다.
+- 수동 입력 성공 후 지급일은 UTC date가 아니라 사용자의 local calendar date로 reset한다.
+- Mobile shell은 header, scrollable main, bottom navigation을 별도 grid row로 유지해 navigation이 chart content를 덮지 않도록 한다.
 
 ## Related
 
 - [Architecture](./architecture.md)
 - [Data model](./data-model.md)
 - [Input pipelines](./input-pipelines.md)
+- [UI behavior and QA](./ui-quality-and-behavior.md)
+- [Authentication UX](./authentication-ux.md)
 - [Known gaps](./known-gaps.md)
 
 ## Sources
@@ -46,3 +50,4 @@ DiviDash는 인증된 사용자가 배당금 내역을 입력하고, 월·연·�
 - [`README.md`](../../README.md)
 - [S005 YTD KPI comparison change](../raw/2026-08-09-kpi-ytd-comparison.md)
 - [S006 YTD KPI display change](../raw/2026-08-10-kpi-ytd-display.md)
+- [S007 OMO UI and QA evidence](../raw/2026-08-23-omo-ui-qa-evidence.md)

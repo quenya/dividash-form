@@ -3,7 +3,7 @@ title: Known Gaps and Open Risks
 type: risk
 status: current
 updated: 2026-08-16
-source_refs: [S002, S003]
+source_refs: [S002, S003, S007, S008]
 tags: [risk, drift, follow-up]
 ---
 
@@ -43,6 +43,18 @@ tags: [risk, drift, follow-up]
 - 2026-08-06 기준 Supabase browser variables는 Vercel Production에만 존재했다.
 - Preview에서 인증 기능을 시험해야 한다면 별도 Preview env를 등록해야 한다.
 
+### Password recovery and account settings
+
+- Status: prototype only, not current main
+- `.omo/evidence/password-auth/`와 `agent/password-reset` branch에 responsive design과 prototype 구현이 있지만 current `main`에는 sign-in/sign-up/sign-out만 있다.
+- Required evidence to close: current main에 맞춘 구현, production redirect allowlist 확인, 실제 recovery email/link/browser flow, expired/reused link, session continuity, 375/768/desktop 접근성 QA.
+
+### Dashboard chart label collisions
+
+- Status: fresh full-surface visual verification required
+- Focused Issue 16과 Issue 17 review에서 대상 chart 밖의 일부 dashboard label collision 가능성이 non-blocking note로 남았다.
+- Required evidence to close: current production-equivalent data와 authenticated desktop/mobile full-dashboard capture에서 CJK label, data label, tooltip, legend overlap을 모두 확인.
+
 ## Monitoring questions
 
 - live RLS와 repository hardening migration이 계속 일치하는가
@@ -56,11 +68,15 @@ tags: [risk, drift, follow-up]
 - [Deployment and security](./deployment-and-security.md)
 - [Architecture](./architecture.md)
 - [Contribution and PR policy](./contribution-and-pr-policy.md)
+- [UI behavior and QA](./ui-quality-and-behavior.md)
+- [Authentication UX](./authentication-ux.md)
 
 ## Sources
 
 - [S002 repository baseline](../raw/sources.md)
 - [S003 Vercel production snapshot](../raw/sources.md)
+- [S007 OMO UI and QA evidence](../raw/2026-08-23-omo-ui-qa-evidence.md)
+- [S008 OMO password and account UX prototype](../raw/2026-08-23-omo-password-auth-evidence.md)
 - [`src/api/llmService.js`](../../src/api/llmService.js)
 - [`src/api/ocrService.js`](../../src/api/ocrService.js)
 - [`sheet/supabase_setup.sql`](../../sheet/supabase_setup.sql)
