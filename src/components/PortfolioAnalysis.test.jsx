@@ -67,7 +67,7 @@ test('renders verified names and keeps unconfirmed candidates out of the contrib
   const contributionTableView = within(contributionTable);
 
   expect(contributionTableView.getByText('Apple Inc.')).toBeInTheDocument();
-  expect(contributionTableView.getByText('AAPL')).toBeInTheDocument();
+  expect(contributionTableView.queryByText('AAPL')).not.toBeInTheDocument();
   expect(contributionTableView.getByText('UNVERIFIED FUND (확인 대기)')).toBeInTheDocument();
   expect(contributionTableView.getByText('LEGACY (확인 대기)')).toBeInTheDocument();
   expect(contributionTableView.queryByText('Possible match')).not.toBeInTheDocument();
