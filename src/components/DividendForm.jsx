@@ -13,8 +13,10 @@ export function getVerifiedMatchChoices(matchData) {
     verifiedMatches
       .flatMap((match) => {
         const matchedTickerKey = normalizeTickerInput(match.matched_ticker);
-        return [match.source_input, match.matched_company_name]
-          .filter((alias) => normalizeTickerInput(alias) !== matchedTickerKey);
+        const aliases = match.market && match.market !== 'KRX'
+          ? [match.matched_company_name]
+          : [match.source_input, match.matched_company_name];
+        return aliases.filter((alias) => normalizeTickerInput(alias) !== matchedTickerKey);
       })
       .filter((alias) => {
         const aliasKey = normalizeTickerInput(alias);

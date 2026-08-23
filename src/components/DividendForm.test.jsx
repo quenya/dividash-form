@@ -139,10 +139,9 @@ test('does not expose normalized-colliding aliases in the input choices', () => 
     }
   ]);
 
-  expect(choices).toEqual(expect.arrayContaining(['Third Source']));
+  expect(choices).toEqual([]);
+  expect(choices).not.toContain('Third Source');
   expect(choices).not.toContain('GOOG');
-  expect(choices).not.toContain('AAPL');
-  expect(choices).not.toContain('MSFT');
   expect(choices).not.toContain('Source Name');
 });
 
@@ -172,10 +171,30 @@ test('does not expose a company alias shared by different canonical tickers', ()
     }
   ]);
 
-  expect(choices).toEqual(expect.arrayContaining(['Source A', 'Source B']));
+  expect(choices).toEqual([]);
+  expect(choices).not.toContain('Source A');
+  expect(choices).not.toContain('Source B');
   expect(choices).not.toContain('AAPL');
   expect(choices).not.toContain('MSFT');
   expect(choices).not.toContain('Shared Issuer');
+});
+
+test('shows only the canonical English name for a US market match', () => {
+  const choices = getVerifiedMatchChoices([
+    {
+      source_input: '맥도날드',
+      matched_company_name: 'McDonalds Corporation',
+      matched_ticker: 'MCD',
+      market: 'NYSE',
+      sector: 'Consumer Cyclical',
+      industry: 'Restaurants',
+      evidence: 'User-confirmed mapping',
+      confidence: 'high',
+      status: 'confirmed'
+    }
+  ]);
+
+  expect(choices).toEqual(['McDonalds Corporation']);
 });
 
 test('reuses an existing brokerage and supports the DC account type', async () => {
