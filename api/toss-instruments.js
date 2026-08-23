@@ -82,6 +82,9 @@ export default async function handler(req, res) {
 
   try {
     const normalizedQuery = normalize(query);
+    const tickerTerms = (query.match(/[A-Za-z]{1,6}|\d{4,6}/g) || []).map(normalize);
+    const nameQuery = normalize(query.replace(/\([^)]*\)/g, ' ').replace(/\b[A-Za-z]{1,6}\b|\b\d{4,6}\b/g, ' '));
+    const searchTerms = [...new Set([normalizedQuery, nameQuery, ...tickerTerms].filter(Boolean))];
     const marketResults = [];
     for (const market of marketsForQuery(query)) {
       try {
@@ -97,7 +100,7 @@ export default async function handler(req, res) {
       .filter((item) => {
         const symbol = normalize(item.symbol);
         const name = normalize(item.name);
-        return symbol.includes(normalizedQuery) || name.includes(normalizedQuery);
+        return searchTerms.some((term) => symbol.includes(term) || name.includes(term));
       })
       .filter((item) => {
         const key = `${item.symbol}:${item.name}`;
