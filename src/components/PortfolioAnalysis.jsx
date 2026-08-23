@@ -245,14 +245,10 @@ function PortfolioAnalysis() {
                                 const total = sectorTableData.reduce((sum, r) => sum + r.amount, 0);
                                 const percent = ((row.amount / total) * 100).toFixed(1);
                                 const displayName = getPortfolioDisplayName(row);
-                                const displayTicker = row.isConfirmed ? row.ticker : '';
                                 return (
                                     <tr key={idx} style={{ borderBottom: '1px solid var(--border-color)' }}>
                                         <td className="portfolio-security-cell" style={{ padding: '12px', fontWeight: 'bold' }}>
                                             <span className="portfolio-security-name">{displayName}</span>
-                                            {displayTicker && displayTicker !== displayName && (
-                                                <small className="portfolio-security-ticker">{displayTicker}</small>
-                                            )}
                                         </td>
                                         <td style={{ padding: '12px' }}>
                                             <span style={{
