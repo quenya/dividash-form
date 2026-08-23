@@ -6,8 +6,21 @@ jest.mock('../api/insertDividend', () => jest.fn(() => Promise.resolve({ success
 
 jest.mock('../api/supabaseClient', () => ({
   supabase: {
-    from: () => ({
-      select: (columns) => {
+    from: (table) => {
+      if (table === 'accounts') {
+        return {
+          select: () => ({
+            eq: () => ({
+              order: () => Promise.resolve({
+                data: [],
+                error: { message: 'accounts migration not applied' }
+              })
+            })
+          })
+        };
+      }
+      return {
+        select: (columns) => {
         if (columns === '*') {
           return {
             order: () => ({
@@ -27,9 +40,14 @@ jest.mock('../api/supabaseClient', () => ({
           error: null
         });
       }
-    })
+      };
+    }
   }
 }));
+
+beforeEach(() => {
+  window.localStorage.clear();
+});
 
 test('keeps payment date set to today after submitting a dividend', async () => {
   jest.useFakeTimers();
@@ -54,4 +72,34 @@ test('keeps payment date set to today after submitting a dividend', async () => 
     alertSpy.mockRestore();
     jest.useRealTimers();
   }
+});
+
+test('adds a new account and selects it for the current form', async () => {
+  render(<DividendForm />);
+
+  fireEvent.click(screen.getByRole('button', { name: '+ 새 계좌 추가' }));
+  fireEvent.change(screen.getByLabelText('새 계좌명'), {
+    target: { value: '미래에셋 ISA' }
+  });
+  fireEvent.change(screen.getByLabelText('증권사'), {
+    target: { value: '미래에셋증권' }
+  });
+  fireEvent.click(screen.getByRole('button', { name: '저장 후 사용' }));
+
+  await waitFor(() => expect(screen.getByRole('combobox', { name: /계좌명/i })).toHaveValue('미래에셋 ISA'));
+  expect(screen.getByRole('option', { name: '미래에셋 ISA' })).toBeInTheDocument();
+  expect(JSON.parse(window.localStorage.getItem('dividash.manualAccountNames'))).toContain('미래에셋 ISA');
+});
+
+test('rejects a duplicate account name', async () => {
+  window.localStorage.setItem('dividash.manualAccountNames', JSON.stringify(['IRP']));
+  render(<DividendForm />);
+
+  fireEvent.click(screen.getByRole('button', { name: '+ 새 계좌 추가' }));
+  fireEvent.change(screen.getByLabelText('새 계좌명'), { target: { value: ' irp ' } });
+  fireEvent.change(screen.getByLabelText('증권사'), { target: { value: '한국투자증권' } });
+  fireEvent.click(screen.getByRole('button', { name: '저장 후 사용' }));
+
+  expect(await screen.findByText('이미 등록된 계좌명입니다.')).toBeInTheDocument();
+  expect(screen.getByRole('combobox', { name: /계좌명/i })).toHaveValue('');
 });

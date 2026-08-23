@@ -44,3 +44,11 @@
 - `올해 누적 배당금` KPI를 현재 월까지의 올해 누적으로 변경했다.
 - 전년 비교 기준을 작년 전체 연도에서 작년 같은 월까지의 누적으로 변경했다.
 - `src/utils/dividendKpi.js`와 회귀 테스트를 추가하고 S005에 기록했다.
+
+## [2026-08-23] change | Account master for manual dividend input
+
+- `accounts` 사용자별 계좌 마스터와 `dividend_entries.account_id` 연결 migration을 추가했다.
+- 계좌 표시명, 증권사, 유형, 마스킹 계좌번호를 지원하고 전체 계좌번호 저장을 금지했다.
+- 수동 입력 화면과 공통 insert 경로가 계좌 master를 사용하도록 연결했다.
+- migration 미적용 환경에서는 기존 입력이 중단되지 않도록 호환 fallback을 유지했다.
+- 관련 데이터 모델과 입력 파이프라인 문서를 갱신했다.

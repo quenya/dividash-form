@@ -13,6 +13,7 @@ async function insertDividend(dividendData) {
       .insert([{
         user_id: authData.user.id,
         account_name: dividendData.account_name,
+        account_id: dividendData.account_id || null,
         account_type: dividendData.account_type || null,
         account_number: dividendData.account_number || null,
         ticker: dividendData.ticker || null,
