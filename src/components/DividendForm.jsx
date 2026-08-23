@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import insertDividend from '../api/insertDividend';
 import { listAccounts, createAccount } from '../api/accounts';
 import { supabase } from '../api/supabaseClient';
+import { searchTossInstruments } from '../api/searchInstruments';
 import { buildTickerMatchesMap, getVerifiedMatchAliasKeys, isVerifiedMatch, normalizeTickerInput } from '../utils/tickerMatching';
 
 export function getVerifiedMatchChoices(matchData) {
@@ -105,6 +106,10 @@ function DividendForm() {
   const [newAccountNumberMasked, setNewAccountNumberMasked] = useState('');
   const [accountError, setAccountError] = useState('');
   const [customStock, setCustomStock] = useState('');
+  const [instrumentCandidates, setInstrumentCandidates] = useState([]);
+  const [selectedInstrument, setSelectedInstrument] = useState(null);
+  const [instrumentSearchLoading, setInstrumentSearchLoading] = useState(false);
+  const [instrumentSearchError, setInstrumentSearchError] = useState('');
   const [recentDividends, setRecentDividends] = useState([]);
 
   useEffect(() => {
@@ -178,6 +183,38 @@ function DividendForm() {
     fetchRecentDividends();
   }, []);
 
+  useEffect(() => {
+    const query = customStock.trim();
+    if (query.length < 2) {
+      setInstrumentCandidates([]);
+      setInstrumentSearchError('');
+      setInstrumentSearchLoading(false);
+      return undefined;
+    }
+
+    const controller = new AbortController();
+    const timer = setTimeout(async () => {
+      setInstrumentSearchLoading(true);
+      setInstrumentSearchError('');
+      try {
+        const candidates = await searchTossInstruments(query, controller.signal);
+        setInstrumentCandidates(candidates);
+      } catch (error) {
+        if (error.name !== 'AbortError') {
+          setInstrumentCandidates([]);
+          setInstrumentSearchError(error.message);
+        }
+      } finally {
+        if (!controller.signal.aborted) setInstrumentSearchLoading(false);
+      }
+    }, 300);
+
+    return () => {
+      clearTimeout(timer);
+      controller.abort();
+    };
+  }, [customStock]);
+
   const handleChange = (e) => {
     let name = e.target.name;
     if (name === 'amount') name = 'dividend_amount';
@@ -203,7 +240,18 @@ function DividendForm() {
 
   const handleCustomStockChange = (e) => {
     setCustomStock(e.target.value);
+    setSelectedInstrument(null);
+    setInstrumentCandidates([]);
+    setInstrumentSearchError('');
     setForm({ ...form, stock: e.target.value });
+  };
+
+  const handleInstrumentSelect = (instrument) => {
+    setSelectedInstrument(instrument);
+    setCustomStock(instrument.name);
+    setInstrumentCandidates([]);
+    setInstrumentSearchError('');
+    setForm({ ...form, stock: instrument.name });
   };
 
   const handleAddAccount = async () => {
@@ -265,6 +313,10 @@ function DividendForm() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (customStock.trim() && !selectedInstrument) {
+      alert('새 종목은 검색 결과에서 실제 종목을 선택해 주세요.');
+      return;
+    }
     // DB 컬럼에 맞게 데이터 변환
     const payload = {
       account_id: form.account_id || null,
@@ -272,6 +324,7 @@ function DividendForm() {
       account_type: form.account_type || null,
       account_number: form.account_number_masked || null,
       company_name: form.stock,
+      ticker: selectedInstrument?.symbol || null,
       dividend_amount: form.dividend_amount,
       payment_date: form.payment_date,
       currency: form.currency,
@@ -289,6 +342,9 @@ function DividendForm() {
       currency: 'KRW'
     });
     setCustomStock('');
+    setSelectedInstrument(null);
+    setInstrumentCandidates([]);
+    setInstrumentSearchError('');
   };
 
   return (
@@ -413,6 +469,26 @@ function DividendForm() {
               placeholder="새 종목명 입력"
               style={{ minWidth: 120, maxWidth: 220 }}
             />
+            {instrumentSearchLoading && <small>검색 중…</small>}
+            {instrumentSearchError && <small style={{ color: '#d32f2f' }}>{instrumentSearchError}</small>}
+            {instrumentCandidates.length > 0 && (
+              <div role="listbox" aria-label="실시간 종목 검색 결과" style={{ width: '100%', display: 'grid', gap: 4 }}>
+                {instrumentCandidates.map((instrument) => (
+                  <button
+                    key={`${instrument.symbol}-${instrument.market || ''}`}
+                    type="button"
+                    onClick={() => handleInstrumentSelect(instrument)}
+                    style={{ textAlign: 'left', padding: '8px 10px' }}
+                  >
+                    {instrument.name} · {instrument.symbol} · {instrument.market || '시장 확인'}
+                    {instrument.securityType ? ` · ${instrument.securityType}` : ''}
+                  </button>
+                ))}
+              </div>
+            )}
+            {customStock.trim().length >= 2 && !instrumentSearchLoading && !instrumentSearchError && instrumentCandidates.length === 0 && !selectedInstrument && (
+              <small style={{ color: 'var(--text-secondary)' }}>검색 결과가 없습니다. 종목명 또는 ticker를 다시 입력해 주세요.</small>
+            )}
           </div>
         </label>
         <div style={{ margin: '12px 0' }}>
