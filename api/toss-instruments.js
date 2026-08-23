@@ -42,14 +42,25 @@ async function loadMarket(market) {
   const token = await getAccessToken();
   const baseUrl = process.env.TOSSINVEST_BASE_URL || DEFAULT_BASE_URL;
   const params = new URLSearchParams({ market, status: 'ACTIVE' });
-  const response = await fetch(`${baseUrl}/api/v1/stocks/all?${params}`, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
+  let response;
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    response = await fetch(`${baseUrl}/api/v1/stocks/all?${params}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (response.status !== 429 || attempt === 2) break;
+    await new Promise((resolve) => setTimeout(resolve, 1200 * (attempt + 1)));
+  }
   if (!response.ok) throw new Error(`TOSS stock list request failed for ${market}: ${response.status}`);
   const payload = await response.json();
-  const items = Array.isArray(payload.result) ? payload.result : [];
+  const items = (Array.isArray(payload.result) ? payload.result : []).map((item) => ({ ...item, market }));
   cache.set(market, { expiresAt: Date.now() + CACHE_TTL_MS, items });
   return items;
+}
+
+function marketsForQuery(query) {
+  if (/^[A-Za-z0-9 .&'-]+$/.test(query)) return ['NASDAQ', 'NYSE', 'AMEX'];
+  if (/^\d+$/.test(query)) return ['KOSPI', 'KOSDAQ'];
+  return MARKETS;
 }
 
 function normalize(value) {
@@ -71,8 +82,16 @@ export default async function handler(req, res) {
 
   try {
     const normalizedQuery = normalize(query);
-    const marketResults = await Promise.allSettled(MARKETS.map(loadMarket));
-    const allItems = marketResults.flatMap((result) => result.status === 'fulfilled' ? result.value : []);
+    const marketResults = [];
+    for (const market of marketsForQuery(query)) {
+      try {
+        marketResults.push(await loadMarket(market));
+      } catch (error) {
+        console.warn(`TOSS market load skipped (${market}):`, error.message);
+      }
+      await new Promise((resolve) => setTimeout(resolve, 350));
+    }
+    const allItems = marketResults.flat();
     const seen = new Set();
     const items = allItems
       .filter((item) => {
