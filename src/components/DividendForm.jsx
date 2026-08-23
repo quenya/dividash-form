@@ -106,6 +106,7 @@ function DividendForm() {
   const [newAccountNumberMasked, setNewAccountNumberMasked] = useState('');
   const [accountError, setAccountError] = useState('');
   const [customStock, setCustomStock] = useState('');
+  const [selectedEtfBrand, setSelectedEtfBrand] = useState('');
   const [instrumentCandidates, setInstrumentCandidates] = useState([]);
   const [selectedInstrument, setSelectedInstrument] = useState(null);
   const [instrumentSearchLoading, setInstrumentSearchLoading] = useState(false);
@@ -197,7 +198,7 @@ function DividendForm() {
       setInstrumentSearchLoading(true);
       setInstrumentSearchError('');
       try {
-        const candidates = await searchTossInstruments(query, controller.signal);
+        const candidates = await searchTossInstruments(query, selectedEtfBrand, controller.signal);
         setInstrumentCandidates(candidates);
       } catch (error) {
         if (error.name !== 'AbortError') {
@@ -213,7 +214,7 @@ function DividendForm() {
       clearTimeout(timer);
       controller.abort();
     };
-  }, [customStock]);
+  }, [customStock, selectedEtfBrand]);
 
   const handleChange = (e) => {
     let name = e.target.name;
@@ -462,6 +463,21 @@ function DividendForm() {
               ))}
             </select>
             <span style={{ margin: '0 8px' }}>또는</span>
+            <select
+              aria-label="ETF 브랜드 검색"
+              value={selectedEtfBrand}
+              onChange={(e) => {
+                setSelectedEtfBrand(e.target.value);
+                setInstrumentCandidates([]);
+                setSelectedInstrument(null);
+              }}
+              style={{ minWidth: 130 }}
+            >
+              <option value="">ETF 브랜드 전체</option>
+              {['TIGER', 'RISE', 'KODEX', 'ACE', 'SOL', 'HANARO', 'KBSTAR', 'KOSEF', 'ARIRANG', 'TIMEFOLIO'].map((brand) => (
+                <option key={brand} value={brand}>{brand}</option>
+              ))}
+            </select>
             <input
               name="customStock"
               value={customStock}
