@@ -192,28 +192,28 @@ ALTER TABLE public.ticker_matches ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Enable read access for authenticated users" ON public.ticker_matches;
 DROP POLICY IF EXISTS "Enable insert for authenticated users" ON public.ticker_matches;
 DROP POLICY IF EXISTS "Enable update for authenticated users" ON public.ticker_matches;
+DROP POLICY IF EXISTS "ticker_matches_read" ON public.ticker_matches;
+DROP POLICY IF EXISTS "ticker_matches_insert_user" ON public.ticker_matches;
+DROP POLICY IF EXISTS "ticker_matches_update_user" ON public.ticker_matches;
 
-CREATE POLICY "Enable read access for authenticated users" ON public.ticker_matches
-    FOR SELECT TO authenticated USING (true);
+CREATE POLICY "ticker_matches_read" ON public.ticker_matches
+    FOR SELECT TO anon, authenticated USING (true);
 
-CREATE POLICY "Enable insert for authenticated users" ON public.ticker_matches
-    FOR INSERT TO authenticated
+CREATE POLICY "ticker_matches_insert_user" ON public.ticker_matches
+    FOR INSERT TO anon, authenticated
     WITH CHECK (
-        auth.role() = 'authenticated'
-        AND status <> 'confirmed'
+        auth.role() IN ('anon', 'authenticated')
         AND managed_by = 'user'
     );
 
-CREATE POLICY "Enable update for authenticated users" ON public.ticker_matches
-    FOR UPDATE TO authenticated
+CREATE POLICY "ticker_matches_update_user" ON public.ticker_matches
+    FOR UPDATE TO anon, authenticated
     USING (
-        auth.role() = 'authenticated'
-        AND status <> 'confirmed'
+        auth.role() IN ('anon', 'authenticated')
         AND managed_by = 'user'
     )
     WITH CHECK (
-        auth.role() = 'authenticated'
-        AND status <> 'confirmed'
+        auth.role() IN ('anon', 'authenticated')
         AND managed_by = 'user'
     );
 
