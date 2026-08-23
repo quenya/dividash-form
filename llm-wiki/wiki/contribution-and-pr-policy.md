@@ -2,8 +2,8 @@
 title: Contribution and Pull Request Policy
 type: operations
 status: current
-updated: 2026-08-08
-source_refs: [S004]
+updated: 2026-08-23
+source_refs: [S004, S007]
 tags: [github, pull-request, contribution, release]
 ---
 
@@ -23,7 +23,7 @@ tags: [github, pull-request, contribution, release]
 
 1. `origin/main`을 fetch하고 local base가 최신인지 확인한다.
 2. default branch에서 시작할 때 `agent/<description>` branch를 만든다.
-3. 혼합 worktree에서는 요청 범위의 path만 explicit staging하고 `.omo/` 같은 관련 없는 산출물을 제외한다.
+3. 혼합 worktree에서는 요청 범위의 path만 explicit staging한다. `.omo/`는 transient QA evidence로 취급해 Git에서 제외하고, 재사용할 결론만 sanitized raw snapshot과 Wiki page에 편입한다.
 4. 하나의 되돌릴 수 있는 목적은 하나의 focused commit으로 만든다.
 5. 최근 저장소 형식에 맞춘 conventional-style title을 사용한다.
 6. 관련 build, test, Wiki link/source/security lint를 실행한다.
@@ -45,3 +45,4 @@ Repository가 세 merge 방식을 모두 허용하므로 merge 방식은 변경 
 ## Sources
 
 - [S004 GitHub PR policy snapshot](../raw/sources.md)
+- [S007 OMO UI and QA evidence](../raw/2026-08-23-omo-ui-qa-evidence.md)
