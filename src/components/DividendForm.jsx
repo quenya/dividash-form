@@ -19,6 +19,15 @@ export function getVerifiedMatchChoices(matchData) {
   )];
 }
 
+export function getCompanyNameChoices(entryData = [], matchData = [], matchError = null) {
+  const matchedNames = matchError ? [] : getVerifiedMatchChoices(matchData);
+  const entryNames = entryData
+    .map((entry) => entry.company_name?.trim())
+    .filter(Boolean);
+
+  return [...new Set([...matchedNames, ...entryNames])];
+}
+
 function getToday() {
   const d = new Date();
   const year = d.getFullYear();
@@ -58,11 +67,13 @@ function DividendForm() {
   });
   const [companyNames, setCompanyNames] = useState([]);
   const [accountRecords, setAccountRecords] = useState([]);
+  const [brokerageNames, setBrokerageNames] = useState([]);
   const [accountStorageAvailable, setAccountStorageAvailable] = useState(false);
   const [accountNames, setAccountNames] = useState(storedAccountNames);
   const [isAddingAccount, setIsAddingAccount] = useState(false);
   const [newAccountName, setNewAccountName] = useState('');
   const [newBrokerageName, setNewBrokerageName] = useState('');
+  const [isCustomBrokerage, setIsCustomBrokerage] = useState(false);
   const [newAccountType, setNewAccountType] = useState('');
   const [newAccountNumberMasked, setNewAccountNumberMasked] = useState('');
   const [accountError, setAccountError] = useState('');
@@ -78,6 +89,7 @@ function DividendForm() {
       }
       setAccountStorageAvailable(true);
       setAccountRecords(data || []);
+      setBrokerageNames([...new Set((data || []).map((account) => account.brokerage_name?.trim()).filter(Boolean))]);
       setAccountNames((currentAccountNames) => {
         const managedNames = (data || []).map((account) => account.display_name);
         return [...managedNames, ...currentAccountNames].filter(
@@ -101,11 +113,7 @@ function DividendForm() {
       const { data: matchData, error: matchError } = await supabase
         .from('ticker_matches')
         .select('source_input, matched_company_name, matched_ticker, market, sector, industry, evidence, confidence, status');
-      if (matchError) {
-        setCompanyNames([]);
-      } else {
-        setCompanyNames(getVerifiedMatchChoices(matchData));
-      }
+      setCompanyNames(getCompanyNameChoices(data || [], matchData || [], matchError));
       // 최신순 정렬 후 중복 제거 (계좌명)
       const sortedAccounts = (data || [])
         .filter(item => item.payment_date >= oneYearAgoStr)
@@ -202,6 +210,9 @@ function DividendForm() {
     setAccountNames(nextAccountNames);
     if (createdAccount) {
       setAccountRecords((currentAccounts) => [createdAccount, ...currentAccounts]);
+      setBrokerageNames((currentBrokerages) => currentBrokerages.includes(brokerageName)
+        ? currentBrokerages
+        : [...currentBrokerages, brokerageName]);
     }
     setForm({
       ...form,
@@ -212,6 +223,7 @@ function DividendForm() {
     });
     setNewAccountName('');
     setNewBrokerageName('');
+    setIsCustomBrokerage(false);
     setNewAccountType('');
     setNewAccountNumberMasked('');
     setAccountError('');
@@ -293,15 +305,33 @@ function DividendForm() {
                   aria-label="새 계좌명"
                   autoFocus
                 />
-                <input
-                  value={newBrokerageName}
+                <select
+                  aria-label="증권사"
+                  value={isCustomBrokerage ? '__custom__' : newBrokerageName}
                   onChange={(e) => {
-                    setNewBrokerageName(e.target.value);
+                    const custom = e.target.value === '__custom__';
+                    setIsCustomBrokerage(custom);
+                    setNewBrokerageName(custom ? '' : e.target.value);
                     setAccountError('');
                   }}
-                  placeholder="증권사 예: 미래에셋증권"
-                  aria-label="증권사"
-                />
+                >
+                  <option value="">증권사 선택</option>
+                  {brokerageNames.map((brokerage) => (
+                    <option key={brokerage} value={brokerage}>{brokerage}</option>
+                  ))}
+                  <option value="__custom__">직접 입력</option>
+                </select>
+                {isCustomBrokerage && (
+                  <input
+                    value={newBrokerageName}
+                    onChange={(e) => {
+                      setNewBrokerageName(e.target.value);
+                      setAccountError('');
+                    }}
+                    placeholder="새 증권사 입력"
+                    aria-label="새 증권사"
+                  />
+                )}
                 <select
                   value={newAccountType}
                   onChange={(e) => setNewAccountType(e.target.value)}
@@ -311,6 +341,7 @@ function DividendForm() {
                   <option value="일반계좌">일반계좌</option>
                   <option value="ISA">ISA</option>
                   <option value="IRP">IRP</option>
+                  <option value="DC">DC</option>
                   <option value="연금저축">연금저축</option>
                   <option value="기타">기타</option>
                 </select>

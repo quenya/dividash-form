@@ -1,17 +1,38 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import DividendForm, { getVerifiedMatchChoices } from './DividendForm';
+import userEvent from '@testing-library/user-event';
+import DividendForm, { getCompanyNameChoices, getVerifiedMatchChoices } from './DividendForm';
 import insertDividend from '../api/insertDividend';
 
 jest.mock('../api/insertDividend', () => jest.fn(() => Promise.resolve({ success: true })));
 
 jest.mock('../api/supabaseClient', () => ({
   supabase: {
+    auth: {
+      getUser: () => Promise.resolve({ data: { user: { id: 'user-1' } }, error: null })
+    },
     from: (table) => {
       if (table === 'accounts') {
         return {
           select: () => ({
             eq: () => ({
-              order: () => Promise.resolve({ data: [], error: new Error('accounts migration not applied') })
+              order: () => Promise.resolve({
+                data: [{ id: 'account-1', display_name: '한국투자 일반', brokerage_name: '한국투자증권', account_type: '일반계좌' }],
+                error: null
+              })
+            })
+          }),
+          insert: (rows) => ({
+            select: () => ({
+              single: () => Promise.resolve({
+                data: {
+                  id: 'account-new',
+                  display_name: rows[0].display_name,
+                  brokerage_name: rows[0].brokerage_name,
+                  account_type: rows[0].account_type,
+                  is_active: true
+                },
+                error: null
+              })
             })
           })
         };
@@ -65,6 +86,16 @@ jest.mock('../api/supabaseClient', () => ({
     }
   }
 }));
+
+test('falls back to existing dividend company names when ticker matches are unavailable', () => {
+  const choices = getCompanyNameChoices(
+    [{ company_name: 'TIGER 미국배당다우존스' }, { company_name: ' TIGER 미국배당다우존스 ' }, { company_name: 'SCHD' }],
+    [],
+    new Error('ticker_matches table does not exist')
+  );
+
+  expect(choices).toEqual(['TIGER 미국배당다우존스', 'SCHD']);
+});
 
 test('does not expose normalized-colliding aliases in the input choices', () => {
   const choices = getVerifiedMatchChoices([
@@ -135,6 +166,22 @@ test('does not expose a company alias shared by different canonical tickers', ()
 
   expect(choices).toEqual(expect.arrayContaining(['Source A', 'Source B', 'AAPL', 'MSFT']));
   expect(choices).not.toContain('Shared Issuer');
+});
+
+test('reuses an existing brokerage and supports the DC account type', async () => {
+  const user = userEvent.setup();
+  render(<DividendForm />);
+
+  await user.click(screen.getByRole('button', { name: '+ 새 계좌 추가' }));
+  await waitFor(() => expect(screen.getByRole('option', { name: '한국투자증권' })).toBeInTheDocument());
+  await user.type(screen.getByLabelText('새 계좌명'), '한국투자 DC');
+  await user.selectOptions(screen.getByLabelText('증권사'), '한국투자증권');
+  await user.selectOptions(screen.getByLabelText('계좌 유형'), 'DC');
+  expect(screen.getByLabelText('증권사')).toHaveValue('한국투자증권');
+  expect(screen.getByLabelText('계좌 유형')).toHaveValue('DC');
+  await user.click(screen.getByRole('button', { name: '저장 후 사용' }));
+
+  await waitFor(() => expect(screen.getByRole('combobox', { name: /계좌명/i })).toHaveValue('한국투자 DC'));
 });
 
 test('keeps payment date set to today after submitting a dividend', async () => {

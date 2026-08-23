@@ -170,3 +170,10 @@
 
 - 삭제된 Issue 16 gate의 KPI 방향 기호, percentage, 동기간 label, prior KRW amount, shared typography·색상 기준을 S007과 UI QA page에 보강했다.
 - `known-gaps.md`가 사용하는 S007/S008을 Wiki index source 목록에도 반영했다.
+
+## [2026-08-23] fix | Manual form account and stock choices
+
+- 새 계좌 등록에서 기존 계좌 마스터의 증권사 목록을 재사용하고, `직접 입력`으로 신규 증권사를 추가할 수 있게 했다.
+- 계좌 유형 선택지에 `DC`를 추가했다.
+- 운영 DB에 `ticker_matches` 테이블이 아직 없는 경우에도 기존 `dividend_entries.company_name`을 종목 선택지로 fallback하도록 수정했다.
+- 원인과 fallback 동작을 회귀 테스트로 고정했다.
