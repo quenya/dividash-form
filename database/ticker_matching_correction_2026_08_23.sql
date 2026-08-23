@@ -23,4 +23,22 @@ from (values
 ) as v(source_input, matched_ticker, matched_company_name, market, sector, industry, evidence)
 where public.ticker_matches.source_input = v.source_input;
 
+update public.ticker_matches
+set matched_ticker = v.matched_ticker,
+    matched_company_name = v.matched_company_name,
+    market = v.market,
+    sector = v.sector,
+    industry = v.industry,
+    status = 'manual_review',
+    confidence = 'medium',
+    evidence = v.evidence,
+    managed_by = 'user',
+    updated_at = now()
+from (values
+  ('486290', '486290', 'TIGER 미국나스닥100타겟데일리커버드콜', 'KRX', 'ETF', '커버드콜', 'TOSS cache candidate conflicts with historical SOL company name'),
+  ('448880', '448880', 'ACE 24-12 회사채(AA-이상)액티브', 'KRX', 'ETF', '회사채', 'Product report candidate conflicts with historical KB RISE company name'),
+  ('ATVI', 'ATVI', 'Activision Blizzard, Inc.', 'NASDAQ', 'Communication Services', 'Electronic Gaming and Multimedia', 'Historical ticker; statement-date confirmation required')
+) as v(source_input, matched_ticker, matched_company_name, market, sector, industry, evidence)
+where public.ticker_matches.source_input = v.source_input;
+
 commit;
