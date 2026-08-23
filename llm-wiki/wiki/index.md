@@ -15,7 +15,7 @@
 
 - [contribution-and-pr-policy.md](./contribution-and-pr-policy.md) - GitHub 설정과 최근 PR 형식에 기반한 branch, commit, validation, draft PR 및 transient QA evidence 정책을 기록한다. Sources: S004, S007.
 - [deployment-and-security.md](./deployment-and-security.md) - Vercel target, 환경변수, 인증과 secret 경계를 기록한다. Sources: S002, S003.
-- [known-gaps.md](./known-gaps.md) - 현재 코드·문서·운영 사이의 확인된 차이와 후속 검증 항목을 관리한다. Sources: S002, S003.
+- [known-gaps.md](./known-gaps.md) - 현재 코드·문서·운영 사이의 확인된 차이와 후속 검증 항목을 관리한다. Sources: S002, S003, S007, S008.
 - [log.md](./log.md) - ingest, query, lint의 append-only 타임라인이다.
 
 ## Navigation rule

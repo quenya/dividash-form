@@ -35,7 +35,9 @@ tags: [ui, charts, responsive, qa, accessibility]
 ### KPI and annual-chart behavior
 
 - 월 평균 KPI는 올해 1월부터 현재 월까지와 작년 같은 기간을 같은 month denominator로 비교한다.
-- 비교 가능한 prior-period total이 없으면 변화율과 prior amount를 숨긴다.
+- KPI title과 prior-period label은 모두 같은 1월~현재 월 범위를 표시해 계산 기간과 화면 문구를 일치시킨다.
+- 비교값은 명시적인 `▲`/`▼` 방향, percentage, formatted prior KRW amount를 제공하고 shared `KPICard`의 typography와 positive/negative color rule을 유지한다.
+- 비교 가능한 prior-period total이 없으면 변화율, 방향, prior amount를 포함한 comparison row 전체를 숨긴다.
 - 연도별 chart의 palette, legend, tooltip, canvas accessible name은 375, 768, desktop에서 의미를 유지해야 한다.
 
 ## Reusable QA workflow

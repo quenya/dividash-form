@@ -165,3 +165,8 @@
 - Current UI claim을 현재 source와 main ancestry로 확인하고 password recovery prototype이 main에 merge되지 않았음을 확인했다.
 - 변경 문서에서 token, private key, JWT, email value, 실제 계좌번호 패턴이 검출되지 않았다.
 - Result: pass.
+
+## [2026-08-23] fix | Archived OMO review completeness
+
+- 삭제된 Issue 16 gate의 KPI 방향 기호, percentage, 동기간 label, prior KRW amount, shared typography·색상 기준을 S007과 UI QA page에 보강했다.
+- `known-gaps.md`가 사용하는 S007/S008을 Wiki index source 목록에도 반영했다.
