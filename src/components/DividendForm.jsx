@@ -11,7 +11,11 @@ export function getVerifiedMatchChoices(matchData) {
 
   return [...new Set(
     verifiedMatches
-      .flatMap((match) => [match.source_input, match.matched_company_name, match.matched_ticker])
+      .flatMap((match) => {
+        const matchedTickerKey = normalizeTickerInput(match.matched_ticker);
+        return [match.source_input, match.matched_company_name]
+          .filter((alias) => normalizeTickerInput(alias) !== matchedTickerKey);
+      })
       .filter((alias) => {
         const aliasKey = normalizeTickerInput(alias);
         return aliasKey && verifiedAliases.has(aliasKey);

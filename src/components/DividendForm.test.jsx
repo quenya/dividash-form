@@ -139,7 +139,10 @@ test('does not expose normalized-colliding aliases in the input choices', () => 
     }
   ]);
 
-  expect(choices).toEqual(expect.arrayContaining(['Third Source', 'GOOG']));
+  expect(choices).toEqual(expect.arrayContaining(['Third Source']));
+  expect(choices).not.toContain('GOOG');
+  expect(choices).not.toContain('AAPL');
+  expect(choices).not.toContain('MSFT');
   expect(choices).not.toContain('Source Name');
 });
 
@@ -169,7 +172,9 @@ test('does not expose a company alias shared by different canonical tickers', ()
     }
   ]);
 
-  expect(choices).toEqual(expect.arrayContaining(['Source A', 'Source B', 'AAPL', 'MSFT']));
+  expect(choices).toEqual(expect.arrayContaining(['Source A', 'Source B']));
+  expect(choices).not.toContain('AAPL');
+  expect(choices).not.toContain('MSFT');
   expect(choices).not.toContain('Shared Issuer');
 });
 
