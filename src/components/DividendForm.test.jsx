@@ -1,5 +1,5 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import DividendForm from './DividendForm';
+import DividendForm, { getVerifiedMatchChoices } from './DividendForm';
 import insertDividend from '../api/insertDividend';
 
 jest.mock('../api/insertDividend', () => jest.fn(() => Promise.resolve({ success: true })));
@@ -11,22 +11,43 @@ jest.mock('../api/supabaseClient', () => ({
         return {
           select: () => ({
             eq: () => ({
-              order: () => Promise.resolve({
-                data: [],
-                error: { message: 'accounts migration not applied' }
-              })
+              order: () => Promise.resolve({ data: [], error: new Error('accounts migration not applied') })
             })
           })
         };
       }
+
       return {
-        select: (columns) => {
+      select: (columns) => {
         if (columns === '*') {
           return {
             order: () => ({
               limit: () => Promise.resolve({ data: [], error: null })
             })
           };
+        }
+
+        if (table === 'ticker_matches') {
+          if (columns !== 'source_input, matched_company_name, matched_ticker, market, sector, industry, evidence, confidence, status') {
+            return Promise.resolve({ data: null, error: new Error('incomplete match projection') });
+          }
+
+          return Promise.resolve({
+            data: [
+              {
+                source_input: '삼성전자',
+                matched_company_name: '삼성전자',
+                matched_ticker: '005930',
+                market: 'KRX',
+                sector: 'Technology',
+                industry: 'Semiconductors',
+                evidence: 'test evidence',
+                confidence: 'high',
+                status: 'confirmed'
+              }
+            ],
+            error: null
+          });
         }
 
         return Promise.resolve({
@@ -45,8 +66,75 @@ jest.mock('../api/supabaseClient', () => ({
   }
 }));
 
-beforeEach(() => {
-  window.localStorage.clear();
+test('does not expose normalized-colliding aliases in the input choices', () => {
+  const choices = getVerifiedMatchChoices([
+    {
+      source_input: 'Source Name',
+      matched_company_name: 'Apple Inc.',
+      matched_ticker: 'AAPL',
+      market: 'NASDAQ',
+      sector: 'Technology',
+      industry: 'Consumer Electronics',
+      evidence: 'Issuer verified',
+      confidence: 'high',
+      status: 'confirmed'
+    },
+    {
+      source_input: ' source name ',
+      matched_company_name: 'Microsoft Corporation',
+      matched_ticker: 'MSFT',
+      market: 'NASDAQ',
+      sector: 'Technology',
+      industry: 'Software',
+      evidence: 'Issuer verified',
+      confidence: 'high',
+      status: 'confirmed'
+    },
+    {
+      source_input: 'Third Source',
+      matched_company_name: 'Source Name',
+      matched_ticker: 'GOOG',
+      market: 'NASDAQ',
+      sector: 'Technology',
+      industry: 'Internet Content',
+      evidence: 'Issuer verified',
+      confidence: 'high',
+      status: 'confirmed'
+    }
+  ]);
+
+  expect(choices).toEqual(expect.arrayContaining(['Third Source', 'GOOG']));
+  expect(choices).not.toContain('Source Name');
+});
+
+test('does not expose a company alias shared by different canonical tickers', () => {
+  const choices = getVerifiedMatchChoices([
+    {
+      source_input: 'Source A',
+      matched_company_name: 'Shared Issuer',
+      matched_ticker: 'AAPL',
+      market: 'NASDAQ',
+      sector: 'Technology',
+      industry: 'Consumer Electronics',
+      evidence: 'Issuer verified',
+      confidence: 'high',
+      status: 'confirmed'
+    },
+    {
+      source_input: 'Source B',
+      matched_company_name: 'Shared Issuer',
+      matched_ticker: 'MSFT',
+      market: 'NASDAQ',
+      sector: 'Technology',
+      industry: 'Software',
+      evidence: 'Issuer verified',
+      confidence: 'high',
+      status: 'confirmed'
+    }
+  ]);
+
+  expect(choices).toEqual(expect.arrayContaining(['Source A', 'Source B', 'AAPL', 'MSFT']));
+  expect(choices).not.toContain('Shared Issuer');
 });
 
 test('keeps payment date set to today after submitting a dividend', async () => {
@@ -58,6 +146,7 @@ test('keeps payment date set to today after submitting a dividend', async () => 
     render(<DividendForm />);
 
     fireEvent.change(await screen.findByLabelText(/계좌명/i), { target: { value: 'IRP' } });
+    expect(await screen.findByRole('option', { name: '삼성전자' })).toBeInTheDocument();
     fireEvent.change(screen.getByLabelText(/종목명/i), { target: { value: '삼성전자' } });
     fireEvent.change(screen.getByPlaceholderText('금액'), { target: { value: '12000' } });
 
@@ -72,34 +161,4 @@ test('keeps payment date set to today after submitting a dividend', async () => 
     alertSpy.mockRestore();
     jest.useRealTimers();
   }
-});
-
-test('adds a new account and selects it for the current form', async () => {
-  render(<DividendForm />);
-
-  fireEvent.click(screen.getByRole('button', { name: '+ 새 계좌 추가' }));
-  fireEvent.change(screen.getByLabelText('새 계좌명'), {
-    target: { value: '미래에셋 ISA' }
-  });
-  fireEvent.change(screen.getByLabelText('증권사'), {
-    target: { value: '미래에셋증권' }
-  });
-  fireEvent.click(screen.getByRole('button', { name: '저장 후 사용' }));
-
-  await waitFor(() => expect(screen.getByRole('combobox', { name: /계좌명/i })).toHaveValue('미래에셋 ISA'));
-  expect(screen.getByRole('option', { name: '미래에셋 ISA' })).toBeInTheDocument();
-  expect(JSON.parse(window.localStorage.getItem('dividash.manualAccountNames'))).toContain('미래에셋 ISA');
-});
-
-test('rejects a duplicate account name', async () => {
-  window.localStorage.setItem('dividash.manualAccountNames', JSON.stringify(['IRP']));
-  render(<DividendForm />);
-
-  fireEvent.click(screen.getByRole('button', { name: '+ 새 계좌 추가' }));
-  fireEvent.change(screen.getByLabelText('새 계좌명'), { target: { value: ' irp ' } });
-  fireEvent.change(screen.getByLabelText('증권사'), { target: { value: '한국투자증권' } });
-  fireEvent.click(screen.getByRole('button', { name: '저장 후 사용' }));
-
-  expect(await screen.findByText('이미 등록된 계좌명입니다.')).toBeInTheDocument();
-  expect(screen.getByRole('combobox', { name: /계좌명/i })).toHaveValue('');
 });

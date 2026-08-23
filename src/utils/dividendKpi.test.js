@@ -12,14 +12,34 @@ describe('calculateYtdKpi', () => {
     expect(result.currentYearTotal).toBe(1600);
     expect(result.previousYearTotal).toBe(800);
     expect(result.monthlyAverage).toBe(200);
+    expect(result.previousMonthlyAverage).toBe(100);
     expect(result.yoyGrowth).toBe(100);
+    expect(result.monthlyAverageYoyGrowth).toBe(100);
+    expect(result.previousMonthAmount).toBe(100);
+    expect(result.monthlyYoyGrowth).toBe(100);
   });
 
-  test('returns zero growth when the comparable previous-year total is zero', () => {
+  test('does not calculate growth when the comparable previous-year total is zero', () => {
     const result = calculateYtdKpi({ 2026: [100, 200] }, 2026, 1);
 
     expect(result.currentYearTotal).toBe(300);
     expect(result.previousYearTotal).toBe(0);
-    expect(result.yoyGrowth).toBe(0);
+    expect(result.yoyGrowth).toBeNull();
+    expect(result.previousMonthlyAverage).toBeNull();
+    expect(result.monthlyAverageYoyGrowth).toBeNull();
+    expect(result.previousMonthAmount).toBeNull();
+    expect(result.monthlyYoyGrowth).toBeNull();
+  });
+
+  test('does not compare a month that has no previous-year dividend', () => {
+    const result = calculateYtdKpi({
+      2025: [100, 0, 100],
+      2026: [200, 300, 400],
+    }, 2026, 1);
+
+    expect(result.previousMonthAmount).toBeNull();
+    expect(result.monthlyYoyGrowth).toBeNull();
+    expect(result.previousMonthlyAverage).toBe(50);
+    expect(result.monthlyAverageYoyGrowth).toBe(400);
   });
 });

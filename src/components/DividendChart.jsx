@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { supabase } from '../api/supabaseClient';
 import {
   Chart as ChartJS,
@@ -15,6 +15,7 @@ import { DollarSign, TrendingUp, Calendar } from 'lucide-react';
 import KPICard from './KPICard';
 import GoalTracker from './GoalTracker';
 import { calculateYtdKpi } from '../utils/dividendKpi';
+import { getChartColor } from '../utils/chartPalette';
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, ChartDataLabels);
 
@@ -22,6 +23,7 @@ const MONTH_LABELS = [
   '1월', '2월', '3월', '4월', '5월', '6월',
   '7월', '8월', '9월', '10월', '11월', '12월',
 ];
+const YEAR_CHART_TITLE = '연도별 배당금 합계';
 
 function DividendChart() {
   const [monthChart, setMonthChart] = useState(null);
@@ -29,11 +31,16 @@ function DividendChart() {
   const [accountChart, setAccountChart] = useState(null);
   const [stockChart, setStockChart] = useState(null);
   const [comparisonChart, setComparisonChart] = useState(null);
+  const [hiddenYearIndexes, setHiddenYearIndexes] = useState([]);
+  const yearChartRef = useRef(null);
   const [kpiData, setKpiData] = useState({
     currentMonth: 0,
     currentYearTotal: 0,
+    previousYearTotal: null,
     monthlyAverage: 0,
-    yoyGrowth: 0
+    previousMonthlyAverage: null,
+    yoyGrowth: null,
+    monthlyAverageYoyGrowth: null
   });
 
   useEffect(() => {
@@ -113,31 +120,38 @@ function DividendChart() {
         const currentMonthAmount = monthYearMap[currentYear] ? monthYearMap[currentYear][currentMonth] : 0;
         const {
           currentYearTotal,
+          previousYearTotal,
           yoyGrowth,
+          previousMonthlyAverage,
+          monthlyAverageYoyGrowth,
+          previousMonthAmount,
+          monthlyYoyGrowth,
           monthlyAverage: monthlyAvg,
         } = calculateYtdKpi(monthYearMap, currentYear, currentMonth);
 
         setKpiData({
           currentMonth: currentMonthAmount,
           currentYearTotal,
+          previousYearTotal,
           monthlyAverage: monthlyAvg,
-          yoyGrowth
+          previousMonthlyAverage,
+          monthlyAverageYoyGrowth,
+          yoyGrowth,
+          previousMonthAmount,
+          monthlyYoyGrowth
         });
 
         const years = Object.keys(monthYearMap).sort();
-        const palette = [
-          '#4e73df', '#e74a3b', '#1cc88a', '#f6c23e', '#36b9cc', '#858796', '#fd7e14', '#6f42c1',
-        ];
 
         setMonthChart({
           labels: MONTH_LABELS,
           datasets: years.map((year, idx) => ({
             label: year,
             data: monthYearMap[year],
-            backgroundColor: palette[idx % palette.length],
-            borderColor: palette[idx % palette.length],
+            backgroundColor: getChartColor(idx),
+            borderColor: getChartColor(idx),
             borderWidth: 2,
-            hoverBackgroundColor: palette[idx % palette.length],
+            hoverBackgroundColor: getChartColor(idx),
           })),
         });
 
@@ -192,10 +206,10 @@ function DividendChart() {
         setYearChart({
           labels: years,
           datasets: [{
-            label: '연도별 배당금 합계',
+            label: YEAR_CHART_TITLE,
             data: years.map(y => yearMap[y]),
-            backgroundColor: years.map(() => '#4e73df'),
-            borderColor: years.map(() => '#4e73df'),
+            backgroundColor: years.map((_, idx) => getChartColor(idx)),
+            borderColor: years.map((_, idx) => getChartColor(idx)),
             borderWidth: 2,
           }],
         });
@@ -211,8 +225,8 @@ function DividendChart() {
           datasets: [{
             label: '계좌별 배당금 합계',
             data: accValues,
-            backgroundColor: accNames.map((_, i) => palette[i % palette.length]),
-            borderColor: accNames.map((_, i) => palette[i % palette.length]),
+            backgroundColor: accNames.map((_, i) => getChartColor(i)),
+            borderColor: accNames.map((_, i) => getChartColor(i)),
             borderWidth: 2,
           }],
         });
@@ -297,6 +311,10 @@ function DividendChart() {
         padding: 10,
         cornerRadius: 4,
         callbacks: {
+          title: (items) => {
+            const label = items[0]?.label || '';
+            return title === YEAR_CHART_TITLE ? `${label}년` : label;
+          },
           label: (context) => {
             const label = context.dataset.label || '';
             const value = context.raw;
@@ -319,6 +337,32 @@ function DividendChart() {
     }
   });
 
+  const yearChartOptions = () => {
+    const options = chartOptions(YEAR_CHART_TITLE);
+
+    options.layout.padding.top = 24;
+    options.plugins.legend = {
+      display: false,
+    };
+
+    return options;
+  };
+
+  const toggleYearVisibility = (index) => {
+    const chart = yearChartRef.current;
+    if (!chart) return;
+
+    chart.toggleDataVisibility(index);
+    chart.update();
+    setHiddenYearIndexes((currentIndexes) => (
+      currentIndexes.includes(index)
+        ? currentIndexes.filter((currentIndex) => currentIndex !== index)
+        : [...currentIndexes, index]
+    ));
+  };
+
+  const currentMonthNumber = new Date().getMonth() + 1;
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
 
@@ -327,17 +371,26 @@ function DividendChart() {
         <KPICard
           title="이번 달 배당금"
           value={`₩ ${kpiData.currentMonth.toLocaleString()}`}
+          change={kpiData.monthlyYoyGrowth}
+          comparisonValue={kpiData.previousMonthAmount}
+          comparisonLabel="작년 동월 대비"
+          comparisonPeriodLabel="작년 동월"
           icon={DollarSign}
         />
         <KPICard
           title="올해 누적 배당금"
           value={`₩ ${kpiData.currentYearTotal.toLocaleString()}`}
           change={kpiData.yoyGrowth}
+          comparisonValue={kpiData.previousYearTotal}
           icon={TrendingUp}
         />
         <KPICard
-          title="월 평균 배당금"
+          title={`월 평균 배당금 (올해 1~${currentMonthNumber}월)`}
           value={`₩ ${kpiData.monthlyAverage.toLocaleString()}`}
+          change={kpiData.monthlyAverageYoyGrowth}
+          comparisonValue={kpiData.previousMonthlyAverage}
+          comparisonLabel="전년 동기 대비"
+          comparisonPeriodLabel={`작년 1~${currentMonthNumber}월 평균`}
           icon={Calendar}
         />
         <GoalTracker currentAmount={kpiData.monthlyAverage} />
@@ -357,7 +410,41 @@ function DividendChart() {
 
       <div style={{ display: 'flex', gap: '24px', flexWrap: 'wrap' }}>
         <div className="card" style={{ flex: 1, minWidth: 'min(320px, 100%)', height: '400px' }}>
-          {yearChart ? <Bar data={yearChart} options={chartOptions('연도별 배당금 합계')} /> : <div>데이터 불러오는 중...</div>}
+          {yearChart ? (
+            <>
+              <Bar
+                ref={yearChartRef}
+                data={yearChart}
+                options={yearChartOptions()}
+                aria-label="연도별 배당금 합계 차트. 막대와 범례의 색상으로 연도를 구분합니다."
+                fallbackContent="연도별 배당금 합계 차트"
+              />
+              <div
+                role="list"
+                aria-label="연도별 배당금 색상 범례"
+                style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '8px 12px', paddingTop: 4 }}
+              >
+                {yearChart.labels.map((year, index) => {
+                  const isHidden = hiddenYearIndexes.includes(index);
+
+                  return (
+                    <div key={year} role="listitem">
+                      <button
+                        type="button"
+                        aria-pressed={!isHidden}
+                        aria-label={`${year}년 배당금 ${isHidden ? '표시' : '숨김'}`}
+                        onClick={() => toggleYearVisibility(index)}
+                        style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: 0, border: 0, background: 'transparent', color: '#666', whiteSpace: 'nowrap', cursor: 'pointer' }}
+                      >
+                        <span aria-hidden="true" style={{ width: 28, height: 14, backgroundColor: getChartColor(index), opacity: isHidden ? 0.35 : 1 }} />
+                        {year}
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            </>
+          ) : <div>데이터 불러오는 중...</div>}
         </div>
 
         <div className="card" style={{ flex: 1, minWidth: 'min(320px, 100%)', height: '400px' }}>

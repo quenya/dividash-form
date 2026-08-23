@@ -1,7 +1,12 @@
 import React from 'react';
 
-function KPICard({ title, value, change, format = 'text', icon: Icon }) {
-    const isPositive = typeof change === 'number' && change >= 0;
+function KPICard({ title, value, change, comparisonValue, comparisonLabel = '전년 동기 대비', comparisonPeriodLabel = '작년 동기', format = 'text', icon: Icon }) {
+    const hasComparison = typeof change === 'number'
+        && Number.isFinite(change)
+        && typeof comparisonValue === 'number'
+        && Number.isFinite(comparisonValue)
+        && comparisonValue > 0;
+    const isPositive = hasComparison && change >= 0;
 
     return (
         <div className="card" style={{ flex: 1, minWidth: '200px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
@@ -14,16 +19,20 @@ function KPICard({ title, value, change, format = 'text', icon: Icon }) {
                 {value}
             </div>
 
-            {change !== undefined && (
+            {hasComparison && (
                 <div style={{
                     fontSize: '0.85rem',
                     color: isPositive ? '#2ecc71' : '#e74c3c',
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '4px'
+                    gap: '4px',
+                    flexWrap: 'wrap',
+                    lineHeight: 1.4
                 }}>
-                    {isPositive ? '▲' : '▼'} {Math.abs(change)}%
-                    <span style={{ color: 'var(--text-secondary)' }}> vs last year</span>
+                    <span>
+                        {comparisonLabel} {isPositive ? '▲' : '▼'}{Math.abs(change)}%
+                        {' '}({comparisonPeriodLabel} ₩ {comparisonValue.toLocaleString()})
+                    </span>
                 </div>
             )}
         </div>

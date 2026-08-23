@@ -1,135 +1,100 @@
-import React, { useMemo, useState, useCallback } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
 import { Doughnut } from 'react-chartjs-2';
 import ChartDataLabels from 'chartjs-plugin-datalabels';
 import { useDividendData } from '../hooks/useDividendData';
-import { PieChart, PlusCircle, AlertCircle, X, Check } from 'lucide-react';
+import { buildPortfolioSummary, getPortfolioDisplayName, MATCH_STATUS } from '../utils/tickerMatching';
+import { PieChart, AlertCircle, X } from 'lucide-react';
 import { supabase } from '../api/supabaseClient';
 
 ChartJS.register(ArcElement, Tooltip, Legend, ChartDataLabels);
 
 function PortfolioAnalysis() {
-    const { data, tickersMap, exchangeRate, loading, refetch } = useDividendData();
+    const { data, tickersMap, tickerMatchesMap, exchangeRate, loading, refetch } = useDividendData();
 
-    const [registeringTicker, setRegisteringTicker] = useState(null);
-    const [newSector, setNewSector] = useState('ETF');
-    const [newIndustry, setNewIndustry] = useState('Multi-Sector');
+    const [registeringRow, setRegisteringRow] = useState(null);
+    const [matchStatus, setMatchStatus] = useState(MATCH_STATUS.MANUAL_REVIEW);
+    const [confidence, setConfidence] = useState('low');
+    const [matchedTicker, setMatchedTicker] = useState('');
+    const [matchedCompanyName, setMatchedCompanyName] = useState('');
+    const [market, setMarket] = useState('');
+    const [newSector, setNewSector] = useState('');
+    const [newIndustry, setNewIndustry] = useState('');
+    const [evidence, setEvidence] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    const handleOpenModal = (ticker) => {
-        setRegisteringTicker(ticker);
-        setNewSector('ETF');
-        setNewIndustry('Multi-Sector');
+    const handleOpenModal = (row) => {
+        const match = row.match || {};
+        setRegisteringRow(row);
+        setMatchStatus(match.status || MATCH_STATUS.MANUAL_REVIEW);
+        setConfidence(match.confidence || 'low');
+        setMatchedTicker(match.matched_ticker || '');
+        setMatchedCompanyName(match.matched_company_name || '');
+        setMarket(match.market || '');
+        setNewSector(match.sector || '');
+        setNewIndustry(match.industry || '');
+        setEvidence(match.evidence || '');
     };
 
     const handleCloseModal = () => {
-        setRegisteringTicker(null);
+        setRegisteringRow(null);
     };
 
     const handleRegister = async () => {
-        if (!registeringTicker || !newSector || !newIndustry) return;
+        if (!registeringRow || !evidence.trim()) return;
+
+        const sourceInput = registeringRow.sourceInput.trim();
+        const normalizedTicker = matchedTicker.trim().toUpperCase();
+        if (matchStatus === MATCH_STATUS.CONFIRMED) {
+            alert('확정 매칭은 검증된 migration에서만 등록할 수 있습니다.');
+            return;
+        }
 
         setIsSubmitting(true);
-        // Normalize the ticker being registered
-        const tickerToRegister = registeringTicker.trim();
 
         try {
-            console.log('Registering to DB:', { ticker: tickerToRegister, sector: newSector, industry: newIndustry });
-
             const { error } = await supabase
-                .from('tickers')
-                .insert([{
-                    ticker: tickerToRegister,
-                    sector: newSector.trim(),
-                    industry: newIndustry.trim()
-                }]);
+                .from('ticker_matches')
+                .upsert([{
+                    source_input: sourceInput.toUpperCase(),
+                    matched_ticker: normalizedTicker || null,
+                    matched_company_name: matchedCompanyName.trim() || null,
+                    market: market.trim() || null,
+                    sector: newSector.trim() || null,
+                    industry: newIndustry.trim() || null,
+                    status: matchStatus,
+                    confidence,
+                    evidence: evidence.trim(),
+                    updated_at: new Date().toISOString()
+                }], { onConflict: 'source_input' });
 
             if (error) {
-                if (error.code === '23505') {
-                    alert('이미 등록된 종목입니다.');
-                } else {
-                    throw error;
-                }
+                throw error;
             } else {
-                alert(`'${tickerToRegister}' 종목이 성공적으로 등록되었습니다!`);
-                // Close modal first
-                setRegisteringTicker(null);
-
-                // CRITICAL: Delay refetch slightly or ensure it's called
-                console.log('Calling refetch...');
-                if (refetch) {
-                    await refetch();
-                    console.log('Refetch complete.');
-                }
+                alert(matchStatus === MATCH_STATUS.UNMATCHED ? '미매칭 보류로 저장되었습니다.' : '수동 확인 대상으로 저장되었습니다.');
+                setRegisteringRow(null);
+                await refetch();
             }
         } catch (err) {
-            console.error('Registration error:', err);
-            alert('등록 중 오류가 발생했습니다: ' + err.message);
+            console.error('종목 매칭 저장 오류:', err);
+            alert('종목 매칭 저장 중 오류가 발생했습니다.');
         } finally {
             setIsSubmitting(false);
         }
     };
 
     const { sectorChartData, sectorTableData, unknownItems } = useMemo(() => {
-        const sectorMap = {};
-        const tickerAgg = {};
-
-        // Debug log to see what's being mapped
-        console.log('Recalculating weights with tickersMap:', Object.keys(tickersMap).length, 'items');
-
-        data.forEach(item => {
-            let amount = Number(item.dividend_amount) || 0;
-            if (item.currency === 'USD') amount = amount * exchangeRate;
-
-            let rawTicker = item.ticker || '';
-            let rawCompany = item.company_name || '';
-
-            // Normalize for lookup
-            let lookupKey = rawTicker.toUpperCase().trim();
-            if (!lookupKey && rawCompany) {
-                lookupKey = rawCompany.toUpperCase().trim();
-            }
-
-            const ticker = lookupKey || 'UNKNOWN';
-            if (!tickerAgg[ticker]) tickerAgg[ticker] = 0;
-            tickerAgg[ticker] += amount;
+        const summary = buildPortfolioSummary({
+            data,
+            exchangeRate,
+            tickerMatchesMap: tickerMatchesMap || {},
+            tickersMap
         });
-
-        Object.entries(tickerAgg).forEach(([ticker, amount]) => {
-            let sector = 'Unknown';
-            const normalizedTicker = ticker.toUpperCase().trim();
-
-            if (tickersMap[normalizedTicker]) {
-                sector = tickersMap[normalizedTicker].sector || 'Unknown';
-            }
-
-            if (!sectorMap[sector]) sectorMap[sector] = 0;
-            sectorMap[sector] += amount;
-        });
-
-        const categories = Object.keys(sectorMap).sort((a, b) => sectorMap[b] - sectorMap[a]);
-        const values = categories.map(c => sectorMap[c]);
-
-        const tableData = Object.entries(tickerAgg)
-            .map(([ticker, amount]) => {
-                const normalizedTicker = ticker.toUpperCase().trim();
-                const metadata = tickersMap[normalizedTicker];
-                return {
-                    ticker,
-                    amount,
-                    sector: metadata?.sector || 'Unknown',
-                    industry: metadata?.industry || '-'
-                };
-            })
-            .sort((a, b) => b.amount - a.amount);
-
-        const unknown = tableData.filter(row => row.sector === 'Unknown');
-
         return {
             sectorChartData: {
-                labels: categories,
+                labels: summary.sectorChartData.labels,
                 datasets: [{
-                    data: values,
+                    data: summary.sectorChartData.values,
                     backgroundColor: [
                         '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40',
                         '#8e44ad', '#34495e', '#2ecc71', '#e74c3c', '#95a5a6', '#7f8c8d'
@@ -137,10 +102,10 @@ function PortfolioAnalysis() {
                     borderWidth: 1,
                 }]
             },
-            sectorTableData: tableData,
-            unknownItems: unknown
+            sectorTableData: summary.sectorTableData,
+            unknownItems: summary.unknownItems
         };
-    }, [data, tickersMap, exchangeRate]);
+    }, [data, tickerMatchesMap, tickersMap, exchangeRate]);
 
     if (loading) return <div style={{ padding: '40px', textAlign: 'center' }}>데이터 로딩 중...</div>;
 
@@ -148,39 +113,65 @@ function PortfolioAnalysis() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', paddingBottom: '40px', position: 'relative' }}>
 
             {/* Modal */}
-            {registeringTicker && (
+            {registeringRow && (
                 <div style={{
                     position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
                     backgroundColor: 'rgba(0,0,0,0.6)', display: 'flex',
                     alignItems: 'center', justifyContent: 'center', zIndex: 9999
                 }}>
-                    <div className="card" style={{ width: '90%', maxWidth: '400px', padding: '24px' }}>
+                    <div className="card" style={{ width: '90%', maxWidth: '520px', padding: '24px', maxHeight: '90vh', overflowY: 'auto' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px' }}>
-                            <h3 style={{ margin: 0 }}>종목 정보 등록</h3>
+                            <h3 style={{ margin: 0 }}>종목 매칭 정보 확인</h3>
                             <button onClick={handleCloseModal} style={{ border: 'none', background: 'none', cursor: 'pointer' }}><X /></button>
                         </div>
                         <div style={{ marginBottom: '16px' }}>
-                            <label style={{ fontSize: '0.8rem', color: '#666' }}>등록할 종목명</label>
-                            <div style={{ fontWeight: 'bold', fontSize: '1.2rem' }}>{registeringTicker}</div>
+                            <label style={{ fontSize: '0.8rem', color: '#666' }}>원본 입력값</label>
+                            <div style={{ fontWeight: 'bold', fontSize: '1.1rem' }}>{registeringRow.sourceInput}</div>
+                            <p style={{ margin: '6px 0 0', color: 'var(--text-secondary)', fontSize: '0.85rem' }}>검증된 확정 매칭만 분류와 배당 집계에 반영됩니다. 이 화면에서는 수동 확인 결과만 저장합니다.</p>
                         </div>
-                        <div style={{ marginBottom: '16px' }}>
-                            <label style={{ display: 'block', marginBottom: '8px' }}>섹터</label>
-                            <input
-                                type="text" value={newSector} onChange={e => setNewSector(e.target.value)}
-                                style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid var(--border-color)', background: 'var(--bg-card)', color: 'var(--text-primary)' }}
-                            />
-                        </div>
-                        <div style={{ marginBottom: '24px' }}>
-                            <label style={{ display: 'block', marginBottom: '8px' }}>산업군</label>
-                            <input
-                                type="text" value={newIndustry} onChange={e => setNewIndustry(e.target.value)}
-                                style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid var(--border-color)', background: 'var(--bg-card)', color: 'var(--text-primary)' }}
-                            />
-                        </div>
+                        <label style={{ display: 'block', marginBottom: '12px' }}>
+                            처리 상태
+                            <select value={matchStatus} onChange={e => setMatchStatus(e.target.value)} style={{ display: 'block', width: '100%', marginTop: '6px', padding: '10px' }}>
+                                <option value={MATCH_STATUS.MANUAL_REVIEW}>수동 확인</option>
+                                <option value={MATCH_STATUS.UNMATCHED}>미매칭 보류</option>
+                            </select>
+                        </label>
+                        <label style={{ display: 'block', marginBottom: '12px' }}>
+                            신뢰 수준
+                            <select value={confidence} onChange={e => setConfidence(e.target.value)} style={{ display: 'block', width: '100%', marginTop: '6px', padding: '10px' }}>
+                                <option value="high">높음</option>
+                                <option value="medium">중간</option>
+                                <option value="low">낮음</option>
+                            </select>
+                        </label>
+                        <label style={{ display: 'block', marginBottom: '12px' }}>
+                            실제 종목명
+                            <input type="text" value={matchedCompanyName} onChange={e => setMatchedCompanyName(e.target.value)} style={{ display: 'block', width: '100%', marginTop: '6px', padding: '10px' }} />
+                        </label>
+                        <label style={{ display: 'block', marginBottom: '12px' }}>
+                            실제 티커
+                            <input type="text" value={matchedTicker} onChange={e => setMatchedTicker(e.target.value)} style={{ display: 'block', width: '100%', marginTop: '6px', padding: '10px' }} />
+                        </label>
+                        <label style={{ display: 'block', marginBottom: '12px' }}>
+                            시장
+                            <input type="text" value={market} onChange={e => setMarket(e.target.value)} placeholder="예: NASDAQ, KOSPI" style={{ display: 'block', width: '100%', marginTop: '6px', padding: '10px' }} />
+                        </label>
+                        <label style={{ display: 'block', marginBottom: '12px' }}>
+                            섹터
+                            <input type="text" value={newSector} onChange={e => setNewSector(e.target.value)} style={{ display: 'block', width: '100%', marginTop: '6px', padding: '10px' }} />
+                        </label>
+                        <label style={{ display: 'block', marginBottom: '12px' }}>
+                            산업군
+                            <input type="text" value={newIndustry} onChange={e => setNewIndustry(e.target.value)} style={{ display: 'block', width: '100%', marginTop: '6px', padding: '10px' }} />
+                        </label>
+                        <label style={{ display: 'block', marginBottom: '24px' }}>
+                            매칭 근거
+                            <textarea value={evidence} onChange={e => setEvidence(e.target.value)} required rows={3} placeholder="공식 거래소·발행사·공시 등 확인 가능한 근거를 기록하세요." style={{ display: 'block', width: '100%', marginTop: '6px', padding: '10px', resize: 'vertical' }} />
+                        </label>
                         <div style={{ display: 'flex', gap: '10px' }}>
                             <button onClick={handleCloseModal} style={{ flex: 1, padding: '12px', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'none', cursor: 'pointer' }}>취소</button>
-                            <button onClick={handleRegister} disabled={isSubmitting} style={{ flex: 1, padding: '12px', borderRadius: '8px', border: 'none', backgroundColor: 'var(--accent-color)', color: '#fff', fontWeight: 'bold', cursor: 'pointer' }}>
-                                {isSubmitting ? '처리 중...' : '등록 완료'}
+                            <button onClick={handleRegister} disabled={isSubmitting || !evidence.trim()} style={{ flex: 1, padding: '12px', borderRadius: '8px', border: 'none', backgroundColor: 'var(--accent-color)', color: '#fff', fontWeight: 'bold', cursor: 'pointer' }}>
+                                {isSubmitting ? '처리 중...' : '매칭 정보 저장'}
                             </button>
                         </div>
                     </div>
@@ -238,8 +229,8 @@ function PortfolioAnalysis() {
             {/* Top 20 Table */}
             <div className="card">
                 <h4>종목별 기여도 Top 20</h4>
-                <div style={{ overflowX: 'auto' }}>
-                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.9rem' }}>
+                <div className="portfolio-table-scroll" style={{ overflowX: 'auto' }}>
+                    <table className="portfolio-table" style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.9rem' }}>
                         <thead>
                             <tr style={{ borderBottom: '2px solid var(--border-color)', textAlign: 'left' }}>
                                 <th style={{ padding: '12px' }}>종목</th>
@@ -253,9 +244,16 @@ function PortfolioAnalysis() {
                             {sectorTableData.slice(0, 20).map((row, idx) => {
                                 const total = sectorTableData.reduce((sum, r) => sum + r.amount, 0);
                                 const percent = ((row.amount / total) * 100).toFixed(1);
+                                const displayName = getPortfolioDisplayName(row);
+                                const displayTicker = row.isConfirmed ? row.ticker : '';
                                 return (
                                     <tr key={idx} style={{ borderBottom: '1px solid var(--border-color)' }}>
-                                        <td style={{ padding: '12px', fontWeight: 'bold' }}>{row.ticker}</td>
+                                        <td className="portfolio-security-cell" style={{ padding: '12px', fontWeight: 'bold' }}>
+                                            <span className="portfolio-security-name">{displayName}</span>
+                                            {displayTicker && displayTicker !== displayName && (
+                                                <small className="portfolio-security-ticker">{displayTicker}</small>
+                                            )}
+                                        </td>
                                         <td style={{ padding: '12px' }}>
                                             <span style={{
                                                 padding: '2px 8px', borderRadius: '12px',
@@ -283,11 +281,13 @@ function PortfolioAnalysis() {
                         <AlertCircle color="#e74a3b" size={20} />
                         <h4 style={{ margin: 0, color: '#e74a3b' }}>분류 미확인 종목 정보 보완</h4>
                     </div>
-                    <div style={{ overflowX: 'auto' }}>
-                        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.9rem' }}>
+                    <div className="portfolio-table-scroll" style={{ overflowX: 'auto' }}>
+                        <table className="portfolio-table" style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.9rem' }}>
                             <thead>
                                 <tr style={{ borderBottom: '2px solid var(--border-color)', textAlign: 'left' }}>
-                                    <th style={{ padding: '12px' }}>종목명(티커)</th>
+                                    <th style={{ padding: '12px' }}>원본 입력값</th>
+                                    <th style={{ padding: '12px' }}>확인 후보</th>
+                                    <th style={{ padding: '12px' }}>상태</th>
                                     <th style={{ padding: '12px', textAlign: 'right' }}>누적 배당금</th>
                                     <th style={{ padding: '12px', textAlign: 'center' }}>조치</th>
                                 </tr>
@@ -295,12 +295,14 @@ function PortfolioAnalysis() {
                             <tbody>
                                 {unknownItems.map((row, idx) => (
                                     <tr key={idx} style={{ borderBottom: '1px solid var(--border-color)' }}>
-                                        <td style={{ padding: '12px', fontWeight: 'bold' }}>{row.ticker}</td>
+                                        <td style={{ padding: '12px', fontWeight: 'bold' }}>{row.sourceInput || row.ticker}</td>
+                                        <td style={{ padding: '12px' }}>{row.match?.matched_company_name || '-'}{row.match?.matched_ticker ? ` (${row.match.matched_ticker})` : ''}</td>
+                                        <td style={{ padding: '12px' }}>{row.matchStatus === MATCH_STATUS.MANUAL_REVIEW ? '수동 확인' : row.matchStatus === MATCH_STATUS.UNMATCHED ? '미매칭 보류' : '미확인'}</td>
                                         <td style={{ padding: '12px', textAlign: 'right' }}>₩ {Math.round(row.amount).toLocaleString()}</td>
                                         <td style={{ padding: '12px', textAlign: 'center' }}>
                                             <button
                                                 type="button"
-                                                onClick={() => handleOpenModal(row.ticker)}
+                                                onClick={() => handleOpenModal(row)}
                                                 style={{
                                                     padding: '6px 12px', fontSize: '0.8rem', backgroundColor: '#e74a3b', color: '#fff',
                                                     border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold'
