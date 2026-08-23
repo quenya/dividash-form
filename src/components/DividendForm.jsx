@@ -28,6 +28,26 @@ export function getCompanyNameChoices(entryData = [], matchData = [], matchError
   return [...new Set([...matchedNames, ...entryNames])];
 }
 
+export function maskAccountNumber(value = '') {
+  const trimmed = value.trim();
+  if (!trimmed) return '';
+
+  const segments = trimmed.split(/[-\s]+/).filter(Boolean);
+  if (segments.length >= 3 && segments.every((segment) => /^(?:\d+|\*+)$/.test(segment))) {
+    return segments
+      .map((segment, index) => {
+        const isEdge = index === 0 || index === segments.length - 1;
+        return isEdge || /^\*+$/.test(segment) ? segment : '*'.repeat(segment.length);
+      })
+      .join('-');
+  }
+
+  return trimmed.replace(/\d{4,}/g, (segment) => {
+    const visibleDigits = segment.length > 2 ? 1 : 0;
+    return `${segment.slice(0, visibleDigits)}${'*'.repeat(segment.length - visibleDigits - 1)}${segment.slice(-1)}`;
+  });
+}
+
 function getToday() {
   const d = new Date();
   const year = d.getFullYear();
@@ -182,6 +202,7 @@ function DividendForm() {
   const handleAddAccount = async () => {
     const accountName = newAccountName.trim();
     const brokerageName = newBrokerageName.trim();
+    const maskedAccountNumber = maskAccountNumber(newAccountNumberMasked);
     if (!accountName || !brokerageName) {
       setAccountError('계좌 표시명과 증권사를 입력해 주세요.');
       return;
@@ -198,7 +219,7 @@ function DividendForm() {
           displayName: accountName,
           brokerageName,
           accountType: newAccountType,
-          accountNumberMasked: newAccountNumberMasked
+          accountNumberMasked: maskedAccountNumber
         });
       } catch (error) {
         setAccountError(error.message || '계좌 저장에 실패했습니다.');
@@ -219,7 +240,7 @@ function DividendForm() {
       account_id: createdAccount?.id || '',
       account_name: accountName,
       account_type: newAccountType,
-      account_number_masked: newAccountNumberMasked
+      account_number_masked: maskedAccountNumber
     });
     setNewAccountName('');
     setNewBrokerageName('');
@@ -358,7 +379,7 @@ function DividendForm() {
               </div>
               {accountError && <div style={{ color: '#d32f2f', marginTop: 6 }}>{accountError}</div>}
               <small style={{ display: 'block', marginTop: 6, color: 'var(--text-secondary)' }}>
-                계좌번호는 전체 번호를 입력하지 말고 마스킹된 값만 입력하세요.
+                계좌번호는 저장 전에 중간 숫자를 자동 마스킹합니다. 전체 번호를 직접 입력하지 않는 것을 권장합니다.
               </small>
             </div>
           )}
