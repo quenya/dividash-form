@@ -45,8 +45,15 @@ function PortfolioAnalysis() {
 
         const sourceInput = registeringRow.sourceInput.trim();
         const normalizedTicker = matchedTicker.trim().toUpperCase();
-        if (matchStatus === MATCH_STATUS.CONFIRMED) {
-            alert('확정 매칭은 검증된 migration에서만 등록할 수 있습니다.');
+        if (matchStatus === MATCH_STATUS.CONFIRMED && [
+            normalizedTicker,
+            matchedCompanyName.trim(),
+            market.trim(),
+            newSector.trim(),
+            newIndustry.trim(),
+            evidence.trim(),
+        ].some(value => !value)) {
+            alert('확정 매칭에는 실제 종목명, 티커, 시장, 섹터, 산업군, 근거를 모두 입력해 주세요.');
             return;
         }
 
@@ -71,7 +78,11 @@ function PortfolioAnalysis() {
             if (error) {
                 throw error;
             } else {
-                alert(matchStatus === MATCH_STATUS.UNMATCHED ? '미매칭 보류로 저장되었습니다.' : '수동 확인 대상으로 저장되었습니다.');
+                alert(matchStatus === MATCH_STATUS.CONFIRMED
+                    ? '확정 매칭으로 저장되었습니다. 포트폴리오 분류에 반영됩니다.'
+                    : matchStatus === MATCH_STATUS.UNMATCHED
+                        ? '미매칭 보류로 저장되었습니다.'
+                        : '수동 확인 대상으로 저장되었습니다.');
                 setRegisteringRow(null);
                 await refetch();
             }
@@ -127,11 +138,12 @@ function PortfolioAnalysis() {
                         <div style={{ marginBottom: '16px' }}>
                             <label style={{ fontSize: '0.8rem', color: '#666' }}>원본 입력값</label>
                             <div style={{ fontWeight: 'bold', fontSize: '1.1rem' }}>{registeringRow.sourceInput}</div>
-                            <p style={{ margin: '6px 0 0', color: 'var(--text-secondary)', fontSize: '0.85rem' }}>검증된 확정 매칭만 분류와 배당 집계에 반영됩니다. 이 화면에서는 수동 확인 결과만 저장합니다.</p>
+                            <p style={{ margin: '6px 0 0', color: 'var(--text-secondary)', fontSize: '0.85rem' }}>확정 매칭은 입력한 종목명·티커·시장·섹터·산업군과 검증 근거가 모두 있어야 저장할 수 있습니다.</p>
                         </div>
                         <label style={{ display: 'block', marginBottom: '12px' }}>
                             처리 상태
                             <select value={matchStatus} onChange={e => setMatchStatus(e.target.value)} style={{ display: 'block', width: '100%', marginTop: '6px', padding: '10px' }}>
+                                <option value={MATCH_STATUS.CONFIRMED}>확정 매칭</option>
                                 <option value={MATCH_STATUS.MANUAL_REVIEW}>수동 확인</option>
                                 <option value={MATCH_STATUS.UNMATCHED}>미매칭 보류</option>
                             </select>
