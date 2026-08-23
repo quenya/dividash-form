@@ -102,6 +102,17 @@ test('falls back to existing dividend company names when ticker matches are unav
   expect(choices).toEqual(['TIGER 미국배당다우존스', 'SCHD']);
 });
 
+test('orders company choices by most recent dividend payment date', () => {
+  const choices = getCompanyNameChoices([
+    { company_name: 'Older Fund', payment_date: '2026-01-10' },
+    { company_name: 'Newest Fund', payment_date: '2026-07-20' },
+    { company_name: 'Middle Fund', payment_date: '2026-04-15' },
+    { company_name: 'Newest Fund', payment_date: '2026-06-01' }
+  ], [], new Error('ticker_matches table does not exist'));
+
+  expect(choices).toEqual(['Newest Fund', 'Middle Fund', 'Older Fund']);
+});
+
 test('does not expose normalized-colliding aliases in the input choices', () => {
   const choices = getVerifiedMatchChoices([
     {
