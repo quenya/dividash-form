@@ -200,21 +200,18 @@ CREATE POLICY "ticker_matches_read" ON public.ticker_matches
     FOR SELECT TO anon, authenticated USING (true);
 
 CREATE POLICY "ticker_matches_insert_user" ON public.ticker_matches
-    FOR INSERT TO anon, authenticated
+    FOR INSERT TO authenticated
     WITH CHECK (
-        auth.role() IN ('anon', 'authenticated')
-        AND managed_by = 'user'
+        managed_by = 'user'
     );
 
 CREATE POLICY "ticker_matches_update_user" ON public.ticker_matches
-    FOR UPDATE TO anon, authenticated
+    FOR UPDATE TO authenticated
     USING (
-        auth.role() IN ('anon', 'authenticated')
-        AND managed_by = 'user'
+        managed_by = 'user'
     )
     WITH CHECK (
-        auth.role() IN ('anon', 'authenticated')
-        AND managed_by = 'user'
+        managed_by = 'user'
     );
 
 CREATE INDEX IF NOT EXISTS idx_ticker_matches_status

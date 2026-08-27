@@ -11,6 +11,15 @@ tags: [risk, drift, follow-up]
 
 이 페이지는 확인된 차이를 숨기지 않고 유지한다. 해결 시 항목을 삭제하지 말고 상태와 해결 근거를 갱신한 뒤 log에 기록한다.
 
+## Resolved
+
+### DiviDash legacy Supabase policies
+
+- Status: resolved 2026-08-27
+- Live schema dump에서 `user_goals`의 broad read/upsert 정책과 `ticker_matches`의 anon write 정책을 확인했다.
+- `supabase/migrations/202608270001_dividash_rls_hardening.sql`을 원격 DB에 적용하고 anon REST 재검증을 완료했다. 개인 테이블은 anon 조회 0건이며 공개 검색 메타데이터만 읽기 가능하다.
+- Repository의 `database/ticker_matching.sql`과 `database/security_hardening.sql`도 anon write를 재생성하지 않도록 정렬했다.
+
 ## Open
 
 ### Secret rotation and history

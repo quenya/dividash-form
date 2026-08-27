@@ -177,3 +177,4 @@
 - 계좌 유형 선택지에 `DC`를 추가했다.
 - 운영 DB에 `ticker_matches` 테이블이 아직 없는 경우에도 기존 `dividend_entries.company_name`을 종목 선택지로 fallback하도록 수정했다.
 - 원인과 fallback 동작을 회귀 테스트로 고정했다.
+- `2026-08-27` security | DiviDash live RLS hardening: removed legacy broad policies from personal tables, restricted `ticker_matches` writes to authenticated users, applied remote migration `202608270001`, and verified anon access plus full test/build.

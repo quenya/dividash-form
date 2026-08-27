@@ -2,7 +2,7 @@
 title: Deployment and Security Boundaries
 type: operations
 status: current
-updated: 2026-08-06
+updated: 2026-08-27
 source_refs: [S002, S003]
 tags: [vercel, environment, auth, secrets]
 ---
@@ -32,6 +32,8 @@ Create React App의 `REACT_APP_*` 값은 build 결과에 포함된다. Supabase 
 - Supabase RLS가 사용자별 row 접근을 최종 제한한다.
 
 Client-side gate만으로 권한을 보장하지 않으며 live RLS가 migration 의도와 일치하는지 별도로 검증해야 한다.
+
+2026-08-27에 live Supabase schema를 dump하고 anon REST 접근을 검증했다. `dividend_entries`, `user_goals`, `simulation_settings`는 owner-scoped 정책만 남겼고, `ticker_matches`의 anon insert/update를 제거했다. `instrument_search_index`는 공개 종목 검색 기능 때문에 read-only public 정책을 유지한다. 재현 가능한 migration은 [`supabase/migrations/202608270001_dividash_rls_hardening.sql`](../../supabase/migrations/202608270001_dividash_rls_hardening.sql)이다.
 
 ## Secret handling
 

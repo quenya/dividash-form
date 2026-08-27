@@ -134,3 +134,19 @@ CREATE POLICY "simulation_settings_update_own" ON public.simulation_settings
   FOR UPDATE TO authenticated
   USING (user_id = auth.uid())
   WITH CHECK (user_id = auth.uid());
+
+-- Shared ticker matching metadata may be read publicly, but only signed-in
+-- users may create or edit review records.
+ALTER TABLE public.ticker_matches ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "ticker_matches_read" ON public.ticker_matches;
+DROP POLICY IF EXISTS "ticker_matches_insert_user" ON public.ticker_matches;
+DROP POLICY IF EXISTS "ticker_matches_update_user" ON public.ticker_matches;
+CREATE POLICY "ticker_matches_read" ON public.ticker_matches
+  FOR SELECT TO anon, authenticated USING (true);
+CREATE POLICY "ticker_matches_insert_user" ON public.ticker_matches
+  FOR INSERT TO authenticated
+  WITH CHECK (managed_by = 'user');
+CREATE POLICY "ticker_matches_update_user" ON public.ticker_matches
+  FOR UPDATE TO authenticated
+  USING (managed_by = 'user')
+  WITH CHECK (managed_by = 'user');
