@@ -7,6 +7,7 @@ import DividendData from './components/DividendData';
 import DividendCalendar from './components/DividendCalendar';
 import PortfolioAnalysis from './components/PortfolioAnalysis';
 import DividendSimulator from './components/DividendSimulator';
+import RecentEtfCandidates from './components/RecentEtfCandidates';
 import Layout from './components/Layout';
 import { ThemeProvider } from './context/ThemeContext';
 import { AuthProvider } from './context/AuthContext';
@@ -90,6 +91,10 @@ function AppContent() {
 
       {page === 'portfolio' && (
         <PortfolioAnalysis />
+      )}
+
+      {page === 'etf' && (
+        <RecentEtfCandidates />
       )}
 
       {page === 'simulator' && (
