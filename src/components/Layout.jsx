@@ -10,6 +10,7 @@ import {
     Sun,
     PieChart,
     LineChart,
+    List,
     LogOut
 } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
@@ -32,6 +33,7 @@ function Layout({ children, currentPage, setPage }) {
         { id: 'chart', label: '대시보드', icon: LayoutDashboard },
         { id: 'calendar', label: '캘린더', icon: Calendar },
         { id: 'portfolio', label: '포트폴리오', icon: PieChart },
+        { id: 'etf', label: 'ETF 분석', icon: List },
         { id: 'simulator', label: '시뮬레이터', icon: LineChart },
         { id: 'data', label: '데이터', icon: Database },
         { id: 'add', label: '입력', icon: PlusCircle },

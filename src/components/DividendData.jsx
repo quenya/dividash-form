@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { supabase } from "../api/supabaseClient";
 
 const PAGE_SIZE_OPTIONS = [10, 25, 50];
+const ETF_BRANDS = ["전체", "KODEX", "RISE", "SOL", "TIGER", "ACE", "HANARO", "KOSEF", "PLUS", "TIMEFOLIO"];
 const WON_SYMBOL = String.fromCharCode(0x20A9);
 
 function formatAmount(amount, currency) {
@@ -23,6 +24,11 @@ function DividendData() {
   const [totalCount, setTotalCount] = useState(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [sourceLinks, setSourceLinks] = useState({});
+  const [sort, setSort] = useState({ key: "payment_date", ascending: false });
+  const [searchInput, setSearchInput] = useState("");
+  const [brandInput, setBrandInput] = useState("전체");
+  const [filters, setFilters] = useState({ search: "", brand: "전체" });
 
   const totalPages = useMemo(() => {
     if (!totalCount) return 1;
@@ -36,11 +42,17 @@ function DividendData() {
       const from = (page - 1) * pageSize;
       const to = from + pageSize - 1;
 
-      const { data, count, error: queryError } = await supabase
-        .from("dividend_entries")
-        .select("*", { count: "exact" })
-        .order("payment_date", { ascending: false })
-        .range(from, to);
+      let dividendQuery = supabase.from("dividend_entries").select("*", { count: "exact" });
+      if (filters.search.trim()) {
+        const term = filters.search.trim().replace(/[%(),]/g, " ");
+        dividendQuery = dividendQuery.or(`company_name.ilike.%${term}%,account_name.ilike.%${term}%`);
+      }
+      if (filters.brand !== "전체") dividendQuery = dividendQuery.ilike("company_name", `${filters.brand}%`);
+      const [{ data, count, error: queryError }, { data: cache }, { data: matches }] = await Promise.all([
+        dividendQuery.order(sort.key, { ascending: sort.ascending, nullsFirst: false }).range(from, to),
+        supabase.from("etf_product_cache").select("ticker,official_url"),
+        supabase.from("ticker_matches").select("source_input,matched_company_name,matched_ticker,status,confidence"),
+      ]);
 
       if (queryError) {
         console.error("배당 데이터 조회 오류:", queryError);
@@ -49,13 +61,54 @@ function DividendData() {
       } else {
         setRows(data || []);
         setTotalCount(typeof count === "number" ? count : 0);
+        const links = {};
+        (cache || []).forEach((item) => { if (item.official_url) links[String(item.ticker).trim().toUpperCase()] = item.official_url; });
+        (matches || []).forEach((match) => {
+          if (match.status !== "confirmed" || match.confidence !== "high") return;
+          const url = links[String(match.matched_ticker || "").trim().toUpperCase()];
+          if (url) {
+            links[String(match.source_input || "").trim().toUpperCase()] = url;
+            links[String(match.matched_company_name || "").trim().toUpperCase()] = url;
+          }
+        });
+        setSourceLinks(links);
       }
 
       setLoading(false);
     };
 
     fetchPage();
-  }, [page, pageSize]);
+  }, [page, pageSize, sort, filters]);
+
+  const handleFilterSubmit = (event) => {
+    event.preventDefault();
+    setPage(1);
+    setFilters({ search: searchInput, brand: brandInput });
+  };
+
+  const clearFilters = () => {
+    setSearchInput("");
+    setBrandInput("전체");
+    setFilters({ search: "", brand: "전체" });
+    setPage(1);
+  };
+
+  const handleSort = (key) => {
+    setPage(1);
+    setSort((current) => (current.key === key
+      ? { key, ascending: !current.ascending }
+      : { key, ascending: true }));
+  };
+
+  const sortIndicator = (key) => sort.key === key ? (sort.ascending ? " ↑" : " ↓") : " ↕";
+
+  const sortableHeader = (label, key, align = "left") => (
+    <th aria-sort={sort.key === key ? (sort.ascending ? "ascending" : "descending") : "none"} style={{ border: "1px solid #ddd", padding: "6px", textAlign: align }}>
+      <button type="button" onClick={() => handleSort(key)} style={{ border: 0, background: "transparent", cursor: "pointer", fontWeight: "bold", padding: 0, width: "100%", textAlign: align }}>
+        {label}{sortIndicator(key)}
+      </button>
+    </th>
+  );
 
   const handlePrev = () => {
     setPage((prev) => Math.max(1, prev - 1));
@@ -97,6 +150,17 @@ function DividendData() {
         </div>
       </div>
 
+      <form onSubmit={handleFilterSubmit} style={{ marginBottom: 16, display: "flex", flexWrap: "wrap", gap: 8, alignItems: "center" }}>
+        <label htmlFor="dividendSearch" style={{ fontSize: "0.9em" }}>검색어</label>
+        <input id="dividendSearch" value={searchInput} onChange={(event) => setSearchInput(event.target.value)} placeholder="종목명 또는 계좌명" style={{ minWidth: 190, padding: "6px 8px" }} />
+        <label htmlFor="etfBrand" style={{ fontSize: "0.9em" }}>브랜드</label>
+        <select id="etfBrand" value={brandInput} onChange={(event) => setBrandInput(event.target.value)} style={{ padding: "6px 8px" }}>
+          {ETF_BRANDS.map((brand) => <option key={brand} value={brand}>{brand}</option>)}
+        </select>
+        <button type="submit">검색</button>
+        <button type="button" onClick={clearFilters}>초기화</button>
+      </form>
+
       {error && (
         <div style={{ color: "#d32f2f", marginBottom: 12 }}>
           {error}
@@ -106,11 +170,11 @@ function DividendData() {
       <table style={{ borderCollapse: "collapse", width: "100%", fontSize: "0.95em" }}>
         <thead>
           <tr style={{ background: "#f5f5f5" }}>
-            <th style={{ border: "1px solid #ddd", padding: "6px" }}>계좌명</th>
-            <th style={{ border: "1px solid #ddd", padding: "6px" }}>종목명</th>
-            <th style={{ border: "1px solid #ddd", padding: "6px", textAlign: "right" }}>금액</th>
-            <th style={{ border: "1px solid #ddd", padding: "6px" }}>통화</th>
-            <th style={{ border: "1px solid #ddd", padding: "6px" }}>날짜</th>
+            {sortableHeader("계좌명", "account_name")}
+            {sortableHeader("종목명", "company_name")}
+            {sortableHeader("금액", "dividend_amount", "right")}
+            {sortableHeader("통화", "currency")}
+            {sortableHeader("날짜", "payment_date")}
           </tr>
         </thead>
         <tbody>
@@ -122,7 +186,13 @@ function DividendData() {
           {!loading && rows.map((item) => (
             <tr key={item.id}>
               <td style={{ border: "1px solid #ddd", padding: "6px" }}>{item.account_name || "-"}</td>
-              <td style={{ border: "1px solid #ddd", padding: "6px" }}>{item.company_name || item.stock || "-"}</td>
+              <td style={{ border: "1px solid #ddd", padding: "6px" }}>
+                {(() => {
+                  const name = item.company_name || item.stock || "-";
+                  const url = sourceLinks[String(item.ticker || name).trim().toUpperCase()] || sourceLinks[String(name).trim().toUpperCase()];
+                  return url ? <a href={url} target="_blank" rel="noreferrer">{name}</a> : name;
+                })()}
+              </td>
               <td style={{ border: "1px solid #ddd", padding: "6px", textAlign: "right" }}>{formatAmount(item.dividend_amount, item.currency)}</td>
               <td style={{ border: "1px solid #ddd", padding: "6px" }}>{item.currency || "-"}</td>
               <td style={{ border: "1px solid #ddd", padding: "6px" }}>{item.payment_date || "-"}</td>
