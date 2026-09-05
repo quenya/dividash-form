@@ -89,7 +89,7 @@ def collect_with_retry(collector: Callable[[], dict], attempts: int = MAX_ATTEMP
             last = result if isinstance(result, dict) else {"status": "failure", "error": "malformed collector result"}
             if last.get("status") not in {"failure", "timeout"}: return last
         if attempt < attempts:
-            delay = backoff_seconds * (2 ** (attempt - 1))
+            delay = min(MAX_BACKOFF_SECONDS, backoff_seconds * (2 ** (attempt - 1)))
             log("retry", attempt=attempt, delay_seconds=delay, error=last.get("error"))
             time.sleep(delay)
     return last or {"status": "failure", "error": "no collector result"}
