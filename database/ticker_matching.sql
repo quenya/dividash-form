@@ -223,6 +223,7 @@ CREATE INDEX IF NOT EXISTS idx_ticker_matches_matched_ticker
 INSERT INTO public.tickers (ticker, company_name_kr, exchange, sector, industry)
 VALUES
     ('458730', 'TIGER 미국배당다우존스', 'KRX', 'ETF', '미국 배당주'),
+    ('472150', 'TIGER 배당커버드콜액티브', 'KRX', 'ETF', '커버드콜'),
     ('498400', 'KODEX 200타겟위클리커버드콜', 'KRX', 'ETF', '커버드콜'),
     ('102970', 'KODEX 증권', 'KRX', 'ETF', '금융'),
     ('367380', 'ACE 미국나스닥100', 'KRX', 'ETF', '미국 나스닥100'),
@@ -276,6 +277,7 @@ INSERT INTO pg_temp.ticker_matching_verified_seed (
 )
 VALUES
     ('458730', '458730', 'TIGER 미국배당다우존스', 'KRX', 'ETF', '미국 배당주', 'confirmed', 'high', 'TIGER official product document: https://www.tigeretf.com/upload/etf/20250804095349009577.pdf'),
+    ('TIGER 배당커버드콜액티브', '472150', 'TIGER 배당커버드콜액티브', 'KRX', 'ETF', '커버드콜', 'confirmed', 'high', 'Mirae Asset TIGER official product page: https://investments.miraeasset.com/tigeretf/ko/product/search/detail/index.do?ksdFund=KR7472150002'),
     ('498400', '498400', 'KODEX 200타겟위클리커버드콜', 'KRX', 'ETF', '커버드콜', 'confirmed', 'high', 'Samsung KODEX official product page: https://www.samsungfund.com/etf/product/view.do?id=2ETFP4&isBanner=Y'),
     ('102970', '102970', 'KODEX 증권', 'KRX', 'ETF', '금융', 'confirmed', 'high', 'Samsung KODEX official product list: https://m.samsungfund.com/upload/kodex/newsroom/20260325170636388.pdf'),
     ('367380', '367380', 'ACE 미국나스닥100', 'KRX', 'ETF', '미국 나스닥100', 'confirmed', 'high', 'ACE official product page: https://www.aceetf.co.kr/fund/K55101DB1182'),
