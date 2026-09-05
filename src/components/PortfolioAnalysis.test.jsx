@@ -21,6 +21,8 @@ jest.mock('../api/supabaseClient', () => ({
   }
 }));
 
+jest.mock('./DividendForecast', () => () => null);
+
 jest.mock('../hooks/useDividendData', () => ({
   __esModule: true,
   useDividendData: () => ({
