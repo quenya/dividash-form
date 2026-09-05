@@ -28,11 +28,13 @@
 
 ## 수동 dry-run
 
-네트워크에서 공개 원본을 읽고 JSON 로그를 출력한다. 이 명령은 DB 연결과 SQL 실행을 하지 않는다.
+네트워크에서 공개 원본을 읽고 JSON 로그를 출력한다. 이 명령은 DB 연결과 SQL 실행을 하지 않는다. `--dry-run`은 명시할 수 있으며 생략해도 기본값이다. `--write`와 동시에 사용할 수 없다.
 
-       python3 scripts/sync_official_etfs.py --lock-path /tmp/dividash-official-etf-sync.lock
+       python3 scripts/sync_official_etfs.py --dry-run --lock-path /tmp/dividash-official-etf-sync.lock
 
-종료 코드가 0이고 마지막 `sync_complete`의 `status`가 `success`인지 확인한다. `failure`, `timeout`, 오래된 데이터, 미래 `fetched_at`, 미래 `ex_date`가 하나라도 있으면 종료 코드는 1이며 write하지 않는다. `retry` 로그의 재시도 횟수와 source별 `records`를 기록한다.
+안전한 정확한 범위는 `attempts` 1–5회, `timeout` 1–20초, `backoff` 0–60초다. 범위를 벗어난 값은 수집 전에 거부된다. 재시도 대기는 `backoff × 2^(attempt-1)`이며 최대 시도 횟수를 넘지 않는다.
+
+각 source가 `success`가 아니거나 빈 결과이면 실패다. 각 행은 미래 `fetched_at`/`source_updated_at` 및 미래 `ex_date`를 거부한다. freshness는 어댑터가 새로 찍은 `fetched_at`만 믿지 않고 source의 최신 `ex_date` 또는 `source_updated_at`을 기준으로 기본 370일을 적용한다. 과거 이력 행은 보존하되 payload 전체가 370일 이상 새 기록을 제공하지 않으면 실패한다. 실패 시 종료 코드 1이고 write하지 않는다. 종료 코드가 0이고 마지막 `sync_complete`의 `status`가 `success`인지 확인한다.
 
 ## 백업과 preflight
 
