@@ -170,6 +170,7 @@
 
 - 삭제된 Issue 16 gate의 KPI 방향 기호, percentage, 동기간 label, prior KRW amount, shared typography·색상 기준을 S007과 UI QA page에 보강했다.
 - `known-gaps.md`가 사용하는 S007/S008을 Wiki index source 목록에도 반영했다.
+- `etf_product_cache`와 `ticker_matches`에 공식 발행사 페이지로 확인한 TIGER 배당커버드콜액티브(472150)를 추가했다. 참조 캐시만 idempotently 갱신하며 `dividend_entries`는 쓰지 않는다. 근거: S009.
 
 ## [2026-08-23] fix | Manual form account and stock choices
 

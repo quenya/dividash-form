@@ -32,6 +32,14 @@ tags: [supabase, postgres, rls, migrations]
 - payment: `dividend_amount`, `payment_date`, `currency`
 - provenance: `input_method`, `confidence_score`
 
+## Official ETF reference cache
+
+`etf_product_cache` is a public, read-only reference cache and is separate from
+the user-owned `dividend_entries` table. The verified seed for TIGER
+배당커버드콜액티브 uses ticker `472150` and the Mirae Asset issuer page in
+S009; rerunning it updates only reference metadata and preserves user dividend
+rows.
+
 ## Instrument matching
 
 `public.ticker_matches.source_input`은 배당 원본의 입력값을 대문자 정규화해 저장하는 식별자다. `confirmed` 상태만 `matched_ticker`와 `tickers` metadata를 통해 포트폴리오 분류와 배당 집계의 canonical ticker로 해석한다. `manual_review`와 `unmatched`는 원본 입력값과 금액을 유지한 채 `Unknown`으로 남긴다. 이 공유 메타데이터는 anon 읽기를 허용하지만 insert/update는 authenticated 사용자로 제한한다.
@@ -66,6 +74,7 @@ Migration 파일의 placeholder owner UUID는 실행 전에 실제 owner로 교�
 - [`database/schema_update.sql`](../../database/schema_update.sql): ticker, goal, simulator schema와 seed
 - [`database/security_hardening.sql`](../../database/security_hardening.sql): 실제 owner UUID 치환 후 user ownership, composite key, RLS 강화
 - [`database/ticker_matching.sql`](../../database/ticker_matching.sql): security hardening 이후 실행하는 원본 입력 보존형 ticker 매칭, read-only catalog, RLS와 verified seed
+- [`database/202609050001_tiger_dividend_covered_call.sql`](../../database/202609050001_tiger_dividend_covered_call.sql): verified TIGER 472150 reference cache seed
 - [`supabase/migrations/202608270001_dividash_rls_hardening.sql`](../../supabase/migrations/202608270001_dividash_rls_hardening.sql): live DB의 legacy broad policy 제거와 anon write 차단
 
 Fresh setup order is `schema_update.sql` → owner UUID를 채운 `security_hardening.sql` → `ticker_matching.sql`. `security_hardening.sql`의 placeholder owner UUID는 실행 전에 교체해야 한다.
@@ -80,6 +89,7 @@ Fresh setup order is `schema_update.sql` → owner UUID를 채운 `security_hard
 ## Sources
 
 - [S002 repository baseline](../raw/sources.md)
+- [S009 Mirae Asset TIGER 472150 official product page](../raw/sources.md)
 - [`src/api/insertDividend.js`](../../src/api/insertDividend.js)
 - [`database/security_hardening.sql`](../../database/security_hardening.sql)
 - [`database/schema_update.sql`](../../database/schema_update.sql)

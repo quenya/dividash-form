@@ -6,6 +6,7 @@ import { useDividendData } from '../hooks/useDividendData';
 import { buildPortfolioSummary, getPortfolioDisplayName, MATCH_STATUS } from '../utils/tickerMatching';
 import { PieChart, AlertCircle, X } from 'lucide-react';
 import { supabase } from '../api/supabaseClient';
+import DividendForecast from './DividendForecast';
 
 ChartJS.register(ArcElement, Tooltip, Legend, ChartDataLabels);
 
@@ -281,6 +282,8 @@ function PortfolioAnalysis() {
                     </table>
                 </div>
             </div>
+
+            <DividendForecast />
 
             {/* Unknown Action Table */}
             {unknownItems.length > 0 && (

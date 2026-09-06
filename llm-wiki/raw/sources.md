@@ -66,3 +66,11 @@
 - Captured: 2026-08-23
 - Scope: password-reset request/recovery, account settings, responsive auth acceptance criteria, and current-vs-prototype status
 - Status: needs-review; implementation exists only on an unmerged branch and is not current `main` behavior
+
+## S009 - Mirae Asset TIGER 472150 Official Product Page
+
+- Type: official issuer product page
+- Locator: https://investments.miraeasset.com/tigeretf/ko/product/search/detail/index.do?ksdFund=KR7472150002
+- Captured: 2026-09-05
+- Scope: official product name TIGER 배당커버드콜액티브, short code 472150, and issuer canonical URL
+- Status: active; live product metadata remains subject to issuer updates

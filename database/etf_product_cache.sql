@@ -2,7 +2,7 @@
 -- No user/account/dividend amount data belongs in this table.
 create table if not exists public.etf_product_cache (
   ticker text primary key,
-  issuer text not null check (issuer in ('KODEX', 'SOL', 'RISE', 'OTHER')),
+  issuer text not null check (issuer in ('KODEX', 'SOL', 'RISE', 'TIGER', 'OTHER')),
   product_name text not null,
   official_url text not null,
   isin text,

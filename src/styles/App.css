@@ -83,6 +83,38 @@ body {
   margin-top: 4px;
 }
 
+.dividend-forecast-heading,
+.dividend-forecast-columns,
+.dividend-forecast-provenance {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.dividend-forecast h4,
+.dividend-forecast h5,
+.dividend-forecast p { margin-top: 0; }
+.dividend-forecast-subtitle,
+.dividend-forecast-columns p,
+.dividend-forecast-provenance,
+.dividend-forecast-warning { color: var(--text-secondary); font-size: 0.85rem; }
+.dividend-forecast-heading button {
+  display: inline-flex; align-items: center; gap: 6px; padding: 8px 12px;
+  border: 1px solid var(--border-color); border-radius: 6px; background: transparent;
+  color: var(--text-primary); cursor: pointer;
+}
+.dividend-forecast-heading button:disabled { opacity: 0.6; cursor: wait; }
+.dividend-forecast-columns > div { flex: 1 1 220px; padding: 12px; border: 1px solid var(--border-color); border-radius: 8px; }
+.dividend-forecast-list { list-style: none; padding: 0; margin: 16px 0; }
+.dividend-forecast-list li { display: grid; grid-template-columns: 1fr auto auto; gap: 12px; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border-color); }
+.dividend-forecast-list small { color: var(--text-secondary); }
+.dividend-forecast-provenance a { display: inline-flex; align-items: center; gap: 4px; color: var(--accent-color); }
+.dividend-forecast-message { display: flex; align-items: center; gap: 8px; padding: 12px; border-radius: 8px; background: var(--bg-primary); }
+.dividend-forecast-message.error { color: #c0392b; }
+.dividend-forecast-assumption { padding: 10px; border-left: 3px solid var(--accent-color); background: var(--bg-primary); }
+
 /* Form Elements */
 input, select, textarea {
   background-color: var(--bg-secondary);
