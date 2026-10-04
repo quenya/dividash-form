@@ -2,8 +2,8 @@
 title: Data Model and RLS
 type: data-model
 status: current
-updated: 2026-08-27
-source_refs: [S002]
+updated: 2026-10-04
+source_refs: [S002, S009, S010]
 tags: [supabase, postgres, rls, migrations]
 ---
 
@@ -38,7 +38,14 @@ tags: [supabase, postgres, rls, migrations]
 the user-owned `dividend_entries` table. The verified seed for TIGER
 배당커버드콜액티브 uses ticker `472150` and the Mirae Asset issuer page in
 S009; rerunning it updates only reference metadata and preserves user dividend
-rows.
+rows. `DividendData` resolves links generically by ETF ticker from
+`etf_product_cache.official_url`; confirmed high-confidence name aliases resolve
+through the same cache. For a first-time ETF, verify its exact ticker/name and
+product page on the issuer's official source, then upsert that verified
+`official_url` into the cache. Do not construct or guess issuer URLs. If the
+dividend row has no ticker, first establish a confirmed high-confidence alias;
+unresolved products remain unlinked until verified. These links do not modify
+user dividend records.
 
 ## Instrument matching
 
@@ -90,6 +97,8 @@ Fresh setup order is `schema_update.sql` → owner UUID를 채운 `security_hard
 
 - [S002 repository baseline](../raw/sources.md)
 - [S009 Mirae Asset TIGER 472150 official product page](../raw/sources.md)
+- [S010 KB RISE 0094M0 official product page](../raw/sources.md)
+- [`src/components/DividendData.jsx`](../../src/components/DividendData.jsx)
 - [`src/api/insertDividend.js`](../../src/api/insertDividend.js)
 - [`database/security_hardening.sql`](../../database/security_hardening.sql)
 - [`database/schema_update.sql`](../../database/schema_update.sql)

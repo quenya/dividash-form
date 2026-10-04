@@ -179,3 +179,13 @@
 - 운영 DB에 `ticker_matches` 테이블이 아직 없는 경우에도 기존 `dividend_entries.company_name`을 종목 선택지로 fallback하도록 수정했다.
 - 원인과 fallback 동작을 회귀 테스트로 고정했다.
 - `2026-08-27` security | DiviDash live RLS hardening: removed legacy broad policies from personal tables, restricted `ticker_matches` writes to authenticated users, applied remote migration `202608270001`, and verified anon access plus full test/build.
+
+## [2026-10-04] fix | Official links in dividend data
+
+- 배당 데이터 화면에서 RISE 코리아밸류업위클리고정커버드콜(0094M0)과 TIGER 배당커버드콜액티브(472150)를 발행사 공식 상품 페이지로 연결하는 fallback을 추가했다.
+- ETF 캐시나 confirmed ticker alias가 없더라도 이름 또는 종목 코드로 링크되며, 사용자 배당 원장은 변경하지 않는다. 근거: S009, S010.
+
+## [2026-10-04] rule | First-time ETF source links
+
+- 새 ETF는 UI에 ticker 기준 `etf_product_cache.official_url` 자동 연결 경로를 사용한다. 최초 등록 시 공식 발행사 자료에서 ticker·상품명·원본 URL을 확인해 캐시에 넣고, ticker가 없는 입력은 confirmed/high alias를 먼저 검증한다.
+- 추측 URL은 저장하지 않는다. 원본 검증 전에는 링크를 표시하지 않고 확인 대기 상태로 둔다. generic ticker lookup 회귀 테스트를 추가했다.

@@ -4,6 +4,31 @@ import { supabase } from "../api/supabaseClient";
 const PAGE_SIZE_OPTIONS = [10, 25, 50];
 const ETF_BRANDS = ["전체", "KODEX", "RISE", "SOL", "TIGER", "ACE", "HANARO", "KOSEF", "PLUS", "TIMEFOLIO"];
 const WON_SYMBOL = String.fromCharCode(0x20A9);
+const OFFICIAL_PRODUCT_LINKS = {
+  "0094M0": "https://riseetf.co.kr/prod/finderDetail/44J2",
+  "RISE 코리아밸류업위클리고정커버드콜": "https://riseetf.co.kr/prod/finderDetail/44J2",
+  "472150": "https://investments.miraeasset.com/tigeretf/ko/product/search/detail/index.do?ksdFund=KR7472150002",
+  "TIGER 배당커버드콜액티브": "https://investments.miraeasset.com/tigeretf/ko/product/search/detail/index.do?ksdFund=KR7472150002",
+};
+
+export function getDividendSourceLinks(cache = [], matches = []) {
+  const links = {};
+  cache.forEach((item) => {
+    if (item.official_url) links[String(item.ticker).trim().toUpperCase()] = item.official_url;
+  });
+  matches.forEach((match) => {
+    if (match.status !== "confirmed" || match.confidence !== "high") return;
+    const url = links[String(match.matched_ticker || "").trim().toUpperCase()];
+    if (url) {
+      links[String(match.source_input || "").trim().toUpperCase()] = url;
+      links[String(match.matched_company_name || "").trim().toUpperCase()] = url;
+    }
+  });
+  Object.entries(OFFICIAL_PRODUCT_LINKS).forEach(([key, url]) => {
+    links[key.toUpperCase()] = url;
+  });
+  return links;
+}
 
 function formatAmount(amount, currency) {
   const numeric = typeof amount === "number" ? amount : Number(amount);
@@ -61,17 +86,7 @@ function DividendData() {
       } else {
         setRows(data || []);
         setTotalCount(typeof count === "number" ? count : 0);
-        const links = {};
-        (cache || []).forEach((item) => { if (item.official_url) links[String(item.ticker).trim().toUpperCase()] = item.official_url; });
-        (matches || []).forEach((match) => {
-          if (match.status !== "confirmed" || match.confidence !== "high") return;
-          const url = links[String(match.matched_ticker || "").trim().toUpperCase()];
-          if (url) {
-            links[String(match.source_input || "").trim().toUpperCase()] = url;
-            links[String(match.matched_company_name || "").trim().toUpperCase()] = url;
-          }
-        });
-        setSourceLinks(links);
+        setSourceLinks(getDividendSourceLinks(cache || [], matches || []));
       }
 
       setLoading(false);

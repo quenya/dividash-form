@@ -74,3 +74,11 @@
 - Captured: 2026-09-05
 - Scope: official product name TIGER 배당커버드콜액티브, short code 472150, and issuer canonical URL
 - Status: active; live product metadata remains subject to issuer updates
+
+## S010 - KB RISE 0094M0 Official Product Page
+
+- Type: official issuer product page
+- Locator: https://riseetf.co.kr/prod/finderDetail/44J2
+- Captured: 2026-10-04
+- Scope: official product name RISE 코리아밸류업위클리고정커버드콜, short code 0094M0, and issuer canonical URL
+- Status: active; live product metadata remains subject to issuer updates
