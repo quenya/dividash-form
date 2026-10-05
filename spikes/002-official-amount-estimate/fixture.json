@@ -1,0 +1,24 @@
+{
+  "asOfDate": "2026-08-31",
+  "windowMonths": 3,
+  "entries": [
+    {"ticker":"069500","company_name":"KODEX 200","dividend_amount":10000,"payment_date":"2026-08-28","currency":"KRW"},
+    {"ticker":"SOL123","company_name":"SOL 테스트","dividend_amount":10000,"payment_date":"2026-08-20","currency":"KRW","withholding_tax":1500},
+    {"ticker":"RISE01","company_name":"RISE 테스트","dividend_amount":10000,"payment_date":"2026-08-15","currency":"USD"},
+    {"ticker":"ZERO01","company_name":"ZERO 테스트","dividend_amount":10000,"payment_date":"2026-08-10","currency":"KRW"},
+    {"ticker":null,"company_name":"KODEX 200","dividend_amount":10000,"payment_date":"2026-08-28","currency":"KRW"}
+  ],
+  "distributions": [
+    {"ticker":"069500","payment_date":"2026-05-27","distribution_per_share":100,"currency":"KRW","source_url":"https://example.test/kodex/prior"},
+    {"ticker":"069500","payment_date":"2026-09-27","distribution_per_share":120,"currency":"KRW","source_url":"https://example.test/kodex/new"},
+    {"ticker":"SOL123","payment_date":"2026-05-20","distribution_per_share":100,"currency":"KRW"},
+    {"ticker":"SOL123","payment_date":"2026-08-19","distribution_per_share":110,"currency":"KRW"},
+    {"ticker":"SOL123","payment_date":"2026-09-19","distribution_per_share":115,"currency":"KRW"},
+    {"ticker":"RISE01","payment_date":"2026-05-15","distribution_per_share":100,"currency":"KRW"},
+    {"ticker":"RISE01","payment_date":"2026-08-14","distribution_per_share":110,"currency":"KRW"},
+    {"ticker":"RISE01","payment_date":"2026-09-14","distribution_per_share":110,"currency":"KRW"},
+    {"ticker":"ZERO01","payment_date":"2026-05-10","distribution_per_share":0,"currency":"KRW"},
+    {"ticker":"ZERO01","payment_date":"2026-09-09","distribution_per_share":100,"currency":"KRW"}
+  ],
+  "matches": []
+}

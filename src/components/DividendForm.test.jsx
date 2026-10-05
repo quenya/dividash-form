@@ -1,6 +1,6 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import DividendForm, { getCompanyNameChoices, getVerifiedMatchChoices, maskAccountNumber } from './DividendForm';
+import DividendForm, { getAccountNameChoices, getCompanyNameChoices, getVerifiedMatchChoices, maskAccountNumber } from './DividendForm';
 import insertDividend from '../api/insertDividend';
 
 jest.mock('../api/insertDividend', () => jest.fn(() => Promise.resolve({ success: true })));
@@ -111,6 +111,17 @@ test('orders company choices by most recent dividend payment date', () => {
   ], [], new Error('ticker_matches table does not exist'));
 
   expect(choices).toEqual(['Newest Fund', 'Middle Fund', 'Older Fund']);
+});
+
+test('orders account choices by each account latest deposit date', () => {
+  const choices = getAccountNameChoices([
+    { account_name: '오래된 계좌', payment_date: '2026-01-10' },
+    { account_name: '최근 계좌', payment_date: '2026-07-20' },
+    { account_name: '중간 계좌', payment_date: '2026-04-15' },
+    { account_name: '최근 계좌', payment_date: '2026-07-01' }
+  ], ['입금내역 없는 계좌', '최근 계좌']);
+
+  expect(choices).toEqual(['최근 계좌', '중간 계좌', '오래된 계좌', '입금내역 없는 계좌']);
 });
 
 test('does not expose normalized-colliding aliases in the input choices', () => {
