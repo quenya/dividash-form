@@ -36,6 +36,27 @@ export function getCompanyNameChoices(entryData = [], matchData = [], matchError
   return [...new Set([...entryNames, ...matchedNames])];
 }
 
+export function getAccountNameChoices(entryData = [], additionalNames = []) {
+  const latestPaymentByAccount = new Map();
+  entryData.forEach((entry) => {
+    const accountName = entry.account_name?.trim();
+    if (!accountName) return;
+
+    const paymentDate = String(entry.payment_date || '');
+    const previousDate = latestPaymentByAccount.get(accountName) || '';
+    if (paymentDate > previousDate) latestPaymentByAccount.set(accountName, paymentDate);
+  });
+
+  const recentNames = [...latestPaymentByAccount.entries()]
+    .sort(([, dateA], [, dateB]) => dateB.localeCompare(dateA))
+    .map(([accountName]) => accountName);
+
+  return [...new Set([...recentNames, ...additionalNames])]
+    .filter((name) => name?.trim())
+    .map((name) => name.trim())
+    .filter((name, index, names) => names.indexOf(name) === index);
+}
+
 export function maskAccountNumber(value = '') {
   const trimmed = value.trim();
   if (!trimmed) return '';
@@ -123,19 +144,14 @@ function DividendForm() {
       setAccountStorageAvailable(true);
       setAccountRecords(data || []);
       setBrokerageNames([...new Set((data || []).map((account) => account.brokerage_name?.trim()).filter(Boolean))]);
-      setAccountNames((currentAccountNames) => {
-        const managedNames = (data || []).map((account) => account.display_name);
-        return [...managedNames, ...currentAccountNames].filter(
-          (name, index, names) => name && names.indexOf(name) === index
-        );
-      });
+      setAccountNames((currentAccountNames) => getAccountNameChoices([], [
+        ...(data || []).map((account) => account.display_name),
+        ...currentAccountNames
+      ]));
     };
     fetchManagedAccounts();
 
     const fetchCompanyAndAccountNames = async () => {
-      const oneYearAgo = new Date();
-      oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
-      const oneYearAgoStr = oneYearAgo.toISOString().slice(0, 10);
       const { data, error } = await supabase
         .from('dividend_entries')
         .select('company_name, account_name, payment_date', { distinct: false });
@@ -147,25 +163,8 @@ function DividendForm() {
         .from('ticker_matches')
         .select('source_input, matched_company_name, matched_ticker, market, sector, industry, evidence, confidence, status');
       setCompanyNames(getCompanyNameChoices(data || [], matchData || [], matchError));
-      // 최신순 정렬 후 중복 제거 (계좌명)
-      const sortedAccounts = (data || [])
-        .filter(item => item.payment_date >= oneYearAgoStr)
-        .sort((a, b) => b.payment_date.localeCompare(a.payment_date));
-      const recentAccounts = [];
-      const seenAccounts = new Set();
-      for (const item of sortedAccounts) {
-        const acc = item.account_name && item.account_name.trim();
-        if (acc && !seenAccounts.has(acc)) {
-          recentAccounts.push(acc);
-          seenAccounts.add(acc);
-        }
-      }
-      setAccountNames((currentAccountNames) => {
-        const mergedAccounts = [...currentAccountNames, ...recentAccounts].filter(
-          (name, index, names) => name && names.indexOf(name) === index
-        );
-        return mergedAccounts;
-      });
+      // 최근 입금내역이 있는 계좌부터 최신 입금일 순으로 정렬하고 중복 제거
+      setAccountNames((currentAccountNames) => getAccountNameChoices(data || [], currentAccountNames));
     };
     fetchCompanyAndAccountNames();
 

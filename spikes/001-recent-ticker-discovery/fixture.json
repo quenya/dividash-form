@@ -1,0 +1,20 @@
+{
+  "asOfDate": "2026-08-28",
+  "windowMonths": 3,
+  "entries": [
+    {"ticker":"069500","company_name":"KODEX 200","payment_date":"2026-08-28"},
+    {"ticker":"069500","company_name":"KODEX 200","payment_date":"2026-08-28"},
+    {"ticker":null,"company_name":"RISE 삼성전자SK하이닉스채권혼합","payment_date":"2026-08-04"},
+    {"ticker":"123456","company_name":"일반 주식","payment_date":"2026-08-04"},
+    {"ticker":"999999","company_name":"미등록 종목","payment_date":"2026-06-01"},
+    {"ticker":"069500","company_name":"KODEX 200","payment_date":"2026-05-27"}
+  ],
+  "instruments": [
+    {"symbol":"069500","name":"KODEX 200","security_type":"ETF"},
+    {"symbol":"0162Z0","name":"RISE 삼성전자SK하이닉스채권혼합","security_type":"상장지수펀드"},
+    {"symbol":"123456","name":"일반 주식","security_type":"STOCK"}
+  ],
+  "matches": [
+    {"source_input":"RISE 삼성전자SK하이닉스채권혼합","matched_ticker":"0162Z0","status":"confirmed","confidence":"high"}
+  ]
+}
