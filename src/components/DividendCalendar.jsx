@@ -62,7 +62,7 @@ function DividendCalendar() {
 
             <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
                 <div style={{ display: 'flex', justifyContent: 'center' }}>
-                    <Calendar onChange={setDate} value={date} tileContent={tileContent} formatDay={(locale, day) => day.getDate()} />
+                    <Calendar calendarType="gregory" onChange={setDate} value={date} tileContent={tileContent} formatDay={(locale, day) => day.getDate()} />
                 </div>
 
                 <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: '20px' }}>
