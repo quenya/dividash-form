@@ -1,8 +1,9 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
+import Calendar from 'react-calendar';
 import DividendCalendar from './DividendCalendar';
 
-jest.mock('react-calendar', () => () => null);
+jest.mock('react-calendar', () => ({ __esModule: true, default: jest.fn(() => null) }));
 
 jest.mock('../hooks/useDividendData', () => ({
   useDividendData: () => ({
@@ -19,6 +20,7 @@ test('renders scheduled distribution beside actual receipt without combining tot
   jest.useFakeTimers().setSystemTime(new Date('2026-10-16T12:00:00'));
   render(<DividendCalendar />);
 
+  expect(Calendar).toHaveBeenCalledWith(expect.objectContaining({ calendarType: 'gregory' }), expect.anything());
   expect(screen.getByText('예정 · 공식 주당 분배금')).toBeInTheDocument();
   expect(screen.getByText('실제 입금 · 연금계좌')).toBeInTheDocument();
   expect(screen.getByText('KRW 125 / 주')).toBeInTheDocument();
