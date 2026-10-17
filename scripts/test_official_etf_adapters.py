@@ -1,9 +1,10 @@
 import json
 import pathlib
+import socket
 import sys
 import unittest
 from email.message import Message
-from urllib.error import HTTPError
+from urllib.error import HTTPError, URLError
 
 sys.path.insert(0, str(pathlib.Path(__file__).parent))
 from official_etf_adapters import (MAX_TIMEOUT_SECONDS, SOURCES, collect,
@@ -72,6 +73,11 @@ class OfficialAdapterContractTests(unittest.TestCase):
         denied = collect("SOL", "0167B0", url, fetcher=forbidden)
         self.assertEqual(denied["status"], "failure")
         self.assertEqual(denied["error_code"], "http_403")
+        def dns_failed(_request_url, _timeout):
+            raise URLError(socket.gaierror(-2, "name lookup failed"))
+        network = collect("SOL", "0167B0", url, fetcher=dns_failed)
+        self.assertEqual(network["status"], "failure")
+        self.assertEqual(network["error_code"], "network_dns_error")
         self.assertEqual(collect("TIGER", "123456", "https://example.invalid")["status"], "unsupported")
 
     def test_timeout_bound_rejects_unbounded_values(self):
