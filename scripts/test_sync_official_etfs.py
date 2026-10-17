@@ -61,6 +61,12 @@ def target_and_record():
 
 
 class SyncSafetyTests(unittest.TestCase):
+    def test_retry_result_reports_actual_attempt_count(self):
+        collector = Mock(side_effect=[RuntimeError("temporary"), {"status": "success", "records": [{"ticker": "0094M0"}]}])
+        with patch.object(sync.time, "sleep"):
+            result = sync.collect_with_retry(collector, attempts=2, backoff_seconds=0)
+        self.assertEqual(result["attempts"], 2)
+
     def test_retry_retries_collector_exception(self):
         collector = Mock(side_effect=[RuntimeError("temporary"), {"status": "empty", "records": []}])
         with patch.object(sync.time, "sleep") as sleep:

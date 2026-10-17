@@ -29,6 +29,23 @@ class OfficialAdapterContractTests(unittest.TestCase):
         self.assertEqual(result["records"][0]["distribution_rate"], 1.0)
         self.assertEqual(result["records"][0]["raw_payload"]["DIVIDEND_PRI"], "100")
 
+    def test_rise_official_excel_export_contract(self):
+        url = "https://kbam.co.kr/api/products/etfs/44J2/dividend?download=xlsx"
+        fixture = pathlib.Path(__file__).parent / "fixtures" / "rise_0094m0_distribution.xlsx"
+        fetched = []
+        def fetcher(url, timeout):
+            fetched.append((url, timeout))
+            return fixture.read_bytes()
+        result = collect("RISE", "0094M0", url, fetcher=fetcher)
+        self.assertEqual(fetched, [(url, MAX_TIMEOUT_SECONDS)])
+        self.assertEqual(result["status"], "success")
+        latest = result["records"][0]
+        self.assertEqual(latest["ex_date"], "2026-10-15")
+        self.assertEqual(latest["payment_date"], "2026-10-19")
+        self.assertEqual(latest["distribution_per_share"], 465.0)
+        self.assertEqual(latest["source_url"], url)
+        self.assertEqual(latest["raw_payload"]["분배금액(원)"], "465")
+
     def test_rise_html_parser(self):
         url = SOURCES["RISE"].format(product_page="44K1")
         html = "<h3>분배금 지급현황</h3><table><tr><td>2026-08-01</td><td>2026-08-05</td><td>75</td><td>tax</td></tr></table>"

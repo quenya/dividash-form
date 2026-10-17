@@ -87,7 +87,7 @@ def collect_with_retry(collector: Callable[[], dict], attempts: int = MAX_ATTEMP
         except Exception as exc: last = {"status": "failure", "error": f"collector exception: {exc}"}
         else:
             last = result if isinstance(result, dict) else {"status": "failure", "error": "malformed collector result"}
-            if last.get("status") not in {"failure", "timeout"}: return last
+            if last.get("status") not in {"failure", "timeout"}: return {**last, "attempts": attempt}
         if attempt < attempts:
             delay = min(MAX_BACKOFF_SECONDS, backoff_seconds * (2 ** (attempt - 1)))
             log("retry", attempt=attempt, delay_seconds=delay, error=last.get("error"))

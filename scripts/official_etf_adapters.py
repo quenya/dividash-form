@@ -5,22 +5,25 @@ intentionally owned by a separate trusted sync job.
 """
 from __future__ import annotations
 
+import io
 import json
 import re
+import zipfile
+import xml.etree.ElementTree as ET
 from datetime import date, datetime, timezone
 from html import unescape
 from typing import Any, Callable, Dict, Iterable, Optional
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
-PARSER_VERSION = "official-adapters-v1"
+PARSER_VERSION = "official-adapters-v2"
 MAX_TIMEOUT_SECONDS = 20
 
 # URLs are sourced from the existing issuer sync boundary. Do not add guessed URLs.
 SOURCES = {
     "KODEX": "https://www.samsungfund.com/api/v1/kodex/divid-info.do?id={product_id}",
     "SOL": "https://www.soletf.com/api/etf/pds/dividend/{fund_code}",
-    "RISE": "https://www.riseetf.co.kr/prod/finderDetail/{product_page}",
+    "RISE": "https://kbam.co.kr/api/products/etfs/{product_page}/dividend?download=xlsx",
 }
 
 
@@ -103,16 +106,85 @@ def parse_rise(html: str, ticker: str, source_url: str) -> list:
     return rows
 
 
-def _fetch(url: str, timeout: int = MAX_TIMEOUT_SECONDS) -> str:
+def parse_rise_xlsx(payload: bytes, ticker: str, source_url: str) -> list:
+    """Parse the official KBAM/Rise distribution-history XLSX export."""
+    if not isinstance(payload, bytes) or len(payload) > 10_000_000:
+        raise ValueError("RISE XLSX payload invalid or too large")
+    ns = {"m": "http://schemas.openxmlformats.org/spreadsheetml/2006/main"}
+    try:
+        with zipfile.ZipFile(io.BytesIO(payload)) as workbook:
+            names = set(workbook.namelist())
+            sheet_path = "xl/worksheets/sheet1.xml"
+            if sheet_path not in names:
+                raise ValueError("RISE XLSX missing first worksheet")
+            shared = []
+            if "xl/sharedStrings.xml" in names:
+                root = ET.fromstring(workbook.read("xl/sharedStrings.xml"))
+                shared = ["".join(node.itertext()) for node in root.findall("m:si", ns)]
+            root = ET.fromstring(workbook.read(sheet_path))
+    except (zipfile.BadZipFile, KeyError, ET.ParseError) as exc:
+        raise ValueError("RISE XLSX is malformed") from exc
+
+    def column_index(reference):
+        letters = re.match(r"[A-Z]+", reference or "")
+        if not letters:
+            raise ValueError("RISE XLSX has invalid cell reference")
+        value = 0
+        for char in letters.group(0):
+            value = value * 26 + ord(char) - 64
+        return value - 1
+
+    rows = []
+    for row in root.findall(".//m:sheetData/m:row", ns):
+        values = {}
+        for cell in row.findall("m:c", ns):
+            kind = cell.get("t")
+            if kind == "inlineStr":
+                value = "".join(cell.find("m:is", ns).itertext()) if cell.find("m:is", ns) is not None else ""
+            else:
+                raw = cell.findtext("m:v", default="", namespaces=ns)
+                if kind == "s":
+                    try:
+                        value = shared[int(raw)]
+                    except (ValueError, IndexError):
+                        raise ValueError("RISE XLSX has invalid shared string")
+                else:
+                    value = raw
+            values[column_index(cell.get("r"))] = value
+        rows.append(values)
+        if len(rows) > 5001:
+            raise ValueError("RISE XLSX exceeds row limit")
+
+    if not rows:
+        raise ValueError("RISE XLSX missing header row")
+    headers = {str(value).strip(): index for index, value in rows[0].items()}
+    required = ("지급기준일", "실지급일", "분배금액(원)", "주당과세표준액(원)", "분배율(%)")
+    if any(header not in headers for header in required):
+        raise ValueError("RISE XLSX header schema changed")
+    records = []
+    for values in rows[1:]:
+        raw = {header: values.get(headers[header], "") for header in required}
+        if not any(str(value).strip() for value in raw.values()):
+            continue
+        record = _record("RISE", ticker, source_url, raw["지급기준일"], raw["실지급일"],
+                         raw["분배금액(원)"], None, raw)
+        record["distribution_rate"] = _number(raw["분배율(%)"])
+        record["taxable_base_per_share"] = _number(raw["주당과세표준액(원)"])
+        records.append(record)
+    return records
+
+
+def _fetch(url: str, timeout: int = MAX_TIMEOUT_SECONDS) -> bytes:
     if not isinstance(timeout, int) or timeout < 1 or timeout > MAX_TIMEOUT_SECONDS:
         raise ValueError(f"timeout must be 1-{MAX_TIMEOUT_SECONDS} seconds")
     request = Request(url, headers={"User-Agent": "DiviDash-official-adapter/1.0"})
     with urlopen(request, timeout=timeout) as response:
-        return response.read().decode("utf-8")
+        return response.read(10_000_001)
+
 
 
 def collect(issuer: str, ticker: str, source_url: str,
-            fetcher: Callable[[str, int], str] = _fetch, timeout: int = MAX_TIMEOUT_SECONDS,
+            fetcher: Callable[[str, int], Any] = _fetch, timeout: int = MAX_TIMEOUT_SECONDS,
             payload: Any = None) -> Dict[str, Any]:
     """Collect one source with explicit status and provenance.
 
@@ -128,11 +200,17 @@ def collect(issuer: str, ticker: str, source_url: str,
     try:
         body = payload if payload is not None else fetcher(source_url, timeout)
         if issuer == "KODEX":
+            if isinstance(body, bytes):
+                body = body.decode("utf-8")
             parsed = parse_kodex(body if isinstance(body, (dict, list)) else json.loads(body), ticker, source_url)
         elif issuer == "SOL":
+            if isinstance(body, bytes):
+                body = body.decode("utf-8")
             parsed = parse_sol(body if isinstance(body, (dict, list)) else json.loads(body), ticker, source_url)
+        elif isinstance(body, bytes) and body.startswith(b"PK"):
+            parsed = parse_rise_xlsx(body, ticker, source_url)
         else:
-            parsed = parse_rise(str(body), ticker, source_url)
+            parsed = parse_rise(body.decode("utf-8") if isinstance(body, bytes) else str(body), ticker, source_url)
         base["records"] = parsed
         base["status"] = "success" if parsed else "empty"
         return base
