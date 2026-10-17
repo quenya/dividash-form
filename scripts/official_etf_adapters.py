@@ -8,6 +8,8 @@ from __future__ import annotations
 import io
 import json
 import re
+import socket
+import ssl
 import zipfile
 import xml.etree.ElementTree as ET
 from datetime import date, datetime, timezone
@@ -219,7 +221,18 @@ def collect(issuer: str, ticker: str, source_url: str,
     except HTTPError as exc:
         return {**base, "status": "failure", "error": str(exc), "error_code": f"http_{exc.code}"}
     except URLError as exc:
-        return {**base, "status": "failure", "error": str(exc), "error_code": "network_error"}
+        reason = exc.reason
+        if isinstance(reason, TimeoutError):
+            code = "request_timeout"
+        elif isinstance(reason, socket.gaierror):
+            code = "network_dns_error"
+        elif isinstance(reason, ssl.SSLError):
+            code = "network_tls_error"
+        elif isinstance(reason, (ConnectionError, OSError)):
+            code = "network_connection_error"
+        else:
+            code = "network_error"
+        return {**base, "status": "failure", "error": str(exc), "error_code": code}
     except (ValueError, TypeError, json.JSONDecodeError) as exc:
         return {**base, "status": "failure", "error": str(exc), "error_code": "invalid_source_response"}
 
