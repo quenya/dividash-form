@@ -6,19 +6,51 @@ from scripts.official_etf_targets import resolve_targets
 
 class OfficialEtfTargetTests(unittest.TestCase):
     def test_resolves_official_api_urls_from_verified_product_pages(self):
-        for issuer, url, expected in [
-            ("KODEX", "https://www.samsungfund.com/etf/product/view.do?id=2ETF15", "https://www.samsungfund.com/api/v1/kodex/divid-info.do?id=2ETF15"),
-            ("SOL", "https://www.soletf.com/ko/fund/etf/211107?tabIndex=1", "https://www.soletf.com/api/etf/pds/dividend/211107"),
+        for issuer, ticker, product_name, url, expected in [
+            ("KODEX", "123456", "verified", "https://www.samsungfund.com/etf/product/view.do?id=2ETF15", "https://www.samsungfund.com/api/v1/kodex/divid-info.do?id=2ETF15"),
+            ("SOL", "123456", "verified", "https://www.soletf.com/ko/fund/etf/211107?tabIndex=1", "https://www.soletf.com/api/etf/pds/dividend/211107"),
+            ("TIGER", "472150", "TIGER 배당커버드콜액티브", "https://investments.miraeasset.com/tigeretf/ko/product/search/detail/index.do?ksdFund=KR7472150002", "https://investments.miraeasset.com/tigeretf/ko/reference/dividend-excel.ajax?ksdFund=KR7472150002"),
         ]:
             with self.subTest(issuer=issuer):
                 targets, gaps = resolve_targets(
-                    entries=[{"ticker": "123456", "payment_date": "2026-10-01"}],
-                    instruments=[{"symbol": "123456", "security_type": "ETF"}],
-                    products=[{"ticker": "123456", "issuer": issuer, "product_name": "verified", "official_url": url}],
+                    entries=[{"ticker": ticker, "payment_date": "2026-10-01"}],
+                    instruments=[{"symbol": ticker, "security_type": "ETF"}],
+                    products=[{"ticker": ticker, "issuer": issuer, "product_name": product_name, "official_url": url}],
                     as_of=date(2026, 10, 17),
                 )
                 self.assertEqual(targets[0]["source_url"], expected)
                 self.assertEqual(gaps, [])
+
+    def test_resolves_tiger_by_verified_official_url_and_product_name(self):
+        url = "https://investments.miraeasset.com/tigeretf/ko/product/search/detail/index.do?ksdFund=KR7472150002"
+        targets, unresolved = resolve_targets(
+            entries=[{"ticker": "472150", "company_name": "TIGER 배당커버드콜액티브", "payment_date": "2026-10-02"}],
+            instruments=[{"symbol": "472150", "security_type": "ETF"}],
+            products=[{"ticker": "472150", "issuer": "TIGER", "product_name": "TIGER 배당커버드콜액티브", "official_url": url}],
+            as_of=date(2026, 10, 17),
+        )
+        self.assertEqual(targets[0]["source_url"], "https://investments.miraeasset.com/tigeretf/ko/reference/dividend-excel.ajax?ksdFund=KR7472150002")
+        self.assertEqual(unresolved, [])
+
+    def test_rejects_mismatched_tiger_product_name(self):
+        targets, unresolved = resolve_targets(
+            entries=[{"ticker": "472150", "payment_date": "2026-10-02"}],
+            instruments=[{"symbol": "472150", "security_type": "ETF"}],
+            products=[{"ticker": "472150", "issuer": "TIGER", "product_name": "different TIGER product", "official_url": "https://investments.miraeasset.com/tigeretf/ko/product/search/detail/index.do?ksdFund=KR7472150002"}],
+            as_of=date(2026, 10, 17),
+        )
+        self.assertEqual(targets, [])
+        self.assertEqual(unresolved[0]["reason"], "verified_tiger_product_mismatch")
+
+    def test_rejects_unverified_tiger_product_code(self):
+        targets, unresolved = resolve_targets(
+            entries=[{"ticker": "472150", "payment_date": "2026-10-02"}],
+            instruments=[{"symbol": "472150", "security_type": "ETF"}],
+            products=[{"ticker": "472150", "issuer": "TIGER", "product_name": "incorrect", "official_url": "https://investments.miraeasset.com/tigeretf/ko/product/search/detail/index.do?ksdFund=OTHER"}],
+            as_of=date(2026, 10, 17),
+        )
+        self.assertEqual(targets, [])
+        self.assertEqual(unresolved[0]["reason"], "invalid_or_unverified_official_url")
 
     def test_resolves_name_only_entry_only_through_unique_confirmed_high_match(self):
         matches = [{"source_input": "RISE sample", "matched_ticker": "0094M0", "status": "confirmed", "confidence": "high"}]

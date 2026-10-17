@@ -9,6 +9,7 @@ ISSUER_HOSTS = {
     "KODEX": {"www.samsungfund.com"},
     "SOL": {"www.soletf.com"},
     "RISE": {"riseetf.co.kr", "www.riseetf.co.kr"},
+    "TIGER": {"investments.miraeasset.com"},
 }
 
 
@@ -32,6 +33,10 @@ def _source_url(issuer, official_url):
         parts = parsed.path.rstrip("/").split("/")
         if len(parts) == 4 and parts[1:3] == ["prod", "finderDetail"] and parts[3].isalnum():
             return f"https://kbam.co.kr/api/products/etfs/{parts[3]}/dividend?download=xlsx"
+    elif issuer == "TIGER" and parsed.path == "/tigeretf/ko/product/search/detail/index.do":
+        fund_code = parse_qs(parsed.query).get("ksdFund", [""])[0]
+        if fund_code == "KR7472150002":
+            return f"https://investments.miraeasset.com/tigeretf/ko/reference/dividend-excel.ajax?ksdFund={fund_code}"
     elif issuer == "KODEX" and parsed.path == "/etf/product/view.do":
         product_id = parse_qs(parsed.query).get("id", [""])[0]
         if product_id and product_id.isalnum():
@@ -124,6 +129,9 @@ def resolve_targets(*, entries, instruments, products, as_of, matches=()):
         source_url = _source_url(issuer, product.get("official_url"))
         if not source_url or issuer not in ISSUER_HOSTS:
             unresolved.append({"ticker": ticker, "status": "manual_review", "reason": "invalid_or_unverified_official_url"})
+            continue
+        if issuer == "TIGER" and (ticker != "472150" or product.get("product_name") != "TIGER 배당커버드콜액티브"):
+            unresolved.append({"ticker": ticker, "status": "manual_review", "reason": "verified_tiger_product_mismatch"})
             continue
         targets.append({
             "ticker": ticker,

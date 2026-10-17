@@ -82,3 +82,12 @@
 - Captured: 2026-10-04
 - Scope: official product name RISE 코리아밸류업위클리고정커버드콜, short code 0094M0, and issuer canonical URL
 - Status: active; live product metadata remains subject to issuer updates
+
+## S011 - Mirae Asset TIGER 472150 Official Distribution Export
+
+- Type: live official issuer product page and downloaded distribution export
+- Locator: https://investments.miraeasset.com/tigeretf/ko/product/search/detail/index.do?ksdFund=KR7472150002
+- Export: https://investments.miraeasset.com/tigeretf/ko/reference/dividend-excel.ajax?ksdFund=KR7472150002
+- Captured: 2026-10-17
+- Scope: official product name TIGER 배당커버드콜액티브, short code 472150, export column meanings and 34 public distribution rows. The `.xls` response was verified as UTF-8 HTML; latest observed row was record date 2026-09-30, actual payment date 2026-10-02, amount 425 KRW per share.
+- Status: active; export response schema and history may change at the issuer.

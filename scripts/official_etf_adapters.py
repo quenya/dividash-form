@@ -18,14 +18,17 @@ from typing import Any, Callable, Dict, Iterable, Optional
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
-PARSER_VERSION = "official-adapters-v2"
+PARSER_VERSION = "official-adapters-v3"
 MAX_TIMEOUT_SECONDS = 20
+TIGER_SOURCE = "https://investments.miraeasset.com/tigeretf/ko/reference/dividend-excel.ajax?ksdFund={fund_code}"
+TIGER_HEADERS = ("No", "종목코드", "종목명", "지급기준일", "실지급일", "분배금액(원)", "과세표준액(원)")
 
 # URLs are sourced from the existing issuer sync boundary. Do not add guessed URLs.
 SOURCES = {
     "KODEX": "https://www.samsungfund.com/api/v1/kodex/divid-info.do?id={product_id}",
     "SOL": "https://www.soletf.com/api/etf/pds/dividend/{fund_code}",
     "RISE": "https://kbam.co.kr/api/products/etfs/{product_page}/dividend?download=xlsx",
+    "TIGER": TIGER_SOURCE,
 }
 
 
@@ -93,6 +96,70 @@ def parse_sol(payload: Any, ticker: str, source_url: str) -> list:
 _RISE_ROW = re.compile(r"<tr[^>]*>\s*(?:<td[^>]*>\s*)?(\d{4}[-/]\d{2}[-/]\d{2}).*?</td>\s*"
                        r"(?:<td[^>]*>\s*)?(\d{4}[-/]\d{2}[-/]\d{2}).*?</td>\s*"
                        r"(?:<td[^>]*>\s*)?([^<]+?)\s*</td>", re.I | re.S)
+
+
+def parse_tiger(payload: Any, ticker: str, source_url: str) -> list:
+    """Parse Mirae Asset's official TIGER dividend export (HTML served as .xls)."""
+    if isinstance(payload, bytes):
+        if len(payload) > 10_000_000:
+            raise ValueError("TIGER response is too large")
+        try:
+            text = payload.decode("utf-8-sig")
+        except UnicodeDecodeError as exc:
+            raise ValueError("TIGER response is not UTF-8 HTML") from exc
+    elif isinstance(payload, str):
+        if len(payload.encode("utf-8")) > 10_000_000:
+            raise ValueError("TIGER response is too large")
+        text = payload
+    else:
+        raise ValueError("TIGER response is not an HTML export")
+
+    tables = re.findall(r"<table\b[^>]*>(.*?)</table\s*>", text, re.I | re.S)
+    matches = []
+    for table in tables:
+        rows = re.findall(r"<tr\b[^>]*>(.*?)</tr\s*>", table, re.I | re.S)
+        if not rows:
+            continue
+        header = tuple(unescape(re.sub(r"<[^>]*>", "", cell)).strip()
+                       for cell in re.findall(r"<t[hd]\b[^>]*>(.*?)</t[hd]\s*>", rows[0], re.I | re.S))
+        if header != TIGER_HEADERS:
+            continue
+        parsed_rows = []
+        for row in rows[1:]:
+            cells = [unescape(re.sub(r"<[^>]*>", "", cell)).strip()
+                     for cell in re.findall(r"<td\b[^>]*>(.*?)</td\s*>", row, re.I | re.S)]
+            if not cells:
+                continue
+            if len(cells) != len(TIGER_HEADERS):
+                raise ValueError("TIGER response row schema changed")
+            parsed_rows.append(cells)
+        matches.append(parsed_rows)
+    if len(matches) != 1:
+        raise ValueError("TIGER response missing or ambiguous distribution table")
+
+    records = []
+    for row in matches[0]:
+        row_number, fund_code, product_name, ex_date, payment_date, amount, taxable_base = row
+        if fund_code != "KR7472150002" or str(ticker).strip().upper() != "472150":
+            raise ValueError("TIGER product ticker mismatch")
+        if not product_name or _date(ex_date) is None or _date(payment_date) is None:
+            raise ValueError("TIGER response contains invalid distribution row")
+        amount_n = _number(amount)
+        taxable_n = _number(taxable_base)
+        if not row_number.isdigit() or amount_n is None or amount_n < 0 or taxable_n is None or taxable_n < 0:
+            raise ValueError("TIGER response contains invalid distribution amount")
+        record = _record("TIGER", ticker, source_url, ex_date, payment_date, amount, None, {
+            "순번": row_number,
+            "상품코드": fund_code,
+            "상품명": product_name,
+            "지급기준일": ex_date,
+            "실지급일": payment_date,
+            "분배금액(원)": amount,
+            "과세표준액(원)": taxable_base,
+        })
+        record["taxable_base_per_share"] = taxable_n
+        records.append(record)
+    return records
 
 
 def parse_rise(html: str, ticker: str, source_url: str) -> list:
@@ -209,6 +276,8 @@ def collect(issuer: str, ticker: str, source_url: str,
             if isinstance(body, bytes):
                 body = body.decode("utf-8")
             parsed = parse_sol(body if isinstance(body, (dict, list)) else json.loads(body), ticker, source_url)
+        elif issuer == "TIGER":
+            parsed = parse_tiger(body, ticker, source_url)
         elif isinstance(body, bytes) and body.startswith(b"PK"):
             parsed = parse_rise_xlsx(body, ticker, source_url)
         else:
@@ -237,4 +306,4 @@ def collect(issuer: str, ticker: str, source_url: str,
         return {**base, "status": "failure", "error": str(exc), "error_code": "invalid_source_response"}
 
 
-__all__ = ["SOURCES", "PARSER_VERSION", "MAX_TIMEOUT_SECONDS", "collect", "parse_kodex", "parse_sol", "parse_rise"]
+__all__ = ["SOURCES", "PARSER_VERSION", "MAX_TIMEOUT_SECONDS", "collect", "parse_kodex", "parse_sol", "parse_rise", "parse_tiger"]

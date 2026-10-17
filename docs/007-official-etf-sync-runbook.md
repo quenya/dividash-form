@@ -2,7 +2,7 @@
 
 ## 목적과 안전 경계
 
-`scripts/sync_official_etfs.py`는 KODEX·SOL·RISE 공식 공개 페이지에서 ETF 분배 이력을 수집하고, 승인된 경우 공개 참조 테이블에 반영한다. 사용자 입력의 기준 데이터인 `public.dividend_entries`는 읽거나 쓰지 않는다.
+`scripts/sync_recent_official_etfs.py` dynamically selects recent ETF targets and supports KODEX·SOL·RISE·TIGER official distribution exports. `public.dividend_entries` is read-only input to discovery and is never updated or written by this collector.
 
 기본 실행은 반드시 dry-run이며 DB 드라이버를 import하거나 DB에 연결하지 않는다. 실제 반영은 명시적인 `--write`가 있을 때만 수행한다. 자동 launchd 설치·배포는 이 런북의 범위가 아니다.
 

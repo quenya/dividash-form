@@ -8,7 +8,7 @@ from urllib.error import HTTPError, URLError
 
 sys.path.insert(0, str(pathlib.Path(__file__).parent))
 from official_etf_adapters import (MAX_TIMEOUT_SECONDS, SOURCES, collect,
-                                   parse_kodex, parse_rise, parse_sol)
+                                   parse_kodex, parse_rise, parse_sol, parse_tiger)
 
 
 class OfficialAdapterContractTests(unittest.TestCase):
@@ -49,6 +49,40 @@ class OfficialAdapterContractTests(unittest.TestCase):
         self.assertEqual(latest["source_url"], url)
         self.assertEqual(latest["raw_payload"]["분배금액(원)"], "465")
 
+    def test_tiger_official_html_export_is_fetched_and_parsed(self):
+        url = "https://investments.miraeasset.com/tigeretf/ko/reference/dividend-excel.ajax?ksdFund=KR7472150002"
+        fixture = pathlib.Path(__file__).parent / "fixtures" / "tiger_472150_dividend.html"
+        fetched = []
+
+        def fetcher(request_url, timeout):
+            fetched.append((request_url, timeout))
+            return fixture.read_bytes()
+
+        result = collect("TIGER", "472150", url, fetcher=fetcher)
+
+        self.assertEqual(fetched, [(url, MAX_TIMEOUT_SECONDS)])
+        self.assertEqual(result["status"], "success")
+        self.assertEqual(len(result["records"]), 34)
+        latest = result["records"][0]
+        self.assertEqual(latest["ex_date"], "2026-09-30")
+        self.assertEqual(latest["payment_date"], "2026-10-02")
+        self.assertEqual(latest["distribution_per_share"], 425.0)
+        self.assertEqual(latest["taxable_base_per_share"], 0.0)
+        self.assertEqual(latest["source_url"], url)
+        self.assertEqual(latest["raw_payload"]["상품코드"], "KR7472150002")
+        self.assertEqual(latest["raw_payload"]["상품명"], "TIGER 배당커버드콜액티브")
+
+    def test_tiger_html_schema_change_and_wrong_fund_fail_closed(self):
+        url = "https://investments.miraeasset.com/tigeretf/ko/reference/dividend-excel.ajax?ksdFund=KR7472150002"
+        malformed = b"<table><tr><td>unexpected</td></tr></table>"
+        changed = collect("TIGER", "472150", url, payload=malformed)
+        self.assertEqual(changed["status"], "failure")
+        self.assertEqual(changed["error_code"], "invalid_source_response")
+        fixture = pathlib.Path(__file__).parent / "fixtures" / "tiger_472150_dividend.html"
+        wrong = collect("TIGER", "474720", url, payload=fixture.read_bytes())
+        self.assertEqual(wrong["status"], "failure")
+        self.assertEqual(wrong["error_code"], "invalid_source_response")
+
     def test_rise_html_parser(self):
         url = SOURCES["RISE"].format(product_page="44K1")
         html = "<h3>분배금 지급현황</h3><table><tr><td>2026-08-01</td><td>2026-08-05</td><td>75</td><td>tax</td></tr></table>"
@@ -78,7 +112,8 @@ class OfficialAdapterContractTests(unittest.TestCase):
         network = collect("SOL", "0167B0", url, fetcher=dns_failed)
         self.assertEqual(network["status"], "failure")
         self.assertEqual(network["error_code"], "network_dns_error")
-        self.assertEqual(collect("TIGER", "123456", "https://example.invalid")["status"], "unsupported")
+        self.assertEqual(collect("TIGER", "123456", "https://example.invalid")["status"], "failure")
+        self.assertEqual(collect("VENDOR", "123456", "https://example.invalid")["status"], "unsupported")
 
     def test_timeout_bound_rejects_unbounded_values(self):
         url = SOURCES["KODEX"].format(product_id="2ETF15")

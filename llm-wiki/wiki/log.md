@@ -189,3 +189,10 @@
 
 - 새 ETF는 UI에 ticker 기준 `etf_product_cache.official_url` 자동 연결 경로를 사용한다. 최초 등록 시 공식 발행사 자료에서 ticker·상품명·원본 URL을 확인해 캐시에 넣고, ticker가 없는 입력은 confirmed/high alias를 먼저 검증한다.
 - 추측 URL은 저장하지 않는다. 원본 검증 전에는 링크를 표시하지 않고 확인 대기 상태로 둔다. generic ticker lookup 회귀 테스트를 추가했다.
+
+## [2026-10-17] add | Daily TIGER official distribution export
+
+- Verified Mirae Asset TIGER 472150 product page and fetched its official distribution export from the agent runtime. Although the endpoint labels the response as `.xls`, it is UTF-8 HTML with a seven-column table.
+- Added a fail-closed TIGER parser, exact verified product-page-to-export mapping, and a 34-row official export fixture with regression coverage for record date, actual payment date, per-share amount, taxable base, schema changes, and product mismatches.
+- The existing dynamic collector will discover TIGER from recent ledger ticker `472150` plus the verified ETF instrument and product-cache row; it does not add a fixed scheduled target or write to `dividend_entries`.
+- Live HTTP verification: official export returned HTTP 200 and 34 records; newest observed record was 2026-09-30 / 2026-10-02 / 425 KRW. Production workflow execution, persistence, and calendar readback remain separate operational gates.
