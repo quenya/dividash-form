@@ -1,5 +1,6 @@
 import unittest
 from datetime import date, datetime, timezone
+from pathlib import Path
 
 from sync_recent_official_etfs import execute_sync, month_ago
 
@@ -59,6 +60,13 @@ class FakeConnection:
 
 
 class DailySyncTests(unittest.TestCase):
+    def test_migration_grants_sync_role_select_policies(self):
+        migration = Path(__file__).parents[1] / "database" / "202610170001_rise_0094m0_and_sync_run_logs.sql"
+        sql = migration.read_text()
+        self.assertIn('on public.ticker_matches for select to etf_sync_worker', sql)
+        self.assertIn("using (status = 'confirmed' and confidence = 'high')", sql)
+        self.assertIn('on public.instrument_search_index for select to etf_sync_worker using (true)', sql)
+
     def test_month_window_clamps_month_end(self):
         self.assertEqual(month_ago(date(2026, 3, 31)), date(2026, 2, 28))
         self.assertEqual(month_ago(date(2026, 1, 31)), date(2025, 12, 31))

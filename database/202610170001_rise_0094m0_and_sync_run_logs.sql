@@ -84,6 +84,13 @@ grant execute on function public.get_recent_etf_payments_for_sync(date, date) to
 
 grant select (source_input, matched_ticker, status, confidence) on public.ticker_matches to etf_sync_worker;
 grant select (symbol, security_type) on public.instrument_search_index to etf_sync_worker;
+drop policy if exists "ETF sync worker can read confirmed ticker matches" on public.ticker_matches;
+create policy "ETF sync worker can read confirmed ticker matches"
+  on public.ticker_matches for select to etf_sync_worker
+  using (status = 'confirmed' and confidence = 'high');
+drop policy if exists "ETF sync worker can read instrument metadata" on public.instrument_search_index;
+create policy "ETF sync worker can read instrument metadata"
+  on public.instrument_search_index for select to etf_sync_worker using (true);
 grant select (ticker, issuer, product_name, official_url, source_status) on public.etf_product_cache to etf_sync_worker;
 grant select, insert, update on public.etf_distribution_history to etf_sync_worker;
 grant select, insert, update, delete on public.etf_sync_runs to etf_sync_worker;
