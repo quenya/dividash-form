@@ -2,6 +2,8 @@ import json
 import pathlib
 import sys
 import unittest
+from email.message import Message
+from urllib.error import HTTPError
 
 sys.path.insert(0, str(pathlib.Path(__file__).parent))
 from official_etf_adapters import (MAX_TIMEOUT_SECONDS, SOURCES, collect,
@@ -62,7 +64,14 @@ class OfficialAdapterContractTests(unittest.TestCase):
         url = SOURCES["SOL"].format(fund_code="211107")
         def timed_out(_url, _timeout):
             raise TimeoutError("bounded timeout")
-        self.assertEqual(collect("SOL", "0167B0", url, fetcher=timed_out)["status"], "timeout")
+        timeout_result = collect("SOL", "0167B0", url, fetcher=timed_out)
+        self.assertEqual(timeout_result["status"], "timeout")
+        self.assertEqual(timeout_result["error_code"], "request_timeout")
+        def forbidden(request_url, _timeout):
+            raise HTTPError(request_url, 403, "forbidden", Message(), None)
+        denied = collect("SOL", "0167B0", url, fetcher=forbidden)
+        self.assertEqual(denied["status"], "failure")
+        self.assertEqual(denied["error_code"], "http_403")
         self.assertEqual(collect("TIGER", "123456", "https://example.invalid")["status"], "unsupported")
 
     def test_timeout_bound_rejects_unbounded_values(self):

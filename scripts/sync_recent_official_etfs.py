@@ -90,7 +90,7 @@ def execute_sync(conn, *, as_of, trigger, commit_sha="", collector=collect, writ
         for target in targets:
             fetched = collector(target["issuer"], target["ticker"], target["source_url"])
             records = fetched.get("records", []) if isinstance(fetched.get("records"), list) else []
-            source = {"ticker": target["ticker"], "issuer": target["issuer"], "status": fetched.get("status", "failure"), "records": records, "source_url": target["official_url"], "parser_version": fetched.get("parser_version", PARSER_VERSION), "error_code": None}
+            source = {"ticker": target["ticker"], "issuer": target["issuer"], "status": fetched.get("status", "failure"), "records": records, "source_url": target["official_url"], "parser_version": fetched.get("parser_version", PARSER_VERSION), "error_code": fetched.get("error_code")}
             try:
                 if fetched.get("status") != "success" or not records:
                     raise ValueError("source_not_successful_or_empty")
@@ -101,7 +101,7 @@ def execute_sync(conn, *, as_of, trigger, commit_sha="", collector=collect, writ
                         raise ValueError("source_ticker_mismatch")
             except (KeyError, TypeError, ValueError) as exc:
                 source["status"] = "failure"
-                source["error_code"] = str(exc) if str(exc).startswith("source_") else _safe_error(exc)
+                source["error_code"] = source.get("error_code") or (str(exc) if str(exc).startswith("source_") else _safe_error(exc))
                 source["records"] = []
             results.append(source)
             _json_log("source_complete", ticker=source["ticker"], issuer=source["issuer"], status=source["status"], records=len(source["records"]), error_code=source["error_code"])

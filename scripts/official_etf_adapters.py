@@ -194,9 +194,9 @@ def collect(issuer: str, ticker: str, source_url: str,
     base = {"issuer": issuer, "ticker": ticker, "source_url": source_url,
             "parser_version": PARSER_VERSION, "records": []}
     if issuer not in SOURCES:
-        return {**base, "status": "unsupported", "error": "unsupported issuer"}
+        return {**base, "status": "unsupported", "error": "unsupported issuer", "error_code": "unsupported_issuer"}
     if not isinstance(timeout, int) or timeout < 1 or timeout > MAX_TIMEOUT_SECONDS:
-        return {**base, "status": "failure", "error": f"timeout must be 1-{MAX_TIMEOUT_SECONDS} seconds"}
+        return {**base, "status": "failure", "error": f"timeout must be 1-{MAX_TIMEOUT_SECONDS} seconds", "error_code": "invalid_timeout"}
     try:
         body = payload if payload is not None else fetcher(source_url, timeout)
         if issuer == "KODEX":
@@ -214,10 +214,14 @@ def collect(issuer: str, ticker: str, source_url: str,
         base["records"] = parsed
         base["status"] = "success" if parsed else "empty"
         return base
-    except (TimeoutError, HTTPError, URLError) as exc:
-        return {**base, "status": "timeout" if isinstance(exc, TimeoutError) else "failure", "error": str(exc)}
+    except TimeoutError as exc:
+        return {**base, "status": "timeout", "error": str(exc), "error_code": "request_timeout"}
+    except HTTPError as exc:
+        return {**base, "status": "failure", "error": str(exc), "error_code": f"http_{exc.code}"}
+    except URLError as exc:
+        return {**base, "status": "failure", "error": str(exc), "error_code": "network_error"}
     except (ValueError, TypeError, json.JSONDecodeError) as exc:
-        return {**base, "status": "failure", "error": str(exc)}
+        return {**base, "status": "failure", "error": str(exc), "error_code": "invalid_source_response"}
 
 
 __all__ = ["SOURCES", "PARSER_VERSION", "MAX_TIMEOUT_SECONDS", "collect", "parse_kodex", "parse_sol", "parse_rise"]

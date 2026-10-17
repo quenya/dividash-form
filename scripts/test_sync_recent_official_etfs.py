@@ -1,4 +1,6 @@
+import io
 import unittest
+from contextlib import redirect_stdout
 from datetime import date, datetime, timezone
 from pathlib import Path
 
@@ -97,6 +99,17 @@ class DailySyncTests(unittest.TestCase):
         self.assertNotIn("insert into public.dividend_entries", sql)
         self.assertNotIn("update public.dividend_entries", sql)
         self.assertGreaterEqual(conn.commits, 2)
+
+    def test_dry_run_preserves_structured_source_error_code(self):
+        conn = FakeConnection()
+        output = io.StringIO()
+        with redirect_stdout(output):
+            result = execute_sync(
+                conn, as_of=date(2026, 10, 17), trigger="manual", write=False,
+                collector=lambda *_args: {"status": "failure", "records": [], "error_code": "http_403"},
+            )
+        self.assertEqual(result["status"], "failure")
+        self.assertIn('"error_code": "http_403"', output.getvalue())
 
     def test_dry_run_does_not_write_any_database_rows(self):
         conn = FakeConnection()
