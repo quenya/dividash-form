@@ -5,6 +5,7 @@ from datetime import date, datetime, timezone
 from pathlib import Path
 
 from sync_recent_official_etfs import execute_sync, month_ago
+from official_etf_adapters import collect
 
 
 class FakeCursor:
@@ -61,6 +62,32 @@ class FakeConnection:
         self.rollbacks += 1
 
 
+class TigerCursor(FakeCursor):
+    def execute(self, query, params=()):
+        self.calls.append((query, params))
+        if "from public.get_recent_etf_payments_for_sync" in query:
+            self.description = [("ticker",), ("company_name",), ("payment_date",)]
+            self.rows = [("472150", "TIGER 배당커버드콜액티브", "2026-10-02")]
+        elif "from public.ticker_matches" in query:
+            self.description = [("source_input",), ("matched_ticker",), ("status",), ("confidence",)]
+            self.rows = []
+        elif "from public.instrument_search_index" in query:
+            self.description = [("symbol",), ("security_type",)]
+            self.rows = [("472150", "ETF")]
+        elif "from public.etf_product_cache" in query:
+            self.description = [("ticker",), ("issuer",), ("product_name",), ("official_url",)]
+            self.rows = [("472150", "TIGER", "TIGER 배당커버드콜액티브", "https://investments.miraeasset.com/tigeretf/ko/product/search/detail/index.do?ksdFund=KR7472150002")]
+        else:
+            self.rows = []
+
+
+class TigerConnection(FakeConnection):
+    def cursor(self):
+        cursor = TigerCursor()
+        self.cursors.append(cursor)
+        return cursor
+
+
 class DailySyncTests(unittest.TestCase):
     def test_migration_grants_sync_role_select_policies(self):
         migration = Path(__file__).parents[1] / "database" / "202610170001_rise_0094m0_and_sync_run_logs.sql"
@@ -99,6 +126,33 @@ class DailySyncTests(unittest.TestCase):
         self.assertNotIn("insert into public.dividend_entries", sql)
         self.assertNotIn("update public.dividend_entries", sql)
         self.assertGreaterEqual(conn.commits, 2)
+
+    def test_daily_sync_discovers_and_parses_tiger_without_database_writes(self):
+        conn = TigerConnection()
+        fixture = Path(__file__).parent / "fixtures" / "tiger_472150_dividend.html"
+        url = "https://investments.miraeasset.com/tigeretf/ko/reference/dividend-excel.ajax?ksdFund=KR7472150002"
+
+        calls = []
+        with redirect_stdout(io.StringIO()):
+            result = execute_sync(
+                conn, as_of=date(2026, 10, 17), trigger="manual", write=False,
+                collector=lambda issuer, ticker, source_url: (
+                    calls.append((issuer, ticker, source_url)) or collect(
+                        issuer, ticker, source_url, payload=fixture.read_bytes()
+                    )
+                ),
+            )
+
+        self.assertEqual(result["status"], "success")
+        self.assertEqual(result["candidate_count"], 1)
+        self.assertEqual(result["success_count"], 1)
+        self.assertEqual(result["records_fetched"], 34)
+        self.assertEqual(result["records_written"], 0)
+        self.assertEqual(calls, [("TIGER", "472150", url)])
+        sql = " ".join(query for cursor in conn.cursors for query, _ in cursor.calls)
+        self.assertNotIn("insert into public.etf_distribution_history", sql)
+        self.assertNotIn("insert into public.dividend_entries", sql)
+        self.assertEqual(conn.commits, 0)
 
     def test_dry_run_preserves_structured_source_error_code(self):
         conn = FakeConnection()

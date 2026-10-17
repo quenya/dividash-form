@@ -2,8 +2,8 @@
 title: Data Model and RLS
 type: data-model
 status: current
-updated: 2026-10-04
-source_refs: [S002, S009, S010]
+updated: 2026-10-17
+source_refs: [S002, S009, S010, S011]
 tags: [supabase, postgres, rls, migrations]
 ---
 
@@ -86,6 +86,30 @@ Migration 파일의 placeholder owner UUID는 실행 전에 실제 owner로 교�
 
 Fresh setup order is `schema_update.sql` → owner UUID를 채운 `security_hardening.sql` → `ticker_matching.sql`. `security_hardening.sql`의 placeholder owner UUID는 실행 전에 교체해야 한다.
 
+## RISE official export
+
+The verified RISE distribution-history exporter returns XLSX and is parsed by
+`parse_rise_xlsx`; see source S010 and the collector adapter tests.
+
+## TIGER official distribution export
+
+For the verified product TIGER 배당커버드콜액티브 (short code `472150`, KSD
+fund code `KR7472150002`), the official export endpoint is
+`https://investments.miraeasset.com/tigeretf/ko/reference/dividend-excel.ajax?ksdFund=KR7472150002`.
+The response advertises an Excel `.xls` content type and filename but is UTF-8
+HTML. The header row contains seven columns: sequence, fund code, product name,
+record date, actual payment date, distribution amount in KRW, and taxable base
+in KRW. `parse_tiger` verifies this exact header and fund code before emitting
+rows; response schema or product mismatches fail closed. `official_etf_targets`
+resolves this endpoint only from the exact verified Mirae Asset product URL.
+Daily eligibility still comes from the recent-payment query, ETF instrument
+catalog, and a unique matched official product-cache record. It is not a
+fixed ticker-only schedule.
+
+- [`scripts/official_etf_adapters.py`](../../scripts/official_etf_adapters.py)
+- [`scripts/official_etf_targets.py`](../../scripts/official_etf_targets.py)
+- [`scripts/fixtures/tiger_472150_dividend.html`](../../scripts/fixtures/tiger_472150_dividend.html)
+
 ## Related
 
 - [Architecture](./architecture.md)
@@ -98,6 +122,7 @@ Fresh setup order is `schema_update.sql` → owner UUID를 채운 `security_hard
 - [S002 repository baseline](../raw/sources.md)
 - [S009 Mirae Asset TIGER 472150 official product page](../raw/sources.md)
 - [S010 KB RISE 0094M0 official product page](../raw/sources.md)
+- [S011 Mirae Asset TIGER 472150 official distribution export](../raw/sources.md)
 - [`src/components/DividendData.jsx`](../../src/components/DividendData.jsx)
 - [`src/api/insertDividend.js`](../../src/api/insertDividend.js)
 - [`database/security_hardening.sql`](../../database/security_hardening.sql)
