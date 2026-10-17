@@ -1,0 +1,50 @@
+name: Official ETF distribution sync
+
+on:
+  schedule:
+    # 06:15 KST daily (21:15 UTC); GitHub Actions may start scheduled jobs late.
+    - cron: '15 21 * * *'
+  workflow_dispatch:
+    inputs:
+      write:
+        description: Persist verified public schedules (otherwise read-only dry-run)
+        required: true
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+
+concurrency:
+  group: official-etf-distribution-sync-production
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: Production
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+          cache-dependency-path: scripts/requirements-sync.txt
+      - name: Install sync runtime
+        run: python -m pip install -r scripts/requirements-sync.txt
+      - name: Run daily collection
+        env:
+          SYNC_WRITE: ${{ github.event_name == 'schedule' || inputs.write == true }}
+          SUPABASE_DB_HOST: ${{ secrets.SUPABASE_DB_HOST }}
+          SUPABASE_DB_NAME: ${{ secrets.SUPABASE_DB_NAME }}
+          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+          SUPABASE_DB_PORT: ${{ secrets.SUPABASE_DB_PORT }}
+          SUPABASE_DB_USER: ${{ secrets.SUPABASE_DB_USER }}
+        run: |
+          if [ "$SYNC_WRITE" = "true" ]; then
+            if [ "$GITHUB_EVENT_NAME" = "schedule" ]; then TRIGGER=schedule; else TRIGGER=workflow_dispatch; fi
+            python scripts/sync_recent_official_etfs.py --write --trigger "$TRIGGER"
+          else
+            python scripts/sync_recent_official_etfs.py --dry-run --trigger workflow_dispatch
+          fi

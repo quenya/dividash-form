@@ -8,6 +8,7 @@ export function useDividendData() {
     const [officialDistributions, setOfficialDistributions] = useState([]);
     const [eligibleEtfTickers, setEligibleEtfTickers] = useState([]);
     const [officialDataError, setOfficialDataError] = useState(null);
+    const [officialSyncStatus, setOfficialSyncStatus] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [exchangeRate, setExchangeRate] = useState(1300);
@@ -63,7 +64,7 @@ export function useDividendData() {
             const monthStart = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`;
             const nextMonthDate = new Date(now.getFullYear(), now.getMonth() + 1, 1);
             const nextMonthStart = `${nextMonthDate.getFullYear()}-${String(nextMonthDate.getMonth() + 1).padStart(2, '0')}-01`;
-            const [distributionResult, instrumentResult] = await Promise.all([
+            const [distributionResult, instrumentResult, syncStatusResult] = await Promise.all([
                 candidateTickers.length
                     ? supabase.from('etf_distribution_history')
                         .select('ticker,ex_date,payment_date,distribution_per_share,currency,source_issuer,source_url,fetched_at,source_updated_at')
@@ -75,7 +76,12 @@ export function useDividendData() {
                 candidateTickers.length
                     ? supabase.from('instrument_search_index').select('symbol,security_type').in('symbol', candidateTickers)
                     : Promise.resolve({ data: [], error: null }),
+                supabase.from('etf_sync_status_public')
+                    .select('status,finished_at,has_coverage_gaps')
+                    .limit(1)
+                    .maybeSingle(),
             ]);
+            setOfficialSyncStatus(syncStatusResult.error ? null : syncStatusResult.data);
             if (distributionResult.error) {
                 console.warn('공식 ETF 분배 내역 조회 오류:', distributionResult.error.message);
                 setOfficialDistributions([]);
@@ -100,5 +106,5 @@ export function useDividendData() {
     }, []);
 
     useEffect(() => { fetchData(); }, [fetchData]);
-    return { data, officialDistributions, eligibleEtfTickers, officialDataError, loading, error, exchangeRate, tickersMap, tickerMatchesMap, refetch: fetchData };
+    return { data, officialDistributions, eligibleEtfTickers, officialDataError, officialSyncStatus, loading, error, exchangeRate, tickersMap, tickerMatchesMap, refetch: fetchData };
 }

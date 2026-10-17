@@ -4,6 +4,7 @@ import 'react-calendar/dist/Calendar.css';
 import '../styles/CalendarOverride.css';
 import { useDividendData } from '../hooks/useDividendData';
 import { buildDividendCalendarEvents } from '../utils/dividendCalendarEvents';
+import { getOfficialSyncWarning } from '../utils/officialSyncStatus';
 
 function localDateString(date) {
     const year = date.getFullYear();
@@ -21,7 +22,8 @@ function amountLabel(value, currency = 'KRW', type) {
 }
 
 function DividendCalendar() {
-    const { data, officialDistributions, eligibleEtfTickers, officialDataError, loading, error, exchangeRate } = useDividendData();
+    const { data, officialDistributions, eligibleEtfTickers, officialDataError, officialSyncStatus, loading, error, exchangeRate } = useDividendData();
+    const officialSyncWarning = getOfficialSyncWarning(officialSyncStatus);
     const [date, setDate] = useState(new Date());
 
     const events = useMemo(() => buildDividendCalendarEvents({
@@ -74,6 +76,7 @@ function DividendCalendar() {
                     </h4>
 
                     {officialDataError && <p role="status" style={{ color: '#9a6700' }}>{officialDataError}</p>}
+                    {officialSyncWarning && <p role="status" style={{ color: '#9a6700' }}>{officialSyncWarning}</p>}
                     {loading ? (
                         <p role="status">데이터 로딩 중...</p>
                     ) : error ? (
@@ -101,7 +104,9 @@ function DividendCalendar() {
                         </div>
                     ) : (
                         <div style={{ color: 'var(--text-secondary)', textAlign: 'center', padding: '20px' }}>
-                            이 날짜에는 배당 예정 또는 입금 기록이 없습니다.
+                            {officialSyncWarning
+                                ? '공식 동기화 상태를 확인할 수 없어 이 날짜의 예정 분배금이 모두 표시된다고 보장할 수 없습니다.'
+                                : '이 날짜에는 배당 예정 또는 입금 기록이 없습니다.'}
                         </div>
                     )}
                 </div>

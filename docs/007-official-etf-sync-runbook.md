@@ -23,7 +23,7 @@
        python3 -m py_compile scripts/official_etf_adapters.py scripts/sync_official_etfs.py
 
 2. 운영 DB 자격증명을 dry-run에 설정하지 않는다. dry-run은 네트워크 공개 원본만 읽는다.
-3. 공식 원본 URL이 현재 허용된 `TARGETS`와 일치하는지 코드 리뷰한다. URL이나 상품명을 추측해서 추가하지 않는다.
+3. 공식 원본 URL이 현재 허용된 `TARGETS`와 일치하는지 코드 리뷰한다. URL이나 상품명을 추측해서 추가하지 않는다. RISE 상품 페이지는 `riseetf.co.kr/prod/finderDetail/{id}`에서 KBAM으로 연결될 수 있다. 페이지의 **분배금 지급현황 → 분배내역 → 엑셀 다운받기**로 확인한 실제 다운로드 URL은 `https://kbam.co.kr/api/products/etfs/{id}/dividend?download=xlsx` 형식이며, 이 XLSX를 파싱한다. 브라우저에서 성공한 다운로드가 GitHub Actions 런타임에서도 성공한다는 뜻은 아니므로 운영 실행 환경에서 별도로 검증한다.
 4. write 전에는 DB 백업이 성공했는지, 유지보수 창과 롤백 담당자가 정해졌는지 확인한다.
 
 ## 수동 dry-run
@@ -55,6 +55,43 @@ write 전에 Supabase/Postgres 제공자의 PITR 또는 논리 백업을 확인�
 스크립트는 모든 source 검증이 성공한 경우에만 하나의 DB 트랜잭션으로 두 공개 테이블을 upsert한다. 한 source라도 실패하거나 stale이면 SQL을 실행하지 않는다. 프로세스가 중간에 실패하면 트랜잭션은 rollback된다. lock이 이미 있으면 두 번째 실행을 하지 않는다.
 
 write 후 `sync_complete`의 `writes` 수와 DB에서 해당 두 테이블의 변경을 read-only 조회로 대조한다. `dividend_entries`의 row count와 최근 수정 시각도 별도 read-only 확인하여 변경이 없음을 검증한다.
+
+## GitHub Actions 일일 동기화 (Issue #53)
+
+새 동적 동기화는 `.github/workflows/official-etf-distribution-sync.yml`에서 관리한다. 매일 21:15 UTC, 즉 KST 06:15에 실행되며 DST 영향은 없다. GitHub가 예약 실행을 지연하거나 누락할 수 있으므로 시간 보장으로 간주하지 않는다. `workflow_dispatch`의 `write` 입력은 기본 false이며, 명시적으로 true를 선택한 수동 실행만 DB에 기록한다. 운영 schedule은 write 모드다. 동시 실행은 같은 concurrency group에서 직렬화되고, 작업 제한 시간은 15분이다.
+
+운영 설정 전 필수 항목:
+
+1. Supabase에 `database/202610170001_rise_0094m0_and_sync_run_logs.sql` migration을 검토·적용하고, view/function/table 및 RLS를 read-only 운영자 계정으로 검증한다.
+2. GitHub 저장소의 `Production` environment에 `SUPABASE_DB_HOST`, `SUPABASE_DB_NAME`, `SUPABASE_DB_USER`, `SUPABASE_DB_PASSWORD`를 secret으로 등록한다. `SUPABASE_DB_PORT`는 선택값이다. 비밀번호는 DB 로그/아티팩트에 출력하지 않는다.
+3. DB 로그인 사용자는 `etf_sync_worker` 역할을 상속하도록 별도로 구성한다. migration 자체가 로그인 계정이나 비밀번호를 생성하지 않는다. `SUPABASE_DB_USER`에 광범위한 관리자/service role을 넣지 않는다.
+4. `workflow_dispatch`를 먼저 dry-run(`write=false`)으로 실행하고 로그에서 대상 티커별 결과, 미지원/검토 항목, 총 상태를 확인한다. 운영 write는 migration·출처 검증 이후에만 승인한다.
+5. GitHub Actions → Official ETF distribution sync에서 예약/수동 실행과 `sync_complete`/실패 로그를 확인한다. 성공적인 Actions run만으로 DB 반영을 증명하지 말고 아래 SQL readback을 수행한다.
+
+```sql
+select id, started_at, finished_at, trigger, commit_sha, status,
+       candidate_count, success_count, failure_count, unsupported_count,
+       records_fetched, records_written, error_summary
+from public.etf_sync_runs
+order by started_at desc limit 20;
+
+select r.started_at, r.status, s.ticker, s.issuer, s.status as source_status,
+       s.records_fetched, s.records_written, s.source_url, s.parser_version,
+       s.latest_data_date, s.fetched_at, s.attempts, s.error_code
+from public.etf_sync_runs r
+join public.etf_sync_run_sources s on s.run_id = r.id
+order by r.started_at desc, s.ticker;
+
+select ticker, ex_date, payment_date, distribution_per_share, source_issuer,
+       source_url, fetched_at, parser_version
+from public.etf_distribution_history
+where ticker = '0094M0'
+order by ex_date desc;
+```
+
+캘린더 상태는 `public.etf_sync_status_public`의 가장 최근 종료 run을 기준으로 한다. 실패·stale·coverage gap 경고는 편의 표시이지 지급 일정의 완전성을 보증하지 않는다. `dividend_entries`는 후보 식별용으로만 읽으며 공식 예정 분배를 실제 계좌 입금과 합산하지 않는다.
+
+현재까지의 구현만으로 운영 readiness를 선언하지 않는다. workflow는 Actions secret/environment와 적용 migration이 확인되고, 성공 실행 및 위 SQL readback이 확인된 뒤에만 운영 중으로 판단한다. 스케줄 실행 이력이 없으면 수동/미검증 상태로 보고한다.
 
 ## 롤백
 
