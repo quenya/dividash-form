@@ -9,11 +9,14 @@
 상품명은 공식 페이지 또는 저장소 검토로 확인된 값만 사용한다.
 
 - KODEX 102970: `KODEX 증권` (Naver/KRX-fed page 확인)
+- KODEX 284430: `KODEX 200미국채혼합50` (S012)
 - KODEX 498400: `KODEX 200타겟위클리커버드콜`
 - KODEX 498410: `KODEX 금융고배당TOP10타겟위클리커버드콜`
-- SOL 0167B0: `SOL 200타겟위클리커버드콜`
-- SOL 490490: `SOL 미국배당미국채혼합50`
+- SOL 0167B0: `SOL 200타겟위클리커버드콜` (S014)
+- SOL 490490: `SOL 미국배당미국채혼합50` (S013; its verified product URL and generated dividend API remain on `www.soletf.co.kr`)
+- RISE 0094M0: `RISE 코리아밸류업위클리고정커버드콜` (S010)
 - RISE 0162Z0: `RISE 삼성전자SK하이닉스채권혼합50`
+- TIGER 472150: `TIGER 배당커버드콜액티브` (S009)
 
 ## 사전 점검
 
@@ -62,10 +65,10 @@ write 후 `sync_complete`의 `writes` 수와 DB에서 해당 두 테이블의 �
 
 운영 설정 전 필수 항목:
 
-1. Supabase에 `database/202610170001_rise_0094m0_and_sync_run_logs.sql` migration을 검토·적용하고, view/function/table 및 RLS를 read-only 운영자 계정으로 검증한다.
+1. Supabase에 `database/202610170001_rise_0094m0_and_sync_run_logs.sql`의 동기화 schema가 이미 적용됐는지 확인한다. 이어 `supabase/migrations/202610270001_official_etf_sync_coverage.sql`을 검토·적용하고, `public.tickers`, `public.ticker_matches`, `public.etf_product_cache`의 대상 metadata를 read-only로 확인한다. 이 migration은 `dividend_entries`를 변경하지 않아야 한다.
 2. GitHub 저장소의 `Production` environment에 `SUPABASE_DB_HOST`, `SUPABASE_DB_NAME`, `SUPABASE_DB_USER`, `SUPABASE_DB_PASSWORD`를 secret으로 등록한다. `SUPABASE_DB_PORT`는 선택값이다. 비밀번호는 DB 로그/아티팩트에 출력하지 않는다.
 3. DB 로그인 사용자는 `etf_sync_worker` 역할을 상속하도록 별도로 구성한다. migration 자체가 로그인 계정이나 비밀번호를 생성하지 않는다. `SUPABASE_DB_USER`에 광범위한 관리자/service role을 넣지 않는다.
-4. `workflow_dispatch`를 먼저 dry-run(`write=false`)으로 실행하고 로그에서 source 결과와 `target_resolution_gap_summary` 이벤트를 확인한다. 이 요약은 티커·상품명 없이 상태·사유별 건수만 출력한다. 운영 write는 migration·출처 검증 이후에만 승인한다.
+4. `workflow_dispatch`를 먼저 dry-run(`write=false`)으로 실행하고 로그에서 `target_resolution_gap_summary`와 `source_collection_summary`를 확인한다. 두 event는 허용 목록의 status/reason별 집계만 출력하고 알 수 없는 reason은 `unknown`으로 접으며, 종목·발행사 식별자와 원장·후보·분배 row 수는 공개 Actions 로그에 출력하지 않는다. `sync_complete`는 최종 status/mode/trigger만 출력한다. 운영 write는 migration·출처 검증 이후에만 승인한다.
 5. GitHub Actions → Official ETF distribution sync에서 예약/수동 실행과 `sync_complete`/실패 로그를 확인한다. 성공적인 Actions run만으로 DB 반영을 증명하지 말고 아래 SQL readback을 수행한다.
 
 ```sql

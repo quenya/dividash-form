@@ -22,6 +22,12 @@ class OfficialAdapterContractTests(unittest.TestCase):
         self.assertEqual(result["records"][0]["source_url"], url)
         self.assertEqual(result["records"][0]["source_issuer"], "KODEX")
 
+    def test_sol_source_template_uses_current_verified_co_kr_host(self):
+        self.assertEqual(
+            SOURCES["SOL"],
+            "https://www.soletf.co.kr/api/etf/pds/dividend/{fund_code}",
+        )
+
     def test_sol_rate_and_raw_payload(self):
         url = SOURCES["SOL"].format(fund_code="211107")
         result = collect("SOL", "0167B0", url, payload={"items": [{

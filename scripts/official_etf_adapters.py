@@ -26,7 +26,7 @@ TIGER_HEADERS = ("No", "종목코드", "종목명", "지급기준일", "실지�
 # URLs are sourced from the existing issuer sync boundary. Do not add guessed URLs.
 SOURCES = {
     "KODEX": "https://www.samsungfund.com/api/v1/kodex/divid-info.do?id={product_id}",
-    "SOL": "https://www.soletf.com/api/etf/pds/dividend/{fund_code}",
+    "SOL": "https://www.soletf.co.kr/api/etf/pds/dividend/{fund_code}",
     "RISE": "https://kbam.co.kr/api/products/etfs/{product_page}/dividend?download=xlsx",
     "TIGER": TIGER_SOURCE,
 }

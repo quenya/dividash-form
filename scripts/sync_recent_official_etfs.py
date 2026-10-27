@@ -6,6 +6,7 @@ import argparse
 import datetime as dt
 import json
 import os
+import re
 import sys
 import uuid
 from zoneinfo import ZoneInfo
@@ -41,6 +42,27 @@ def _log_resolution_gaps(gaps):
         counts[key] = counts.get(key, 0) + 1
     for (status, reason), count in sorted(counts.items()):
         _json_log("target_resolution_gap_summary", status=status, reason=reason, count=count)
+
+
+def _log_source_collection_summary(sources):
+    allowed_statuses = {"success", "empty", "failure", "timeout", "unsupported", "manual_review"}
+    allowed_error_codes = {
+        "none", "unsupported_issuer", "invalid_timeout", "request_timeout",
+        "network_dns_error", "network_tls_error", "network_connection_error",
+        "network_error", "invalid_source_response",
+    }
+    counts = {}
+    for source in sources:
+        status = str(source.get("status") or "unknown")
+        if status not in allowed_statuses:
+            status = "unknown"
+        reason = str(source.get("error_code") or "none")
+        if reason not in allowed_error_codes and not re.fullmatch(r"http_[1-5][0-9]{2}", reason):
+            reason = "unknown"
+        key = (status, reason)
+        counts[key] = counts.get(key, 0) + 1
+    for (status, reason), count in sorted(counts.items()):
+        _json_log("source_collection_summary", status=status, reason=reason, count=count)
 
 
 def _read_dict_rows(cursor, query, params=()):
@@ -114,7 +136,7 @@ def execute_sync(conn, *, as_of, trigger, commit_sha="", collector=collect, writ
                 source["error_code"] = source.get("error_code") or (str(exc) if str(exc).startswith("source_") else _safe_error(exc))
                 source["records"] = []
             results.append(source)
-            _json_log("source_complete", ticker=source["ticker"], issuer=source["issuer"], status=source["status"], records=len(source["records"]), error_code=source["error_code"])
+        _log_source_collection_summary([item for item in results if item.get("issuer")])
         good = [item for item in results if item["status"] == "success"]
         bad = [item for item in results if item["status"] != "success"]
         record_count = sum(len(item["records"]) for item in good)
@@ -141,7 +163,7 @@ def execute_sync(conn, *, as_of, trigger, commit_sha="", collector=collect, writ
                    "failure_count": sum(item["status"] in ("failure", "timeout") for item in bad),
                    "unsupported_count": sum(item["status"] in ("unsupported", "manual_review") for item in bad),
                    "records_fetched": record_count, "records_written": record_count if write else 0}
-        _json_log("sync_complete", **summary)
+        _json_log("sync_complete", status=status, mode="write" if write else "dry-run", trigger=trigger)
         return summary
     except Exception as exc:
         conn.rollback()
