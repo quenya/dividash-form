@@ -196,3 +196,8 @@
 - Added a fail-closed TIGER parser, exact verified product-page-to-export mapping, and a 34-row official export fixture with regression coverage for record date, actual payment date, per-share amount, taxable base, schema changes, and product mismatches.
 - The existing dynamic collector will discover TIGER from recent ledger ticker `472150` plus the verified ETF instrument and product-cache row; it does not add a fixed scheduled target or write to `dividend_entries`.
 - Live HTTP verification: official export returned HTTP 200 and 34 records; newest observed record was 2026-09-30 / 2026-10-02 / 425 KRW. Production workflow execution, persistence, and calendar readback remain separate operational gates.
+
+## [2026-10-27] fix | Sanitized ETF sync gap diagnostics
+
+- `sync_recent_official_etfs.py` now emits aggregated `target_resolution_gap_summary` events grouped by status and reason, without ticker or product-name identifiers, because repository Actions logs are public and target discovery is derived from user dividend entries.
+- Updated `docs/007-official-etf-sync-runbook.md` to describe the sanitized diagnostics. Regression coverage verifies the reason counts, identifier omission, and dry-run no-write behavior.
