@@ -201,3 +201,20 @@
 
 - `sync_recent_official_etfs.py` now emits aggregated `target_resolution_gap_summary` events grouped by status and reason, without ticker or product-name identifiers, because repository Actions logs are public and target discovery is derived from user dividend entries.
 - Updated `docs/007-official-etf-sync-runbook.md` to describe the sanitized diagnostics. Regression coverage verifies the reason counts, identifier omission, and dry-run no-write behavior.
+
+## [2026-10-27] fix | Verified official ETF sync coverage
+
+- Added a regression case for deriving the SOL distribution endpoint from its verified `www.soletf.co.kr` product page while keeping the endpoint on the allowlisted source host.
+- Added a narrow migration for verified public catalog metadata and confirmed product-name aliases; it does not write user ledger entries or distribution history.
+- Sanitized public Actions output to aggregate allowlisted source status/reason classes (unexpected reason values collapse to `unknown`) and final status only, removing per-source identifiers and ledger-derived total counters.
+- Registered official KODEX and SOL sources as S012–S014 and updated data-model/runbook documentation. Live application and Actions success remain separate verification gates.
+
+## [2026-10-27] lint | Official ETF sync Wiki integration
+
+- Checked 11 Wiki Markdown pages, 153 relative links, all index coverage and inbound links, and source references S001–S014.
+- Result: pass; no broken links, orphan pages, or unknown source IDs. Production migration and Actions state remain pending external verification.
+
+## [2026-10-27] lint | Final privacy-filter documentation check
+
+- Re-ran the Wiki structural checks after tightening the Actions reason-code allowlist: 11 pages, 153 relative links, 9 indexed knowledge pages, 14 registered source IDs, zero broken links/orphans/unknown references.
+- Result: pass. Live production migration and workflow execution remain pending.

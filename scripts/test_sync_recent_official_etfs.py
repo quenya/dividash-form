@@ -165,7 +165,53 @@ class DailySyncTests(unittest.TestCase):
                 collector=lambda *_args: {"status": "failure", "records": [], "error_code": "http_403"},
             )
         self.assertEqual(result["status"], "failure")
-        self.assertIn('"error_code": "http_403"', output.getvalue())
+        self.assertIn('"reason": "http_403"', output.getvalue())
+
+    def test_source_error_code_is_whitelisted_before_public_logging(self):
+        output = io.StringIO()
+        with redirect_stdout(output):
+            execute_sync(
+                FakeConnection(), as_of=date(2026, 10, 17), trigger="manual", write=False,
+                collector=lambda *_args: {"status": "failure", "records": [], "error_code": "private_0094M0_detail"},
+            )
+        events = [json.loads(line) for line in output.getvalue().splitlines()]
+        self.assertEqual(events[0], {
+            "event": "source_collection_summary", "status": "failure", "reason": "unknown", "count": 1,
+        })
+        self.assertNotIn("private_0094M0_detail", output.getvalue())
+        self.assertNotIn("0094M0", output.getvalue())
+
+    def test_dry_run_logs_aggregate_source_results_without_private_identifiers_or_activity_counts(self):
+        conn = FakeConnection()
+        output = io.StringIO()
+        fetched_at = datetime.now(timezone.utc).isoformat()
+
+        def collector(issuer, ticker, source_url):
+            return {"status": "success", "parser_version": "test-v1", "records": [{
+                "ticker": ticker, "ex_date": "2026-10-01", "payment_date": "2026-10-19",
+                "distribution_per_share": 123, "reference_price": None, "distribution_rate": None,
+                "currency": "KRW", "source_url": source_url, "fetched_at": fetched_at,
+                "parser_version": "test-v1", "raw_payload": {"public": True},
+            }]}
+
+        with redirect_stdout(output):
+            result = execute_sync(
+                conn, as_of=date(2026, 10, 17), trigger="manual", write=False,
+                collector=collector,
+            )
+
+        events = [json.loads(line) for line in output.getvalue().splitlines()]
+        source_events = [event for event in events if event["event"] == "source_collection_summary"]
+        self.assertEqual(source_events, [{
+            "event": "source_collection_summary", "status": "success", "reason": "none", "count": 1,
+        }])
+        self.assertEqual(events[-1], {
+            "event": "sync_complete", "mode": "dry-run", "status": "success", "trigger": "manual",
+        })
+        for private_value in ("0094M0", "RISE", "ledger_rows_read", "candidate_count", "success_count", "records_fetched", "records_written"):
+            self.assertNotIn(private_value, output.getvalue())
+        self.assertEqual(result["status"], "success")
+        self.assertEqual(result["candidate_count"], 1)
 
     def test_dry_run_logs_aggregated_gap_reasons_without_private_instruments(self):
         conn = FakeConnection()

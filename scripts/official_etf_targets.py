@@ -7,9 +7,9 @@ from urllib.parse import parse_qs, urlparse
 
 ISSUER_HOSTS = {
     "KODEX": {"www.samsungfund.com"},
-    "SOL": {"www.soletf.com"},
     "RISE": {"riseetf.co.kr", "www.riseetf.co.kr"},
     "TIGER": {"investments.miraeasset.com"},
+    "SOL": {"www.soletf.com", "www.soletf.co.kr"},
 }
 
 
@@ -27,7 +27,17 @@ def _previous_month(value):
 
 def _source_url(issuer, official_url):
     parsed = urlparse(str(official_url or ""))
-    if parsed.scheme != "https" or parsed.hostname not in ISSUER_HOSTS.get(issuer, set()):
+    try:
+        port = parsed.port
+    except ValueError:
+        return None
+    if (
+        parsed.scheme != "https"
+        or parsed.username is not None
+        or parsed.password is not None
+        or port not in (None, 443)
+        or parsed.hostname not in ISSUER_HOSTS.get(issuer, set())
+    ):
         return None
     if issuer == "RISE":
         parts = parsed.path.rstrip("/").split("/")
@@ -44,7 +54,7 @@ def _source_url(issuer, official_url):
     elif issuer == "SOL":
         parts = parsed.path.rstrip("/").split("/")
         if len(parts) == 5 and parts[1:4] == ["ko", "fund", "etf"] and parts[4].isdigit():
-            return f"https://www.soletf.com/api/etf/pds/dividend/{parts[4]}"
+            return f"https://{parsed.hostname}/api/etf/pds/dividend/{parts[4]}"
     return None
 
 

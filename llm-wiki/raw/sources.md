@@ -91,3 +91,30 @@
 - Captured: 2026-10-17
 - Scope: official product name TIGER 배당커버드콜액티브, short code 472150, export column meanings and 34 public distribution rows. The `.xls` response was verified as UTF-8 HTML; latest observed row was record date 2026-09-30, actual payment date 2026-10-02, amount 425 KRW per share.
 - Status: active; export response schema and history may change at the issuer.
+
+## S012 - Samsung KODEX 284430 Official Product and Name-Change Notice
+
+- Type: official issuer product page and notice
+- Product locator: https://www.samsungfund.com/etf/product/view.do?id=2ETF99
+- Notice locator: https://www.samsungfund.com/etf/lounge/notice-view.do?no=77233
+- Captured: 2026-10-27
+- Scope: official KODEX product identity for short code 284430 and the name KODEX 200미국채혼합50.
+- Status: active; verify live product metadata before future catalog changes.
+
+## S013 - SOL 490490 Official Product Page and Distribution API
+
+- Type: official issuer product page and issuer-hosted distribution API
+- Product locator: https://www.soletf.co.kr/ko/fund/etf/211068
+- Distribution endpoint: https://www.soletf.co.kr/api/etf/pds/dividend/211068
+- Captured: 2026-10-27
+- Scope: official product identity SOL 미국배당미국채혼합50 and verified product-page-to-API path on the current `www.soletf.co.kr` host.
+- Status: active; API response schema and distribution history may change at the issuer.
+
+## S014 - SOL 0167B0 Official Product Page and Distribution API
+
+- Type: official issuer product page and issuer-hosted distribution API
+- Product locator: https://www.soletf.co.kr/ko/fund/etf/211107?tabIndex=1
+- Distribution endpoint: https://www.soletf.co.kr/api/etf/pds/dividend/211107
+- Captured: 2026-10-27
+- Scope: official product identity SOL 200타겟위클리커버드콜 and verified product-page-to-API path for the legacy SOL adapter source template.
+- Status: active; API response schema and distribution history may change at the issuer.

@@ -2,8 +2,8 @@
 title: Known Gaps and Open Risks
 type: risk
 status: current
-updated: 2026-08-16
-source_refs: [S002, S003, S007, S008]
+updated: 2026-10-27
+source_refs: [S002, S003, S007, S008, S009, S010, S012, S013]
 tags: [risk, drift, follow-up]
 ---
 
@@ -64,6 +64,14 @@ tags: [risk, drift, follow-up]
 - Focused Issue 16과 Issue 17 review에서 대상 chart 밖의 일부 dashboard label collision 가능성이 non-blocking note로 남았다.
 - Required evidence to close: current production-equivalent data와 authenticated desktop/mobile full-dashboard capture에서 CJK label, data label, tooltip, legend overlap을 모두 확인.
 
+### Official ETF sync coverage
+
+- Status: implementation added; production migration and Actions verification pending.
+- Read-only diagnosis found missing confirmed aliases for several official ETF names and a newer SOL official URL host that the resolver rejected. Candidate identifiers are intentionally omitted from shared logs/documentation because discovery starts from user-entered dividend data.
+- The code derives the SOL distribution API from the verified allowlisted issuer hostname. A narrow migration adds only public ticker/cache/alias metadata and does not modify user ledger rows or distribution history.
+- The Actions path aggregates allowlisted source status/reason results (unknown reasons collapse to `unknown`) and leaves only final status/mode/trigger in `sync_complete`. It does not log per-source identifiers or total ledger/candidate/distribution-row counts; only sanitized status/reason counts remain.
+- Required evidence to close: apply the migration, run the workflow in dry-run mode, confirm no coverage gaps and successful official-source collection, then separately verify any requested write/readback.
+
 ## Monitoring questions
 
 - live RLS와 repository hardening migration이 계속 일치하는가
@@ -86,6 +94,10 @@ tags: [risk, drift, follow-up]
 - [S003 Vercel production snapshot](../raw/sources.md)
 - [S007 OMO UI and QA evidence](../raw/2026-08-23-omo-ui-qa-evidence.md)
 - [S008 OMO password and account UX prototype](../raw/2026-08-23-omo-password-auth-evidence.md)
+- [S009 Mirae Asset TIGER 472150 official product page](../raw/sources.md)
+- [S010 KB RISE 0094M0 official product page](../raw/sources.md)
+- [S012 Samsung KODEX 284430 official product and name-change notice](../raw/sources.md)
+- [S013 SOL 490490 official product page and distribution API](../raw/sources.md)
 - [`src/api/llmService.js`](../../src/api/llmService.js)
 - [`src/api/ocrService.js`](../../src/api/ocrService.js)
 - [`sheet/supabase_setup.sql`](../../sheet/supabase_setup.sql)

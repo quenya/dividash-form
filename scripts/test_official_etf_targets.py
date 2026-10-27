@@ -115,6 +115,73 @@ class OfficialEtfTargetTests(unittest.TestCase):
         self.assertEqual(targets, [])
         self.assertEqual(unresolved, [{"ticker": "0162Z0", "status": "unsupported", "reason": "verified_official_product_mapping_missing"}])
 
+    def test_accepts_verified_sol_co_kr_product_page(self):
+        targets, unresolved = resolve_targets(
+            entries=[{"ticker": "490490", "payment_date": "2026-10-16"}],
+            instruments=[{"symbol": "490490", "security_type": "ETF"}],
+            products=[{
+                "ticker": "490490", "issuer": "SOL",
+                "product_name": "SOL 미국배당미국채혼합50",
+                "official_url": "https://www.soletf.co.kr/ko/fund/etf/211068",
+            }],
+            as_of=date(2026, 10, 27),
+        )
+        self.assertEqual([target.get("source_url") for target in targets], ["https://www.soletf.co.kr/api/etf/pds/dividend/211068"])
+        self.assertEqual(unresolved, [])
+
+    def test_rejects_sol_product_urls_with_userinfo_or_nonstandard_port(self):
+        for official_url in (
+            "https://attacker@www.soletf.co.kr/ko/fund/etf/211068",
+            "https://www.soletf.co.kr:8443/ko/fund/etf/211068",
+        ):
+            with self.subTest(official_url=official_url):
+                targets, unresolved = resolve_targets(
+                    entries=[{"ticker": "490490", "payment_date": "2026-10-16"}],
+                    instruments=[{"symbol": "490490", "security_type": "ETF"}],
+                    products=[{
+                        "ticker": "490490", "issuer": "SOL",
+                        "product_name": "SOL 미국배당미국채혼합50",
+                        "official_url": official_url,
+                    }],
+                    as_of=date(2026, 10, 27),
+                )
+                self.assertEqual(targets, [])
+                self.assertEqual(unresolved, [{
+                    "ticker": "490490", "status": "manual_review",
+                    "reason": "invalid_or_unverified_official_url",
+                }])
+
+    def test_resolves_every_observed_sync_gap_from_verified_catalog_data(self):
+        entries = [
+            {"company_name": "KODEX 200미국채혼합50", "payment_date": "2026-10-19"},
+            {"company_name": "RISE 코리아밸류업위클리고정커버드콜", "payment_date": "2026-10-19"},
+            {"company_name": "TIGER 배당커버드콜액티브", "payment_date": "2026-10-02"},
+            {"ticker": "490490", "company_name": "SOL 미국배당미국채혼합50", "payment_date": "2026-10-16"},
+            {"ticker": "498400", "company_name": "KODEX 200타겟위클리커버드콜", "payment_date": "2026-10-19"},
+        ]
+        matches = [
+            {"source_input": "KODEX 200미국채혼합50", "matched_ticker": "284430", "status": "confirmed", "confidence": "high"},
+            {"source_input": "RISE 코리아밸류업위클리고정커버드콜", "matched_ticker": "0094M0", "status": "confirmed", "confidence": "high"},
+            {"source_input": "TIGER 배당커버드콜액티브", "matched_ticker": "472150", "status": "confirmed", "confidence": "high"},
+        ]
+        tickers = ["284430", "0094M0", "472150", "490490", "498400"]
+        instruments = [{"symbol": ticker, "security_type": "ETF"} for ticker in tickers]
+        products = [
+            {"ticker": "284430", "issuer": "KODEX", "product_name": "KODEX 200미국채혼합50", "official_url": "https://www.samsungfund.com/etf/product/view.do?id=2ETF99"},
+            {"ticker": "0094M0", "issuer": "RISE", "product_name": "RISE 코리아밸류업위클리고정커버드콜", "official_url": "https://riseetf.co.kr/prod/finderDetail/44J2"},
+            {"ticker": "472150", "issuer": "TIGER", "product_name": "TIGER 배당커버드콜액티브", "official_url": "https://investments.miraeasset.com/tigeretf/ko/product/search/detail/index.do?ksdFund=KR7472150002"},
+            {"ticker": "490490", "issuer": "SOL", "product_name": "SOL 미국배당미국채혼합50", "official_url": "https://www.soletf.co.kr/ko/fund/etf/211068"},
+            {"ticker": "498400", "issuer": "KODEX", "product_name": "KODEX 200타겟위클리커버드콜", "official_url": "https://www.samsungfund.com/etf/product/view.do?id=2ETFP4"},
+        ]
+
+        targets, unresolved = resolve_targets(
+            entries=entries, matches=matches, instruments=instruments,
+            products=products, as_of=date(2026, 10, 27),
+        )
+
+        self.assertEqual({target["ticker"] for target in targets}, set(tickers))
+        self.assertEqual(unresolved, [])
+
     def test_rejects_non_issuer_urls_and_invalid_tickers(self):
         targets, unresolved = resolve_targets(
             entries=[{"ticker": "123456", "payment_date": "2026-10-01"}],

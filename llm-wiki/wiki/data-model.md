@@ -2,8 +2,8 @@
 title: Data Model and RLS
 type: data-model
 status: current
-updated: 2026-10-17
-source_refs: [S002, S009, S010, S011]
+updated: 2026-10-27
+source_refs: [S002, S009, S010, S011, S012, S013, S014]
 tags: [supabase, postgres, rls, migrations]
 ---
 
@@ -35,17 +35,21 @@ tags: [supabase, postgres, rls, migrations]
 ## Official ETF reference cache
 
 `etf_product_cache` is a public, read-only reference cache and is separate from
-the user-owned `dividend_entries` table. The verified seed for TIGER
-배당커버드콜액티브 uses ticker `472150` and the Mirae Asset issuer page in
-S009; rerunning it updates only reference metadata and preserves user dividend
-rows. `DividendData` resolves links generically by ETF ticker from
-`etf_product_cache.official_url`; confirmed high-confidence name aliases resolve
-through the same cache. For a first-time ETF, verify its exact ticker/name and
-product page on the issuer's official source, then upsert that verified
-`official_url` into the cache. Do not construct or guess issuer URLs. If the
-dividend row has no ticker, first establish a confirmed high-confidence alias;
-unresolved products remain unlinked until verified. These links do not modify
-user dividend records.
+the user-owned `dividend_entries` table. Verified product identities include
+TIGER 배당커버드콜액티브 (`472150`, S009), RISE 코리아밸류업위클리고정커버드콜
+(`0094M0`, S010), KODEX 200미국채혼합50 (`284430`, S012), and SOL
+미국배당미국채혼합50 (`490490`, S013). The migration
+[`202610270001_official_etf_sync_coverage.sql`](../../supabase/migrations/202610270001_official_etf_sync_coverage.sql)
+adds the public catalog rows and confirmed, high-confidence name aliases needed
+for the first three products, plus KODEX product-cache metadata. It does not
+modify user dividend rows. `DividendData` resolves links generically by ETF
+ticker from `etf_product_cache.official_url`; confirmed high-confidence name
+aliases resolve through the same cache. For a first-time ETF, verify its exact
+ticker/name and product page on the issuer's official source, then upsert that
+verified `official_url` into the cache. Do not construct or guess issuer URLs.
+If the dividend row has no ticker, first establish a confirmed high-confidence
+alias; unresolved products remain unlinked until verified. These links do not
+modify user dividend records.
 
 ## Instrument matching
 
@@ -82,7 +86,8 @@ Migration 파일의 placeholder owner UUID는 실행 전에 실제 owner로 교�
 - [`database/security_hardening.sql`](../../database/security_hardening.sql): 실제 owner UUID 치환 후 user ownership, composite key, RLS 강화
 - [`database/ticker_matching.sql`](../../database/ticker_matching.sql): security hardening 이후 실행하는 원본 입력 보존형 ticker 매칭, read-only catalog, RLS와 verified seed
 - [`database/202609050001_tiger_dividend_covered_call.sql`](../../database/202609050001_tiger_dividend_covered_call.sql): verified TIGER 472150 reference cache seed
-- [`supabase/migrations/202608270001_dividash_rls_hardening.sql`](../../supabase/migrations/202608270001_dividash_rls_hardening.sql): live DB의 legacy broad policy 제거와 anon write 차단
+- [`supabase/migrations/202610270001_official_etf_sync_coverage.sql`](../../supabase/migrations/202610270001_official_etf_sync_coverage.sql): verified ticker catalog, name aliases, and KODEX 284430 product cache
+- [`supabase/migrations/202608270001_dividash_rls_hardening.sql`](../../supabase/migrations/202608270001_dividash_rls_hardening.sql): live DB legacy broad policy removal and anon write block
 
 Fresh setup order is `schema_update.sql` → owner UUID를 채운 `security_hardening.sql` → `ticker_matching.sql`. `security_hardening.sql`의 placeholder owner UUID는 실행 전에 교체해야 한다.
 
@@ -90,6 +95,17 @@ Fresh setup order is `schema_update.sql` → owner UUID를 채운 `security_hard
 
 The verified RISE distribution-history exporter returns XLSX and is parsed by
 `parse_rise_xlsx`; see source S010 and the collector adapter tests.
+
+## SOL official distribution API
+
+For SOL 미국배당미국채혼합50 (`490490`, S013), the verified product page is
+`https://www.soletf.co.kr/ko/fund/etf/211068`. The collector derives
+`/api/etf/pds/dividend/211068` on the same allowlisted issuer hostname; the
+`.co.kr` official page must not be rejected merely because the endpoint is not
+on the legacy `.com` host. A `.com` product page continues to map to its own
+`.com` API host. The legacy SOL source template was also updated to the
+issuer-verified `.co.kr` endpoint for SOL 0167B0 (S014). The endpoint is
+constructed only from verified official product URLs and numeric product IDs.
 
 ## TIGER official distribution export
 
@@ -123,6 +139,9 @@ fixed ticker-only schedule.
 - [S009 Mirae Asset TIGER 472150 official product page](../raw/sources.md)
 - [S010 KB RISE 0094M0 official product page](../raw/sources.md)
 - [S011 Mirae Asset TIGER 472150 official distribution export](../raw/sources.md)
+- [S012 Samsung KODEX 284430 official product and name-change notice](../raw/sources.md)
+- [S013 SOL 490490 official product page and distribution API](../raw/sources.md)
+- [S014 SOL 0167B0 official product page and distribution API](../raw/sources.md)
 - [`src/components/DividendData.jsx`](../../src/components/DividendData.jsx)
 - [`src/api/insertDividend.js`](../../src/api/insertDividend.js)
 - [`database/security_hardening.sql`](../../database/security_hardening.sql)
