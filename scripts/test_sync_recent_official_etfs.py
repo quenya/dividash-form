@@ -1,8 +1,10 @@
 import io
+import json
 import unittest
 from contextlib import redirect_stdout
 from datetime import date, datetime, timezone
 from pathlib import Path
+from unittest.mock import patch
 
 from sync_recent_official_etfs import execute_sync, month_ago
 from official_etf_adapters import collect
@@ -164,6 +166,34 @@ class DailySyncTests(unittest.TestCase):
             )
         self.assertEqual(result["status"], "failure")
         self.assertIn('"error_code": "http_403"', output.getvalue())
+
+    def test_dry_run_logs_aggregated_gap_reasons_without_private_instruments(self):
+        conn = FakeConnection()
+        gaps = [
+            {"ticker": "0162Z0", "company_name": "PRIVATE ETF A", "status": "unsupported", "reason": "verified_official_product_mapping_missing"},
+            {"ticker": "123456", "company_name": "PRIVATE ETF B", "status": "unsupported", "reason": "verified_official_product_mapping_missing"},
+            {"ticker": "654321", "company_name": "PRIVATE ETF C", "status": "manual_review", "reason": "invalid_or_unverified_official_url"},
+        ]
+        output = io.StringIO()
+        with redirect_stdout(output), patch(
+            "sync_recent_official_etfs.discover", return_value=([], gaps, len(gaps))
+        ):
+            result = execute_sync(
+                conn, as_of=date(2026, 10, 17), trigger="manual", write=False,
+            )
+
+        events = [json.loads(line) for line in output.getvalue().splitlines()]
+        gap_events = [event for event in events if event["event"] == "target_resolution_gap_summary"]
+        self.assertEqual(gap_events, [
+            {"event": "target_resolution_gap_summary", "status": "manual_review",
+             "reason": "invalid_or_unverified_official_url", "count": 1},
+            {"event": "target_resolution_gap_summary", "status": "unsupported",
+             "reason": "verified_official_product_mapping_missing", "count": 2},
+        ])
+        self.assertNotIn("0162Z0", output.getvalue())
+        self.assertNotIn("PRIVATE ETF", output.getvalue())
+        self.assertEqual(result["status"], "failure")
+        self.assertEqual(conn.commits, 0)
 
     def test_dry_run_does_not_write_any_database_rows(self):
         conn = FakeConnection()

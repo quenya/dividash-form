@@ -65,7 +65,7 @@ write 후 `sync_complete`의 `writes` 수와 DB에서 해당 두 테이블의 �
 1. Supabase에 `database/202610170001_rise_0094m0_and_sync_run_logs.sql` migration을 검토·적용하고, view/function/table 및 RLS를 read-only 운영자 계정으로 검증한다.
 2. GitHub 저장소의 `Production` environment에 `SUPABASE_DB_HOST`, `SUPABASE_DB_NAME`, `SUPABASE_DB_USER`, `SUPABASE_DB_PASSWORD`를 secret으로 등록한다. `SUPABASE_DB_PORT`는 선택값이다. 비밀번호는 DB 로그/아티팩트에 출력하지 않는다.
 3. DB 로그인 사용자는 `etf_sync_worker` 역할을 상속하도록 별도로 구성한다. migration 자체가 로그인 계정이나 비밀번호를 생성하지 않는다. `SUPABASE_DB_USER`에 광범위한 관리자/service role을 넣지 않는다.
-4. `workflow_dispatch`를 먼저 dry-run(`write=false`)으로 실행하고 로그에서 대상 티커별 결과, 미지원/검토 항목, 총 상태를 확인한다. 운영 write는 migration·출처 검증 이후에만 승인한다.
+4. `workflow_dispatch`를 먼저 dry-run(`write=false`)으로 실행하고 로그에서 source 결과와 `target_resolution_gap_summary` 이벤트를 확인한다. 이 요약은 티커·상품명 없이 상태·사유별 건수만 출력한다. 운영 write는 migration·출처 검증 이후에만 승인한다.
 5. GitHub Actions → Official ETF distribution sync에서 예약/수동 실행과 `sync_complete`/실패 로그를 확인한다. 성공적인 Actions run만으로 DB 반영을 증명하지 말고 아래 SQL readback을 수행한다.
 
 ```sql

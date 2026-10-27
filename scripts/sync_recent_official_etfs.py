@@ -34,6 +34,15 @@ def _safe_error(exc):
     return type(exc).__name__
 
 
+def _log_resolution_gaps(gaps):
+    counts = {}
+    for gap in gaps:
+        key = (str(gap.get("status") or "unknown"), str(gap.get("reason") or "unknown"))
+        counts[key] = counts.get(key, 0) + 1
+    for (status, reason), count in sorted(counts.items()):
+        _json_log("target_resolution_gap_summary", status=status, reason=reason, count=count)
+
+
 def _read_dict_rows(cursor, query, params=()):
     cursor.execute(query, params)
     columns = [column[0] for column in cursor.description]
@@ -84,6 +93,7 @@ def execute_sync(conn, *, as_of, trigger, commit_sha="", collector=collect, writ
             cursor.execute("insert into public.etf_sync_runs (id, started_at, trigger, commit_sha, status) values (%s,%s,%s,%s,'running')", (run_id, now, trigger, commit_sha or None))
             conn.commit()
         targets, gaps, ledger_rows = discover(conn, as_of)
+        _log_resolution_gaps(gaps)
         results = []
         for gap in gaps:
             results.append({"ticker": gap.get("ticker"), "issuer": None, "status": gap["status"], "records": [], "source_url": None, "parser_version": None, "error_code": gap["reason"]})
