@@ -11,9 +11,6 @@ import subprocess
 import sys
 import tempfile
 
-DEFAULT_CREDENTIAL_NOTE = Path('/Volumes/Seagate500/obsidian/api_key/supabase.md')
-
-
 def parse_credentials(text: str) -> dict[str, str]:
     """Parse only the credential note's documented key/value forms."""
     names = {'host': 'SUPABASE_DB_HOST', 'port': 'SUPABASE_DB_PORT',
@@ -38,7 +35,7 @@ def main(argv=None) -> int:
     mode.add_argument('--write', action='store_true', help='allow database writes (default: dry-run)')
     mode.add_argument('--dry-run', action='store_true', help='explicitly run without writes (default)')
     parser.add_argument('--python', dest='python_path', help='absolute path to executable Python')
-    parser.add_argument('--credential-note', default=str(DEFAULT_CREDENTIAL_NOTE), help=argparse.SUPPRESS)
+    parser.add_argument('--credential-note', required=True, help=argparse.SUPPRESS)
     args = parser.parse_args(argv)
     python_path = args.python_path or os.environ.get('OFFICIAL_ETF_PYTHON')
     if not python_path or not Path(python_path).is_absolute() or not os.access(python_path, os.X_OK):

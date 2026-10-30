@@ -43,6 +43,11 @@ class LauncherTests(unittest.TestCase):
     def test_missing_note_fails_closed(self):
         self.assertEqual(launcher.main(['--python', '/usr/bin/python3', '--credential-note', '/nonexistent/fake-note']), 2)
 
+    def test_credential_note_is_explicit(self):
+        with self.assertRaises(SystemExit) as error:
+            launcher.main(['--python', '/usr/bin/python3'])
+        self.assertEqual(error.exception.code, 2)
+
     def test_write_flag(self):
         with tempfile.TemporaryDirectory() as d:
             note = Path(d) / 'note'; note.write_text(FIXTURE)
