@@ -218,3 +218,10 @@
 
 - Re-ran the Wiki structural checks after tightening the Actions reason-code allowlist: 11 pages, 153 relative links, 9 indexed knowledge pages, 14 registered source IDs, zero broken links/orphans/unknown references.
 - Result: pass. Live production migration and workflow execution remain pending.
+
+
+## [2026-10-29] fix | TIGER distribution-history issuer allowlist
+
+- Added a narrow migration replacing `etf_distribution_history_source_issuer_check` to permit TIGER alongside KODEX, SOL, RISE, and OTHER; it does not write history rows.
+- Added a static Node regression test following the existing repository test style; six tests passed.
+- Applied the constraint SQL and migration record in a transaction after a private backup and isolated restore check; independently read back the live constraint and migration record. A separately approved TIGER reference row was then written and read back. Existing remote migration-history drift remains unresolved; these local files are uncommitted.

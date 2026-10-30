@@ -72,6 +72,12 @@ tags: [risk, drift, follow-up]
 - The Actions path aggregates allowlisted source status/reason results (unknown reasons collapse to `unknown`) and leaves only final status/mode/trigger in `sync_complete`. It does not log per-source identifiers or total ledger/candidate/distribution-row counts; only sanitized status/reason counts remain.
 - Required evidence to close: apply the migration, run the workflow in dry-run mode, confirm no coverage gaps and successful official-source collection, then separately verify any requested write/readback.
 
+### Distribution-history issuer constraint
+
+- Status: applied to production and read back on 2026-10-29; repository migration and static test remain uncommitted.
+- The baseline check allowed KODEX, SOL, RISE, and OTHER but omitted TIGER. The narrow migration adds TIGER to that allowlist without rewriting existing history.
+- The transaction recorded its migration version, but older migration-history drift remains unresolved and the new migration has not yet been committed to the canonical repository.
+
 ## Monitoring questions
 
 - live RLS와 repository hardening migration이 계속 일치하는가
