@@ -66,11 +66,17 @@ tags: [risk, drift, follow-up]
 
 ### Official ETF sync coverage
 
-- Status: implementation added; production migration and Actions verification pending.
+- Status: coverage migration applied and read back; subsequent Actions dry-run still had partial source failures. A local dry-run and write run later collected all five sources successfully. Long-term source reliability and notification delivery remain open.
 - Read-only diagnosis found missing confirmed aliases for several official ETF names and a newer SOL official URL host that the resolver rejected. Candidate identifiers are intentionally omitted from shared logs/documentation because discovery starts from user-entered dividend data.
 - The code derives the SOL distribution API from the verified allowlisted issuer hostname. A narrow migration adds only public ticker/cache/alias metadata and does not modify user ledger rows or distribution history.
 - The Actions path aggregates allowlisted source status/reason results (unknown reasons collapse to `unknown`) and leaves only final status/mode/trigger in `sync_complete`. It does not log per-source identifiers or total ledger/candidate/distribution-row counts; only sanitized status/reason counts remain.
-- Required evidence to close: apply the migration, run the workflow in dry-run mode, confirm no coverage gaps and successful official-source collection, then separately verify any requested write/readback.
+- Required evidence to close: verify ongoing scheduled runs, source reliability and failure notifications. Historical migration drift remains unresolved.
+
+### Distribution-history issuer constraint
+
+- Status: applied to production and read back on 2026-10-29; the repository includes the migration and a static test.
+- The baseline check allowed KODEX, SOL, RISE, and OTHER but omitted TIGER. The narrow migration adds TIGER to that allowlist without rewriting existing history.
+- The transaction recorded its migration version, but older migration-history drift remains unresolved.
 
 ## Monitoring questions
 

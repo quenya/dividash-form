@@ -107,6 +107,10 @@ on the legacy `.com` host. A `.com` product page continues to map to its own
 issuer-verified `.co.kr` endpoint for SOL 0167B0 (S014). The endpoint is
 constructed only from verified official product URLs and numeric product IDs.
 
+## Distribution-history issuer allowlist
+
+The repository baseline `database/etf_distribution_history.sql` permits KODEX, SOL, RISE, and OTHER. The narrow migration [`202610290001_allow_tiger_distribution_issuer.sql`](../../supabase/migrations/202610290001_allow_tiger_distribution_issuer.sql) replaces the named check constraint to include TIGER. It changes no history rows; the matching static regression test is in `database/ticker_matching_static.test.js`. On 2026-10-29 the migration SQL and its version record were applied transactionally to production and the constraint was read back; the earlier remote migration-history mismatch remains unresolved. The migration file remains uncommitted locally.
+
 ## TIGER official distribution export
 
 For the verified product TIGER 배당커버드콜액티브 (short code `472150`, KSD

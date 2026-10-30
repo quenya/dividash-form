@@ -59,3 +59,14 @@ test('legacy upgrades add the columns used by later migration statements', () =>
   }
   assert.match(sql, /requires the existing source_input key column/);
 });
+
+const issuerMigration = fs.readFileSync(
+  path.join(__dirname, '../supabase/migrations/202610290001_allow_tiger_distribution_issuer.sql'),
+  'utf8',
+);
+
+test('distribution history issuer constraint permits TIGER without changing rows', () => {
+  assert.match(issuerMigration, /DROP CONSTRAINT IF EXISTS etf_distribution_history_source_issuer_check/);
+  assert.match(issuerMigration, /ADD CONSTRAINT etf_distribution_history_source_issuer_check[\s\S]*?CHECK \(source_issuer IN \('KODEX', 'SOL', 'RISE', 'TIGER', 'OTHER'\)\)/);
+  assert.doesNotMatch(issuerMigration, /INSERT INTO|UPDATE public\.etf_distribution_history|DELETE FROM/);
+});
