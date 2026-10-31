@@ -79,7 +79,8 @@ export function buildDividendCalendarEvents({
   now = new Date(),
 }) {
   const eligible = new Set(eligibleTickers.map(normalizeTicker));
-  const month = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+  const currentMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+  const followingMonthStart = new Date(now.getFullYear(), now.getMonth() + 2, 1);
   const events = actualEntries
     .filter((entry) => entry.payment_date)
     .map((entry) => ({ ...entry, type: 'actual', amount: Number(entry.dividend_amount) || 0 }));
@@ -88,8 +89,11 @@ export function buildDividendCalendarEvents({
   officialDistributions.forEach((distribution) => {
     const ticker = normalizeTicker(distribution.ticker);
     const amount = Number(distribution.distribution_per_share);
+    const paymentDate = new Date(`${distribution.payment_date}T00:00:00`);
     if (!eligible.has(ticker)
-      || !distribution.payment_date?.startsWith(`${month}-`)
+      || Number.isNaN(paymentDate.getTime())
+      || paymentDate < currentMonthStart
+      || paymentDate >= followingMonthStart
       || !Number.isFinite(amount)
       || !distribution.source_url
       || !distribution.source_issuer) return;

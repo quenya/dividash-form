@@ -62,15 +62,15 @@ export function useDividendData() {
             const candidateTickers = getRecentEtfCandidateSymbols(entries, matchData || []);
             const now = new Date();
             const monthStart = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`;
-            const nextMonthDate = new Date(now.getFullYear(), now.getMonth() + 1, 1);
-            const nextMonthStart = `${nextMonthDate.getFullYear()}-${String(nextMonthDate.getMonth() + 1).padStart(2, '0')}-01`;
+            const followingMonthDate = new Date(now.getFullYear(), now.getMonth() + 2, 1);
+            const followingMonthStart = `${followingMonthDate.getFullYear()}-${String(followingMonthDate.getMonth() + 1).padStart(2, '0')}-01`;
             const [distributionResult, instrumentResult, syncStatusResult] = await Promise.all([
                 candidateTickers.length
                     ? supabase.from('etf_distribution_history')
                         .select('ticker,ex_date,payment_date,distribution_per_share,currency,source_issuer,source_url,fetched_at,source_updated_at')
                         .in('ticker', candidateTickers)
                         .gte('payment_date', monthStart)
-                        .lt('payment_date', nextMonthStart)
+                        .lt('payment_date', followingMonthStart)
                         .order('payment_date', { ascending: true })
                     : Promise.resolve({ data: [], error: null }),
                 candidateTickers.length
@@ -95,7 +95,7 @@ export function useDividendData() {
                 setEligibleEtfTickers([]);
                 setOfficialDataError('최근 배당 ETF 종목을 확인할 수 없습니다.');
             } else {
-                setEligibleEtfTickers(resolveRecentEtfTickers({ entries, instruments: instrumentResult.data || [] }));
+                setEligibleEtfTickers(resolveRecentEtfTickers({ entries, instruments: instrumentResult.data || [], matches: matchData || [] }));
             }
         } catch (err) {
             console.error('Error fetching dividend data:', err);

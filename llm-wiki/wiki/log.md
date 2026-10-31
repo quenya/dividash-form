@@ -225,3 +225,10 @@
 - Added a narrow migration replacing `etf_distribution_history_source_issuer_check` to permit TIGER alongside KODEX, SOL, RISE, and OTHER; it does not write history rows.
 - Added a static Node regression test following the existing repository test style; six tests passed.
 - Applied the constraint SQL and migration record in a transaction after a private backup and isolated restore check; independently read back the live constraint and migration record. A separately approved TIGER reference row was then written and read back. Existing remote migration-history drift remains unresolved; these local files are uncommitted.
+
+## [2026-10-31] test | Dividend calendar current and next month coverage
+
+- 캘린더 공식 예정 이벤트 조회 범위는 이번달 1일부터 다다음달 1일 미만(이번달 및 다음달)이며, 연말 경계의 다음해 1월은 포함하고 2월은 제외한다.
+- 공식 주당 예정액과 실제 입금액은 별도 이벤트 및 별도 합계로 유지하며, confirmed 이름 매칭 후보도 ETF 유형 확인 후에만 eligible ticker가 된다.
+- 컴포넌트 월 선택 및 hook의 Supabase 조회 범위를 테스트한다. 미래 일정의 완전성은 보장하지 않는다.
+- DB·원격 변경은 수행하지 않았다.
