@@ -68,6 +68,20 @@ describe('buildDividendCalendarEvents', () => {
     ]);
   });
 
+  test('includes this month and next month, including December-to-January rollover, but excludes the following month', () => {
+    const events = buildDividendCalendarEvents({
+      actualEntries: [],
+      officialDistributions: [
+        { ticker: '069500', payment_date: '2026-12-20', distribution_per_share: 125, source_url: 'https://issuer.example/069500', source_issuer: 'KODEX' },
+        { ticker: '069500', payment_date: '2027-01-01', distribution_per_share: 125, source_url: 'https://issuer.example/069500', source_issuer: 'KODEX' },
+        { ticker: '069500', payment_date: '2027-02-01', distribution_per_share: 125, source_url: 'https://issuer.example/069500', source_issuer: 'KODEX' },
+      ],
+      eligibleTickers: ['069500'],
+      now: new Date('2026-12-16T12:00:00'),
+    });
+    expect(events.filter((event) => event.type === 'scheduled').map((event) => event.payment_date)).toEqual(['2026-12-20', '2027-01-01']);
+  });
+
   test('does not create a scheduled event with incomplete official evidence', () => {
     const events = buildDividendCalendarEvents({
       actualEntries: [],
