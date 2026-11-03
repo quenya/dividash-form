@@ -29,7 +29,7 @@ tags: [ui, charts, responsive, qa, accessibility]
 ### Notification center
 
 - Header notifications include verified official distribution rows payable today, tomorrow, or the following local calendar date. Eligibility remains limited to ETF tickers found in recent user dividend history and verified as ETFs.
-- Actual receipts are joined by exact payment date and same direct ticker, or by the existing unique confirmed high-confidence name resolver. Account amounts/currencies stay separate from official per-share distributions. Missing ledger records mean unregistered, not non-payment; multiple official events on one ticker/date do not duplicate receipts.
+- Actual receipts are joined by exact payment date and same direct ticker, or by the existing unique confirmed high-confidence name resolver. Show each account receipt on its own line, then total valid amounts separately per currency; never combine ledger receipts with official per-share distributions. Missing/invalid amounts or currencies make the total explicitly incomplete. Missing ledger records mean unregistered, not non-payment; multiple official events on one ticker/date do not duplicate receipts.
 - Duplicate issuer schedules are collapsed. Amounts are shown in the issuer's currency per share, with a direct issuer-source link; do not imply account-level or portfolio totals.
 - Loading, official-data failures, and sync-status warnings are distinct. A failed query must not be presented as an authoritative empty schedule list.
 - Implementation and tests: `src/utils/threeDayScheduledNotifications.js` and its test; source data comes from `useDividendData`.
