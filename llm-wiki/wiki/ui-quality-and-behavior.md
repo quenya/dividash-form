@@ -26,6 +26,13 @@ tags: [ui, charts, responsive, qa, accessibility]
 - “오늘”을 `toISOString().slice(0, 10)`으로 만들지 않는다. KST 00:00–08:59에는 UTC 날짜가 전날일 수 있다.
 - 회귀 테스트는 production formatter를 복제해 expected value를 계산하지 않는다. timezone 차이가 드러나는 고정 시각과 독립된 literal 결과를 사용하고 submit 후 실제 date input 값을 확인한다.
 
+### Notification center
+
+- Header notifications are based only on verified official distribution rows payable on the user's local calendar date, never ledger entries that represent actual receipts.
+- Duplicate issuer schedules are collapsed. Amounts are shown as the issuer's currency per share, with a direct issuer-source link; do not imply account-level or portfolio totals.
+- Loading, official-data failures, and sync-status warnings are distinct. A failed query must not be presented as an authoritative empty schedule list.
+- Implementation and tests: `src/utils/todayScheduledNotifications.js` and its test; source data comes from `useDividendData`.
+
 ### Mobile shell
 
 - Mobile layout은 `header / minmax(0, 1fr) main / bottom navigation`의 세 grid row를 사용한다.
