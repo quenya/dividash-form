@@ -17,7 +17,8 @@ test('shows a three-day schedule with registered account receipt separate from o
   fireEvent.click(screen.getByRole('button', { name: '알림 2개' }));
   expect(screen.getByText('오늘·내일·모레 공식 배당 예정 (2)')).toBeInTheDocument();
   expect(screen.getAllByText(/공식 주당 KRW 125/)).toHaveLength(2);
-  expect(screen.getByText(/등록된 실제 입금: Test account KRW 1,200/)).toBeInTheDocument();
+  expect(screen.getByText('Test account KRW 1,200')).toBeInTheDocument();
+  expect(screen.getByText('실제 입금 합계 · KRW 1,200')).toBeInTheDocument();
   expect(screen.getAllByText(/실제 입금 내역 미등록/)).toHaveLength(1);
 });
 
@@ -36,7 +37,7 @@ test('shows unknown official and actual amounts honestly', () => {
   render(<NotificationCenter />);
   fireEvent.click(screen.getByRole('button', { name: '알림 1개' }));
   expect(screen.getByText(/공식 주당 금액 미확인/)).toBeInTheDocument();
-  expect(screen.getByText(/등록된 실제 입금: 계좌명 없음 금액 미확인/)).toBeInTheDocument();
+  expect(screen.getByText('계좌명 없음 금액 미확인')).toBeInTheDocument();
 });
 test('opens by button and shows schedules in the next three local dates by company name', () => {
   jest.useFakeTimers().setSystemTime(new Date('2026-11-03T10:00:00'));
@@ -95,4 +96,47 @@ test('shows sync warning through existing official warning behavior and missing 
   fireEvent.click(screen.getByRole('button', { name: '알림 1개' }));
   expect(screen.getByRole('status')).toHaveTextContent('확인이 필요한 종목');
   expect(screen.getByText('종목명 확인 필요 배당 예정')).toBeInTheDocument();
+});
+
+
+test('renders each receipt on its own line and totals valid amounts by currency', () => {
+  jest.useFakeTimers().setSystemTime(new Date('2026-11-03T10:00:00'));
+  useDividendData.mockReturnValue(data({ data: [
+    { ticker: '069500', payment_date: row.payment_date, account_name: '연금계좌', dividend_amount: '1200.25', currency: 'KRW' },
+    { ticker: '069500', payment_date: row.payment_date, account_name: '일반계좌', dividend_amount: '300', currency: 'KRW' },
+    { ticker: '069500', payment_date: row.payment_date, account_name: '해외계좌', dividend_amount: '2.5', currency: 'USD' },
+  ] }));
+  render(<NotificationCenter />);
+  fireEvent.click(screen.getByRole('button', { name: '알림 1개' }));
+  expect(screen.getByText('연금계좌 KRW 1,200.25')).toBeInTheDocument();
+  expect(screen.getByText('일반계좌 KRW 300')).toBeInTheDocument();
+  expect(screen.getByText('해외계좌 USD 2.5')).toBeInTheDocument();
+  expect(screen.getByText('실제 입금 합계 · KRW 1,500.25 · USD 2.5')).toBeInTheDocument();
+});
+
+test('marks totals incomplete when an amount or currency is missing or invalid', () => {
+  jest.useFakeTimers().setSystemTime(new Date('2026-11-03T10:00:00'));
+  useDividendData.mockReturnValue(data({ data: [
+    { ticker: '069500', payment_date: row.payment_date, account_name: '정상계좌', dividend_amount: '1200', currency: 'KRW' },
+    { ticker: '069500', payment_date: row.payment_date, account_name: '금액누락', dividend_amount: null, currency: 'KRW' },
+    { ticker: '069500', payment_date: row.payment_date, account_name: '통화누락', dividend_amount: '10', currency: '' },
+    { ticker: '069500', payment_date: row.payment_date, account_name: '비정상', dividend_amount: 'NaN', currency: 'KRW' },
+  ] }));
+  render(<NotificationCenter />);
+  fireEvent.click(screen.getByRole('button', { name: '알림 1개' }));
+  expect(screen.getByText('실제 입금 합계 · KRW 1,200 · 총액 미확인 (불완전)')).toBeInTheDocument();
+  expect(screen.getByText('금액누락 금액 미확인')).toBeInTheDocument();
+  expect(screen.getByText('통화누락 통화 미확인 · 10')).toBeInTheDocument();
+  expect(screen.getByText('비정상 금액 미확인')).toBeInTheDocument();
+});
+
+test('adds decimal receipt strings without floating-point artifacts', () => {
+  jest.useFakeTimers().setSystemTime(new Date('2026-11-03T10:00:00'));
+  useDividendData.mockReturnValue(data({ data: [
+    { ticker: '069500', payment_date: row.payment_date, account_name: '첫째', dividend_amount: '0.1', currency: 'USD' },
+    { ticker: '069500', payment_date: row.payment_date, account_name: '둘째', dividend_amount: '0.2', currency: 'USD' },
+  ] }));
+  render(<NotificationCenter />);
+  fireEvent.click(screen.getByRole('button', { name: '알림 1개' }));
+  expect(screen.getByText('실제 입금 합계 · USD 0.3')).toBeInTheDocument();
 });

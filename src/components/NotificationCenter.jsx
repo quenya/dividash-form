@@ -3,6 +3,53 @@ import { Bell, BellRing } from 'lucide-react';
 import { useDividendData } from '../hooks/useDividendData';
 import { buildThreeDayScheduledNotifications } from '../utils/threeDayScheduledNotifications';
 
+const formatAmount = (amount) => new Intl.NumberFormat('en-US', { maximumFractionDigits: 20 }).format(amount);
+const MAX_DECIMAL_PLACES = 9;
+const parseDecimal = (raw) => {
+  const text = String(raw).trim();
+  const match = /^([+-]?)(\d+)(?:\.(\d+))?$/.exec(text);
+  if (!match || (match[3] || '').length > MAX_DECIMAL_PLACES) return null;
+  const scale = (match[3] || '').length;
+  const magnitude = BigInt(match[2] + (match[3] || ''));
+  return { units: match[1] === '-' ? -magnitude : magnitude, scale };
+};
+const formatDecimal = ({ units, scale }) => {
+  const negative = units < 0n;
+  const digits = (negative ? -units : units).toString().padStart(scale + 1, '0');
+  const whole = scale ? digits.slice(0, -scale) : digits;
+  const fraction = scale ? digits.slice(-scale).replace(/0+$/, '') : '';
+  const grouped = whole.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  return `${negative ? '-' : ''}${grouped}${fraction ? `.${fraction}` : ''}`;
+};
+
+function getReceiptSummary(receipts) {
+  const totals = new Map();
+  let incomplete = false;
+  const formatted = receipts.map((receipt) => {
+    const amountRaw = receipt.dividend_amount;
+    const amountMissing = amountRaw === null || amountRaw === undefined || (typeof amountRaw === 'string' && amountRaw.trim() === '');
+    const decimal = amountMissing ? null : parseDecimal(amountRaw);
+    const amount = decimal ? Number(amountRaw) : null;
+    const currency = typeof receipt.currency === 'string' ? receipt.currency.trim().toUpperCase() : '';
+    const currencyValid = /^[A-Z]{3}$/.test(currency);
+    if (!decimal || !Number.isFinite(amount) || !currencyValid) incomplete = true;
+    if (decimal && Number.isFinite(amount) && currencyValid) {
+      const previous = totals.get(currency) || { units: 0n, scale: 0 };
+      const scale = Math.max(previous.scale, decimal.scale);
+      const units = previous.units * (10n ** BigInt(scale - previous.scale)) + decimal.units * (10n ** BigInt(scale - decimal.scale));
+      totals.set(currency, { units, scale });
+    }
+    let value;
+    if (!decimal || !Number.isFinite(amount)) value = '금액 미확인';
+    else if (!currencyValid) value = `통화 미확인 · ${formatAmount(amount)}`;
+    else value = `${currency} ${formatAmount(amount)}`;
+    return { account: receipt.account_name || '계좌명 없음', value };
+  });
+  const amounts = [...totals].map(([currency, amount]) => `${currency} ${formatDecimal(amount)}`);
+  const total = amounts.length ? amounts.join(' · ') : '금액 미확인';
+  return { formatted, total: `실제 입금 합계 · ${total}${incomplete ? ' · 총액 미확인 (불완전)' : ''}` };
+}
+
 function NotificationCenter() {
   const { data, officialDistributions, eligibleEtfTickers, officialDataError, officialSyncStatus, loading, tickersMap, tickerMatchesMap, error, refetch } = useDividendData();
   const [localDate, setLocalDate] = useState(() => new Date().toDateString());
@@ -57,7 +104,7 @@ function NotificationCenter() {
           {result.notifications.map((note) => <div key={`${note.ticker}-${note.ex_date || 'no-ex-date'}-${note.payment_date}-${note.source_issuer}`} style={{ padding: '12px', borderBottom: '1px solid var(--border-color)', fontSize: '0.9rem' }}>
             <div style={{ fontWeight: 500 }}>{note.company_name || '종목명 확인 필요'} 배당 예정</div>
             <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: 4 }}>{note.payment_date} · {note.amount === null ? '공식 주당 금액 미확인' : `공식 주당 ${note.currency} ${note.amount.toLocaleString()}`}</div>
-            {note.receiptStatus === 'ambiguous' ? <div style={{ fontSize: '0.8rem', marginTop: 4, color: 'var(--text-secondary)' }}>동일 종목·날짜에 일정이 여러 건이라 입금 내역을 연결할 수 없습니다</div> : note.actualReceipts.length > 0 ? <div style={{ fontSize: '0.8rem', marginTop: 4 }}>등록된 실제 입금: {note.actualReceipts.map((receipt) => `${receipt.account_name || '계좌명 없음'} ${receipt.dividend_amount === null || receipt.dividend_amount === undefined || receipt.dividend_amount === '' ? '금액 미확인' : `${receipt.currency || ''} ${Number(receipt.dividend_amount).toLocaleString()}`}`).join(' · ')}</div> : <div style={{ fontSize: '0.8rem', marginTop: 4, color: 'var(--text-secondary)' }}>실제 입금 내역 미등록 (입금 여부를 의미하지 않습니다)</div>}
+            {note.receiptStatus === 'ambiguous' ? <div style={{ fontSize: '0.8rem', marginTop: 4, color: 'var(--text-secondary)' }}>동일 종목·날짜에 일정이 여러 건이라 입금 내역을 연결할 수 없습니다</div> : note.actualReceipts.length > 0 ? <div style={{ fontSize: '0.8rem', marginTop: 4 }}><div>등록된 실제 입금</div>{(() => { const summary = getReceiptSummary(note.actualReceipts); return <>{summary.formatted.map((receipt, index) => <div key={`${receipt.account}-${index}`}>{receipt.account} {receipt.value}</div>)}<div style={{ fontWeight: 600, marginTop: 4 }}>{summary.total}</div></>; })()}</div> : <div style={{ fontSize: '0.8rem', marginTop: 4, color: 'var(--text-secondary)' }}>실제 입금 내역 미등록 (입금 여부를 의미하지 않습니다)</div>}
             <a href={note.source_url} target="_blank" rel="noreferrer">{note.source_issuer} 발행사 원본</a>
           </div>)}
           {!result.notifications.length && !result.message && <div style={{ padding: 20, textAlign: 'center', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>다음 3일 공식 배당 예정 내역이 없습니다.</div>}
