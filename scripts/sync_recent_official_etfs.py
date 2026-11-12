@@ -35,6 +35,31 @@ def _safe_error(exc):
     return type(exc).__name__
 
 
+def _validation_code(exc):
+    """Return a stable, non-sensitive diagnostic for known record failures."""
+    message = str(exc)
+    codes = {
+        "fetched_at is in the future": "validation_future_fetched_at",
+        "ex_date is in the future": "validation_future_ex_date_kst",
+        "ex_date is older than freshness limit": "validation_stale_ex_date",
+        "source_updated_at is in the future": "validation_future_source_updated_at",
+        "source record is older than freshness limit": "validation_stale_source_updated_at",
+    }
+    return codes.get(message, "validation_invalid_record")
+
+
+def _safe_diagnostic_code(value):
+    allowed = {
+        "unsupported_issuer", "invalid_timeout", "request_timeout", "network_dns_error",
+        "network_tls_error", "network_connection_error", "network_error", "invalid_source_response",
+        "validation_future_fetched_at", "validation_future_ex_date_kst", "validation_stale_ex_date",
+        "validation_future_source_updated_at", "validation_stale_source_updated_at", "validation_invalid_record",
+    }
+    if isinstance(value, str) and (value in allowed or re.fullmatch(r"http_[1-5][0-9]{2}", value)):
+        return value
+    return None
+
+
 def _log_resolution_gaps(gaps):
     counts = {}
     for gap in gaps:
@@ -49,7 +74,10 @@ def _log_source_collection_summary(sources):
     allowed_error_codes = {
         "none", "unsupported_issuer", "invalid_timeout", "request_timeout",
         "network_dns_error", "network_tls_error", "network_connection_error",
-        "network_error", "invalid_source_response",
+        "network_error", "invalid_source_response", "validation_future_fetched_at",
+        "validation_future_ex_date_kst", "validation_stale_ex_date",
+        "validation_future_source_updated_at", "validation_stale_source_updated_at",
+        "validation_invalid_record",
     }
     counts = {}
     for source in sources:
@@ -61,8 +89,29 @@ def _log_source_collection_summary(sources):
             reason = "unknown"
         key = (status, reason)
         counts[key] = counts.get(key, 0) + 1
+    explanations = {
+        "unsupported_issuer": ("지원하지 않는 운용사입니다.", "지원 운용사 목록과 공식 데이터 소스를 확인하세요."),
+        "invalid_timeout": ("요청 시간 설정이 유효하지 않습니다.", "수집 설정의 제한 시간 값을 확인하세요."),
+        "request_timeout": ("공식 데이터 요청 시간이 초과되었습니다.", "잠시 후 재시도하고 반복되면 공식 사이트 상태를 확인하세요."),
+        "network_dns_error": ("공식 데이터 사이트 주소를 찾지 못했습니다.", "네트워크와 DNS 상태를 확인한 뒤 재시도하세요."),
+        "network_tls_error": ("공식 데이터 사이트의 보안 연결에 실패했습니다.", "시스템 인증서와 사이트 연결 상태를 확인하세요."),
+        "network_connection_error": ("공식 데이터 사이트에 연결할 수 없습니다.", "네트워크와 사이트 상태를 확인한 뒤 재시도하세요."),
+        "network_error": ("공식 데이터 사이트 통신 중 오류가 발생했습니다.", "네트워크와 사이트 상태를 확인한 뒤 재시도하세요."),
+        "invalid_source_response": ("공식 데이터 응답 형식이 올바르지 않습니다.", "사이트 변경 여부를 확인하고 수집기 점검을 요청하세요."),
+        "validation_future_fetched_at": ("수집 시각이 미래로 판정되었습니다.", "시스템 시각과 공식 응답의 수집 시각을 확인하세요."),
+        "validation_future_ex_date_kst": ("분배 기준일이 미래로 판정되었습니다.", "공식 공시의 기준일과 한국 표준시 변환을 확인하세요."),
+        "validation_stale_ex_date": ("분배 기준일이 최신성 기준보다 오래되었습니다.", "최신 공식 공시를 확인하고 수집 범위를 점검하세요."),
+        "validation_future_source_updated_at": ("원천 갱신 시각이 미래로 판정되었습니다.", "시스템 시각과 공식 응답의 갱신 시각을 확인하세요."),
+        "validation_stale_source_updated_at": ("원천 자료가 최신성 기준보다 오래되었습니다.", "공식 사이트에서 최신 자료 공개 여부를 확인하세요."),
+        "validation_invalid_record": ("공식 자료 검증에 실패했습니다.", "공식 자료 형식을 확인하고 수집기 점검을 요청하세요."),
+        "unknown": ("원인을 확인하지 못했습니다.", "로그의 비민감 오류 코드로 담당자가 조사하도록 요청하세요."),
+    }
     for (status, reason), count in sorted(counts.items()):
-        _json_log("source_collection_summary", status=status, reason=reason, count=count)
+        fields = {"status": status, "reason": reason, "count": count}
+        if status in {"failure", "timeout"}:
+            cause, next_step = explanations.get(reason, explanations["unknown"])
+            fields.update(cause=cause, next_step=next_step)
+        _json_log("source_collection_summary", **fields)
 
 
 def _read_dict_rows(cursor, query, params=()):
@@ -122,7 +171,7 @@ def execute_sync(conn, *, as_of, trigger, commit_sha="", collector=collect, writ
         for target in targets:
             fetched = collector(target["issuer"], target["ticker"], target["source_url"])
             records = fetched.get("records", []) if isinstance(fetched.get("records"), list) else []
-            source = {"ticker": target["ticker"], "issuer": target["issuer"], "status": fetched.get("status", "failure"), "records": records, "source_url": target["official_url"], "parser_version": fetched.get("parser_version", PARSER_VERSION), "error_code": fetched.get("error_code")}
+            source = {"ticker": target["ticker"], "issuer": target["issuer"], "status": fetched.get("status", "failure"), "records": records, "source_url": target["official_url"], "parser_version": fetched.get("parser_version", PARSER_VERSION), "error_code": _safe_diagnostic_code(fetched.get("error_code"))}
             try:
                 if fetched.get("status") != "success" or not records:
                     raise ValueError("source_not_successful_or_empty")
@@ -133,7 +182,11 @@ def execute_sync(conn, *, as_of, trigger, commit_sha="", collector=collect, writ
                         raise ValueError("source_ticker_mismatch")
             except (KeyError, TypeError, ValueError) as exc:
                 source["status"] = "failure"
-                source["error_code"] = source.get("error_code") or (str(exc) if str(exc).startswith("source_") else _safe_error(exc))
+                source["error_code"] = source.get("error_code") or (
+                    str(exc) if str(exc).startswith("source_") else
+                    _validation_code(exc) if isinstance(exc, ValueError) and type(exc).__name__ == "StaleDataError" else
+                    _safe_error(exc)
+                )
                 source["records"] = []
             results.append(source)
         _log_source_collection_summary([item for item in results if item.get("issuer")])
