@@ -156,6 +156,22 @@ class DailySyncTests(unittest.TestCase):
         self.assertNotIn("insert into public.dividend_entries", sql)
         self.assertEqual(conn.commits, 0)
 
+    def test_future_validation_failure_has_safe_specific_reason(self):
+        conn = FakeConnection()
+        future = (datetime.now(timezone.utc).replace(year=datetime.now(timezone.utc).year + 1)).isoformat()
+        output = io.StringIO()
+        def collector(issuer, ticker, source_url):
+            return {"status": "success", "records": [{
+                "ticker": ticker, "ex_date": "2026-10-01", "fetched_at": future,
+                "source_url": source_url, "parser_version": "test-v1",
+            }]}
+        with redirect_stdout(output):
+            result = execute_sync(conn, as_of=date(2026, 10, 17), trigger="manual", write=False, collector=collector)
+        event = next(json.loads(line) for line in output.getvalue().splitlines() if '"source_collection_summary"' in line)
+        self.assertEqual(event["reason"], "validation_future_fetched_at")
+        self.assertEqual(result["status"], "failure")
+        self.assertNotIn("0094M0", output.getvalue())
+
     def test_dry_run_preserves_structured_source_error_code(self):
         conn = FakeConnection()
         output = io.StringIO()
@@ -177,6 +193,8 @@ class DailySyncTests(unittest.TestCase):
         events = [json.loads(line) for line in output.getvalue().splitlines()]
         self.assertEqual(events[0], {
             "event": "source_collection_summary", "status": "failure", "reason": "unknown", "count": 1,
+            "cause": "원인을 확인하지 못했습니다.",
+            "next_step": "로그의 비민감 오류 코드로 담당자가 조사하도록 요청하세요.",
         })
         self.assertNotIn("private_0094M0_detail", output.getvalue())
         self.assertNotIn("0094M0", output.getvalue())
