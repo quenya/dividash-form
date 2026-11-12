@@ -81,6 +81,15 @@ class SyncSafetyTests(unittest.TestCase):
             sync.collect_with_retry(collector, attempts=5, backoff_seconds=60)
         self.assertEqual(sleep.call_args_list, [call(60), call(60), call(60), call(60)])
 
+    def test_ex_date_uses_korean_local_date_near_utc_midnight(self):
+        record = {"ticker": "0167B0", "ex_date": "2026-11-13", "fetched_at": "2026-11-12T21:15:00+00:00"}
+        sync.validate_record(record, now=dt.datetime(2026, 11, 12, 21, 15, tzinfo=dt.timezone.utc))
+
+    def test_next_korean_date_is_rejected_near_utc_midnight(self):
+        record = {"ticker": "0167B0", "ex_date": "2026-11-14", "fetched_at": "2026-11-12T21:15:00+00:00"}
+        with self.assertRaises(sync.StaleDataError):
+            sync.validate_record(record, now=dt.datetime(2026, 11, 12, 21, 15, tzinfo=dt.timezone.utc))
+
     def test_future_ex_date_is_rejected(self):
         record = {"ticker": "0167B0", "ex_date": "2099-01-01", "fetched_at": "2026-09-05T00:00:00+00:00"}
         with self.assertRaises(sync.StaleDataError):

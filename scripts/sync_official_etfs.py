@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import contextlib
 import datetime as dt
+from zoneinfo import ZoneInfo
 import fcntl
 import json
 import os
@@ -103,8 +104,9 @@ def validate_record(record: dict, now: dt.datetime | None = None, max_age_days: 
     fetched = _as_datetime(record["fetched_at"])
     if fetched > now + dt.timedelta(minutes=5): raise StaleDataError("fetched_at is in the future")
     ex_date = dt.date.fromisoformat(record["ex_date"])
-    if ex_date > now.date(): raise StaleDataError("ex_date is in the future")
-    if enforce_age and ex_date < now.date() - dt.timedelta(days=max_age_days): raise StaleDataError("ex_date is older than freshness limit")
+    local_date = now.astimezone(ZoneInfo("Asia/Seoul")).date() if now.tzinfo is not None else now.date()
+    if ex_date > local_date: raise StaleDataError("ex_date is in the future")
+    if enforce_age and ex_date < local_date - dt.timedelta(days=max_age_days): raise StaleDataError("ex_date is older than freshness limit")
     source_updated = record.get("source_updated_at")
     if source_updated is not None:
         updated = _as_datetime(source_updated)
