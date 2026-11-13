@@ -5,10 +5,10 @@
 ## Product and architecture
 
 - [overview.md](./overview.md) - 제품 목적, 주요 사용자 화면, 현재 기술 경계를 요약한다. Sources: S002.
-- [architecture.md](./architecture.md) - React shell, 인증, Supabase, 외부 API와 데이터 흐름을 설명한다. Sources: S002.
+- [architecture.md](./architecture.md) - React shell, 인증, Supabase, 외부 API와 데이터 흐름을 설명한다. Sources: S002, S017, S018.
 - [data-model.md](./data-model.md) - 주요 table, ownership, RLS와 migration 관계, 배당 캘린더의 공식 분배 참조 조회를 정리한다. Sources: S002, S009, S010, S011, S012, S013, S014, S015.
 - [input-pipelines.md](./input-pipelines.md) - manual, OCR, text 입력의 추출·검토·저장 흐름을 비교한다. Sources: S002.
-- [ui-quality-and-behavior.md](./ui-quality-and-behavior.md) - 차트, 캘린더 실제 입금 주수 추정, local-date reset, mobile shell의 동작 불변조건과 재사용 QA workflow를 기록한다. Sources: S002, S007, S015.
+- [ui-quality-and-behavior.md](./ui-quality-and-behavior.md) - 차트, 캘린더 실제 입금 주수 추정, 월별 배당 데이터 표, local-date reset, mobile shell의 동작 불변조건과 재사용 QA workflow를 기록한다. Sources: S002, S007, S015, S017, S018.
 - [authentication-ux.md](./authentication-ux.md) - current auth 범위와 unmerged password recovery/account settings prototype의 채택 기준을 구분한다. Sources: S002, S008.
 
 ## Operations and risk

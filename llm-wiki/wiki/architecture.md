@@ -2,8 +2,8 @@
 title: Application Architecture
 type: architecture
 status: current
-updated: 2026-08-16
-source_refs: [S002]
+updated: 2026-11-13
+source_refs: [S002, S017, S018]
 tags: [react, supabase, auth, data-flow]
 ---
 
@@ -32,7 +32,7 @@ React screens --> Supabase client --> Auth + PostgreSQL/RLS
 ## Read paths
 
 - [`useDividendData.js`](../../src/hooks/useDividendData.js): `dividend_entries`, `tickers`, `ticker_matches`를 조회하고 USD/KRW 환율을 결합한다.
-- [`DividendData.jsx`](../../src/components/DividendData.jsx): count를 포함한 server-side pagination query를 수행한다.
+- [`DividendData.jsx`](../../src/components/DividendData.jsx): 월 단위 `payment_date` 범위로 ledger를 조회한다. 초기 월은 사용자의 local current month이며, 다음달/지난달 navigation을 제공한다. 월별 query는 exact count를 포함하고 기본 page size는 해당 월 전체이며, 500행 단위 offset fetch와 `id` tie-breaker로 API 기본 row limit과 동률 정렬에 대응한다. 10/25/50을 선택하면 월 내부 server-side pagination을 적용한다.
 - Dashboard, calendar, portfolio, notifications는 배당 데이터를 목적별로 재구성한다. Portfolio의 종목별 기여도 표는 `confirmed` 매칭의 검증된 실제 종목명을 우선 표시하고, 미확인 항목은 원본 입력값과 확인 대기 상태를 표시한다.
 - Goal과 simulator는 각각 `user_goals`, `simulation_settings`를 현재 user ID로 조회한다.
 
@@ -64,7 +64,11 @@ React screens --> Supabase client --> Auth + PostgreSQL/RLS
 ## Sources
 
 - [S002 repository baseline](../raw/sources.md)
+- [S017 monthly dividend-data navigation request and evidence](../raw/2026-11-13-dividend-data-month-navigation.md)
+- [S018 monthly data navigation review remediation](../raw/2026-11-13-dividend-data-month-navigation-review.md)
 - [`src/App.jsx`](../../src/App.jsx)
 - [`src/context/AuthContext.jsx`](../../src/context/AuthContext.jsx)
 - [`src/hooks/useDividendData.js`](../../src/hooks/useDividendData.js)
+- [`src/components/DividendData.jsx`](../../src/components/DividendData.jsx)
+- [`src/components/DividendData.test.jsx`](../../src/components/DividendData.test.jsx)
 - [`src/api/insertDividend.js`](../../src/api/insertDividend.js)

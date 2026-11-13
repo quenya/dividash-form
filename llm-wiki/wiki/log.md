@@ -257,3 +257,26 @@
 - 리뷰에서 지적된 과거 입금일의 일정 조회 누락을 수정해, 화면의 이번달/다음달 예정 일정과 별도로 최근 eligible ETF의 실제 과거 지급일만 조회해 추정에 사용한다. 과거 일정은 캘린더 예정 이벤트로 추가하지 않는다.
 - 사용자 요청과 동작 근거를 S015에, PR 미리보기 런타임 제한을 S016에 등록하고 UI/Data model/known gaps Wiki를 갱신했다.
 - 검증: 전체 테스트 18개 suite/94개 통과, production build 성공(기존 caniuse-lite 데이터 경고). Vercel preview 배포 check는 통과했지만 브라우저 앱은 `supabaseUrl is required`로 빈 화면이어서 authenticated preview는 미검증. 운영 DB 쓰기 및 production 배포는 수행하지 않았다.
+
+## [2026-11-13] feature | 월별 배당 데이터 표 탐색
+
+- `DividendData`를 현재 local month 기준으로 분리하고, 상단 지난달/다음달 이동과 월별 `payment_date` 범위를 추가했다. 기본은 선택한 월 전체 행이며 10/25/50건 pagination은 계속 선택할 수 있다.
+- UI behavior, architecture, index, source registry를 S017 요청 snapshot과 함께 갱신했다. 배당 원장 기록은 읽기만 하며 변경하지 않았다.
+- 검증: 전체 테스트 18개 suite/98개 통과, production build 성공(기존 caniuse-lite 경고). Wiki structural lint는 별도 수행 예정.
+
+## [2026-11-13] lint | 월별 배당 데이터 Wiki 무결성
+
+- Wiki knowledge page 9개와 source 17개를 대상으로 index coverage, orphan, frontmatter, `Sources`/`Related`, source references, 상대 링크를 검사했다.
+- Result: 206개 상대 링크, 오류 0개. 변경한 architecture/UI behavior claim은 현재 component와 회귀 테스트에 대조했다.
+
+## [2026-11-13] fix | 월별 배당 표 전체 행 및 조회 안전성
+
+- 리뷰에서 확인된 API 기본 row limit 위험을 보완해 exact count 기반 500행 offset fetch를 적용하고, 기본 정렬 key에 `id` tie-breaker를 추가했다.
+- 새 month/page/filter/sort query가 이전 응답을 덮지 않게 하고, ledger query rejection은 loading을 해제한다. official-link metadata rejection은 실제 배당 행을 유지한 채 경고한다.
+- 추가 회귀 테스트로 다중 range 501행, 동률 안정 정렬, stale response, rejection 동작을 검증했다. 전체 테스트 18개 suite/102개 통과, production build 성공(기존 `caniuse-lite` 경고).
+- Local browser는 HTTP 200과 로그인 gate를 표시했다. 인증된 배당 표는 검증하지 않았으며 DB 쓰기·배포는 수행하지 않았다.
+
+## [2026-11-13] lint | 월별 데이터 리뷰 보강 Wiki 무결성
+
+- Wiki knowledge page 9개와 source 18개에 대해 index coverage, orphan, frontmatter, `Sources`/`Related`, source reference, 상대 링크를 재검사했다.
+- Result: 상대 링크 210개, 오류 0개. 수정한 architecture/UI claim을 component와 회귀 테스트에 대조해 오래된 주장을 남기지 않았다.
