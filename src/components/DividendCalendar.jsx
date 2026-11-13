@@ -103,6 +103,16 @@ function DividendCalendar() {
                                         <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
                                             {item.type === 'scheduled' ? '예정 · 공식 주당 분배금' : `실제 입금${item.account_name ? ` · ${item.account_name}` : ''}`}
                                         </span>
+                                        {item.type === 'actual' && item.estimated_shares && (
+                                            <>
+                                                <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+                                                    예정 주당 {amountLabel(item.scheduled_distribution_per_share, item.currency)} 기준 · 약 {item.estimated_shares.toLocaleString()}주 보유 추정
+                                                </span>
+                                                <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>
+                                                    세금·수수료에 따라 실제 주수와 다를 수 있습니다.
+                                                </span>
+                                            </>
+                                        )}
                                         {item.type === 'scheduled' && item.source_url && (
                                             <a href={item.source_url} target="_blank" rel="noreferrer" style={{ fontSize: '0.75rem' }}>발행사 공식 내역</a>
                                         )}

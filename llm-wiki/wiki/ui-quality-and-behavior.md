@@ -2,9 +2,9 @@
 title: UI Behavior and QA Invariants
 type: workflow
 status: current
-updated: 2026-08-23
-source_refs: [S002, S007]
-tags: [ui, charts, responsive, qa, accessibility]
+updated: 2026-11-13
+source_refs: [S002, S007, S015]
+tags: [ui, charts, calendar, responsive, accessibility, qa]
 ---
 
 # UI Behavior and QA Invariants
@@ -33,6 +33,14 @@ tags: [ui, charts, responsive, qa, accessibility]
 - Duplicate issuer schedules are collapsed. Amounts are shown in the issuer's currency per share, with a direct issuer-source link; do not imply account-level or portfolio totals.
 - Loading, official-data failures, and sync-status warnings are distinct. A failed query must not be presented as an authoritative empty schedule list.
 - Implementation and tests: `src/utils/threeDayScheduledNotifications.js` and its test; source data comes from `useDividendData`.
+
+### Dividend calendar receipt share estimates
+
+- Actual user-entered receipts remain the ledger source of truth; verified official ETF schedules are read-only reference data and remain separate calendar events and totals.
+- An actual receipt shows an approximate whole-share estimate only when exactly one verified official schedule matches the same ticker, exact payment date, and currency. The estimate is `round(actual receipt amount / official distribution per share)` and displays the per-share basis.
+- Missing, ambiguous, invalid, or currency-incompatible schedule matches produce no estimate. The UI notes that taxes and fees can make an actual receipt differ from the gross per-share schedule.
+- The visible official schedule window remains this month and next month. For historical actual receipts, the data hook separately fetches official rows for exact past payment dates of candidate ETF tickers; those rows are used as estimate inputs but are not shown as past scheduled events.
+- The feature is presentation-only and does not change `dividend_entries` or actual-receipt totals. Regression tests cover exact match, ambiguous matches, currency mismatch, historical lookup, and rendered estimate/caveat: `src/utils/dividendCalendarEvents.test.js`, `src/hooks/useDividendData.test.js`, and `src/components/DividendCalendar.test.jsx`.
 
 ### Mobile shell
 
@@ -74,6 +82,7 @@ tags: [ui, charts, responsive, qa, accessibility]
 
 - [Overview](./overview.md)
 - [Application architecture](./architecture.md)
+- [Data model](./data-model.md)
 - [Authentication UX](./authentication-ux.md)
 - [Known gaps](./known-gaps.md)
 - [Wiki log](./log.md)
@@ -81,6 +90,13 @@ tags: [ui, charts, responsive, qa, accessibility]
 ## Sources
 
 - [S007 OMO UI and QA evidence](../raw/2026-08-23-omo-ui-qa-evidence.md)
+- [S015 Dividend Calendar Estimated Holding Count](../raw/2026-11-13-dividend-calendar-estimated-shares.md)
+- [`src/utils/dividendCalendarEvents.js`](../../src/utils/dividendCalendarEvents.js)
+- [`src/utils/dividendCalendarEvents.test.js`](../../src/utils/dividendCalendarEvents.test.js)
+- [`src/hooks/useDividendData.js`](../../src/hooks/useDividendData.js)
+- [`src/hooks/useDividendData.test.js`](../../src/hooks/useDividendData.test.js)
+- [`src/components/DividendCalendar.jsx`](../../src/components/DividendCalendar.jsx)
+- [`src/components/DividendCalendar.test.jsx`](../../src/components/DividendCalendar.test.jsx)
 - [`src/components/DividendChart.jsx`](../../src/components/DividendChart.jsx)
 - [`src/components/DividendForm.jsx`](../../src/components/DividendForm.jsx)
 - [`src/components/DividendForm.test.jsx`](../../src/components/DividendForm.test.jsx)

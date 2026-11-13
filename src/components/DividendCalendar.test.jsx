@@ -39,6 +39,8 @@ test('renders scheduled distribution beside actual receipt without combining tot
   expect(screen.getByText('실제 입금 · 연금계좌')).toBeInTheDocument();
   expect(screen.getByText('KRW 125 / 주')).toBeInTheDocument();
   expect(screen.getByText('₩5,000')).toBeInTheDocument();
+  expect(screen.getByText('예정 주당 ₩125 기준 · 약 40주 보유 추정')).toBeInTheDocument();
+  expect(screen.getByText(/세금·수수료에 따라 실제 주수와 다를 수 있습니다/)).toBeInTheDocument();
   expect(screen.getByText(/실제 입금 합계: ₩ 5,000/)).toBeInTheDocument();
   expect(screen.getByRole('link', { name: '발행사 공식 내역' })).toHaveAttribute('href', 'https://issuer.example/069500');
   fireEvent.click(screen.getByRole('button', { name: 'Next month' }));

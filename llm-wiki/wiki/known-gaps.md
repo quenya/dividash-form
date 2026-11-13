@@ -2,8 +2,8 @@
 title: Known Gaps and Open Risks
 type: risk
 status: current
-updated: 2026-10-27
-source_refs: [S002, S003, S007, S008, S009, S010, S012, S013]
+updated: 2026-11-13
+source_refs: [S002, S003, S007, S008, S009, S010, S012, S013, S016]
 tags: [risk, drift, follow-up]
 ---
 
@@ -48,9 +48,10 @@ tags: [risk, drift, follow-up]
 
 ### Preview environment parity
 
-- Status: intentional or incomplete, decision required
-- 2026-08-06 기준 Supabase browser variables는 Vercel Production에만 존재했다.
-- Preview에서 인증 기능을 시험해야 한다면 별도 Preview env를 등록해야 한다.
+- Status: Preview browser initialization remains unverified; environment parity is incomplete.
+- Vercel's Preview deployment checks passed for PR #68, but both preview surfaces rendered blank in the browser; the `dividash-form` runtime threw `supabaseUrl is required`. This confirms that a green deployment check does not establish a working authenticated preview. Production runtime was not inspected.
+- Source: sanitized point-in-time capture S016.
+- Required evidence to close: configure the intended Preview environment variables and verify the app initializes in a real browser; then separately verify the authenticated calendar flow if credentials are available.
 
 ### Password recovery and account settings
 
