@@ -64,8 +64,33 @@ describe('buildDividendCalendarEvents', () => {
 
     expect(events).toEqual([
       expect.objectContaining({ type: 'scheduled', ticker: '069500', payment_date: '2026-10-20', amount: 125, source_url: 'https://issuer.example/069500' }),
-      expect.objectContaining({ type: 'actual', id: 'actual-1', payment_date: '2026-10-20', amount: 5000 }),
+      expect.objectContaining({ type: 'actual', id: 'actual-1', payment_date: '2026-10-20', amount: 5000, estimated_shares: 40, scheduled_distribution_per_share: 125 }),
     ]);
+  });
+
+  test('does not estimate shares when multiple official schedules match one receipt', () => {
+    const events = buildDividendCalendarEvents({
+      actualEntries: [{ id: 'actual-1', ticker: '069500', payment_date: '2026-10-20', dividend_amount: 5000, currency: 'KRW' }],
+      officialDistributions: [
+        { ticker: '069500', ex_date: '2026-10-10', payment_date: '2026-10-20', distribution_per_share: 125, currency: 'KRW', source_url: 'https://issuer.example/a', source_issuer: 'KODEX' },
+        { ticker: '069500', ex_date: '2026-10-11', payment_date: '2026-10-20', distribution_per_share: 100, currency: 'KRW', source_url: 'https://issuer.example/b', source_issuer: 'KODEX' },
+      ],
+      eligibleTickers: ['069500'],
+      now: new Date('2026-10-16T12:00:00'),
+    });
+    expect(events.find((event) => event.type === 'actual')).not.toHaveProperty('estimated_shares');
+  });
+
+  test('does not estimate shares when receipt currency differs from the official schedule', () => {
+    const events = buildDividendCalendarEvents({
+      actualEntries: [{ id: 'actual-1', ticker: '069500', payment_date: '2026-10-20', dividend_amount: 5000, currency: 'USD' }],
+      officialDistributions: [
+        { ticker: '069500', ex_date: '2026-10-10', payment_date: '2026-10-20', distribution_per_share: 125, currency: 'KRW', source_url: 'https://issuer.example/069500', source_issuer: 'KODEX' },
+      ],
+      eligibleTickers: ['069500'],
+      now: new Date('2026-10-16T12:00:00'),
+    });
+    expect(events.find((event) => event.type === 'actual')).not.toHaveProperty('estimated_shares');
   });
 
   test('includes this month and next month, including December-to-January rollover, but excludes the following month', () => {

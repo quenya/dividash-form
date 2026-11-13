@@ -119,7 +119,31 @@ export function buildDividendCalendarEvents({
     });
   });
 
-  return events.sort((left, right) => (
+  const scheduledEvents = events.filter((event) => event.type === 'scheduled');
+  const enrichedEvents = events.map((event) => {
+    if (event.type !== 'actual') return event;
+    const matchingSchedules = scheduledEvents.filter((schedule) => (
+      schedule.ticker === normalizeTicker(event.ticker)
+      && schedule.payment_date === event.payment_date
+      && String(schedule.currency || 'KRW').trim().toUpperCase() === String(event.currency || 'KRW').trim().toUpperCase()
+    ));
+    if (matchingSchedules.length !== 1) return event;
+
+    const receiptAmount = Number(event.dividend_amount);
+    const distributionPerShare = Number(matchingSchedules[0].amount);
+    if (!Number.isFinite(receiptAmount) || receiptAmount <= 0
+      || !Number.isFinite(distributionPerShare) || distributionPerShare <= 0) return event;
+
+    const estimatedShares = Math.round(receiptAmount / distributionPerShare);
+    if (!Number.isSafeInteger(estimatedShares) || estimatedShares <= 0) return event;
+    return {
+      ...event,
+      estimated_shares: estimatedShares,
+      scheduled_distribution_per_share: distributionPerShare,
+    };
+  });
+
+  return enrichedEvents.sort((left, right) => (
     left.payment_date.localeCompare(right.payment_date)
     || (left.type === right.type ? 0 : left.type === 'scheduled' ? -1 : 1)
     || String(left.ticker || left.company_name || '').localeCompare(String(right.ticker || right.company_name || ''))
