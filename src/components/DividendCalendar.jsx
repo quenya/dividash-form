@@ -21,6 +21,15 @@ function amountLabel(value, currency = 'KRW', type) {
     return `${currency === 'USD' ? '$' : currency === 'KRW' ? '₩' : `${currency} `}${formatted}`;
 }
 
+function eventTitle(item) {
+    const name = String(item.company_name || '').trim();
+    const ticker = String(item.ticker || '').trim();
+    if (item.type === 'scheduled' && name && ticker && name.toUpperCase() !== ticker.toUpperCase()) {
+        return `${name} (${ticker})`;
+    }
+    return name || ticker || '종목 미확인';
+}
+
 function DividendCalendar() {
     const { data, officialDistributions, eligibleEtfTickers, officialDataError, officialSyncStatus, loading, error, exchangeRate } = useDividendData();
     const officialSyncWarning = getOfficialSyncWarning(officialSyncStatus);
@@ -90,7 +99,7 @@ function DividendCalendar() {
                                     borderLeft: `4px solid ${item.type === 'scheduled' ? 'var(--accent-color)' : 'var(--border-color)'}`
                                 }}>
                                     <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
-                                        <span style={{ fontWeight: 'bold' }}>{item.company_name || item.ticker || '종목 미확인'}</span>
+                                        <span style={{ fontWeight: 'bold' }}>{eventTitle(item)}</span>
                                         <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
                                             {item.type === 'scheduled' ? '예정 · 공식 주당 분배금' : `실제 입금${item.account_name ? ` · ${item.account_name}` : ''}`}
                                         </span>

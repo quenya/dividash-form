@@ -2,6 +2,15 @@ import { isVerifiedMatch } from './tickerMatching';
 
 const normalizeTicker = (ticker) => String(ticker || '').trim().toUpperCase();
 
+export function getMatchedProductNames(products = []) {
+  return products.reduce((names, product) => {
+    const ticker = normalizeTicker(product?.ticker);
+    const name = String(product?.product_name || '').trim();
+    if (ticker && name && product?.source_status === 'matched') names[ticker] = name;
+    return names;
+  }, {});
+}
+
 function toLocalDateString(date) {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, '0');

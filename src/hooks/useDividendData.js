@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../api/supabaseClient';
 import { buildTickerMatchesMap } from '../utils/tickerMatching';
-import { getRecentEtfCandidateSymbols, resolveRecentEtfTickers } from '../utils/dividendCalendarEvents';
+import { getMatchedProductNames, getRecentEtfCandidateSymbols, resolveRecentEtfTickers } from '../utils/dividendCalendarEvents';
 
 export function useDividendData() {
     const [data, setData] = useState([]);
@@ -64,7 +64,7 @@ export function useDividendData() {
             const monthStart = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`;
             const followingMonthDate = new Date(now.getFullYear(), now.getMonth() + 2, 1);
             const followingMonthStart = `${followingMonthDate.getFullYear()}-${String(followingMonthDate.getMonth() + 1).padStart(2, '0')}-01`;
-            const [distributionResult, instrumentResult, syncStatusResult] = await Promise.all([
+            const [distributionResult, instrumentResult, syncStatusResult, productResult] = await Promise.all([
                 candidateTickers.length
                     ? supabase.from('etf_distribution_history')
                         .select('ticker,ex_date,payment_date,distribution_per_share,currency,source_issuer,source_url,fetched_at,source_updated_at')
@@ -80,6 +80,10 @@ export function useDividendData() {
                     .select('status,finished_at,has_coverage_gaps')
                     .limit(1)
                     .maybeSingle(),
+                Promise.resolve(candidateTickers.length
+                    ? supabase.from('etf_product_cache').select('ticker,product_name,source_status').in('ticker', candidateTickers)
+                    : { data: [], error: null })
+                    .catch(() => ({ data: [], error: true })),
             ]);
             setOfficialSyncStatus(syncStatusResult.error ? null : syncStatusResult.data);
             if (distributionResult.error) {
@@ -87,7 +91,11 @@ export function useDividendData() {
                 setOfficialDistributions([]);
                 setOfficialDataError('공식 배당 예정 내역을 조회할 수 없습니다.');
             } else {
-                setOfficialDistributions(distributionResult.data || []);
+                const productNames = getMatchedProductNames(productResult.error ? [] : productResult.data || []);
+                setOfficialDistributions((distributionResult.data || []).map((distribution) => ({
+                    ...distribution,
+                    product_name: productNames[String(distribution.ticker || '').trim().toUpperCase()] || null,
+                })));
                 setOfficialDataError(null);
             }
             if (instrumentResult.error) {
