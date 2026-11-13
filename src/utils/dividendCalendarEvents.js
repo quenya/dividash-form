@@ -94,6 +94,7 @@ export function buildDividendCalendarEvents({
     .filter((entry) => entry.payment_date)
     .map((entry) => ({ ...entry, type: 'actual', amount: Number(entry.dividend_amount) || 0 }));
   const seenSchedules = new Set();
+  const verifiedSchedules = [];
 
   officialDistributions.forEach((distribution) => {
     const ticker = normalizeTicker(distribution.ticker);
@@ -101,8 +102,6 @@ export function buildDividendCalendarEvents({
     const paymentDate = new Date(`${distribution.payment_date}T00:00:00`);
     if (!eligible.has(ticker)
       || Number.isNaN(paymentDate.getTime())
-      || paymentDate < currentMonthStart
-      || paymentDate >= followingMonthStart
       || !Number.isFinite(amount)
       || !distribution.source_url
       || !distribution.source_issuer) return;
@@ -110,19 +109,22 @@ export function buildDividendCalendarEvents({
     const key = [ticker, distribution.ex_date, distribution.payment_date, distribution.source_issuer].join('|');
     if (seenSchedules.has(key)) return;
     seenSchedules.add(key);
-    events.push({
+
+    const scheduleEvent = {
       ...distribution,
       ticker,
       type: 'scheduled',
       amount,
       company_name: distribution.company_name || distribution.product_name || ticker,
-    });
+    };
+    verifiedSchedules.push(scheduleEvent);
+    if (paymentDate < currentMonthStart || paymentDate >= followingMonthStart) return;
+    events.push(scheduleEvent);
   });
 
-  const scheduledEvents = events.filter((event) => event.type === 'scheduled');
   const enrichedEvents = events.map((event) => {
     if (event.type !== 'actual') return event;
-    const matchingSchedules = scheduledEvents.filter((schedule) => (
+    const matchingSchedules = verifiedSchedules.filter((schedule) => (
       schedule.ticker === normalizeTicker(event.ticker)
       && schedule.payment_date === event.payment_date
       && String(schedule.currency || 'KRW').trim().toUpperCase() === String(event.currency || 'KRW').trim().toUpperCase()

@@ -93,6 +93,20 @@ describe('buildDividendCalendarEvents', () => {
     expect(events.find((event) => event.type === 'actual')).not.toHaveProperty('estimated_shares');
   });
 
+  test('estimates historical receipts using verified schedules outside the visible calendar window', () => {
+    const events = buildDividendCalendarEvents({
+      actualEntries: [{ id: 'historical-receipt', ticker: '069500', payment_date: '2026-08-20', dividend_amount: 5000, currency: 'KRW' }],
+      officialDistributions: [
+        { ticker: '069500', ex_date: '2026-08-10', payment_date: '2026-08-20', distribution_per_share: 125, currency: 'KRW', source_url: 'https://issuer.example/069500', source_issuer: 'KODEX' },
+      ],
+      eligibleTickers: ['069500'],
+      now: new Date('2026-10-16T12:00:00'),
+    });
+    expect(events).toEqual([
+      expect.objectContaining({ type: 'actual', id: 'historical-receipt', estimated_shares: 40 }),
+    ]);
+  });
+
   test('includes this month and next month, including December-to-January rollover, but excludes the following month', () => {
     const events = buildDividendCalendarEvents({
       actualEntries: [],

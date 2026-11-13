@@ -2,9 +2,9 @@
 title: Data Model and RLS
 type: data-model
 status: current
-updated: 2026-10-27
-source_refs: [S002, S009, S010, S011, S012, S013, S014]
-tags: [supabase, postgres, rls, migrations]
+updated: 2026-11-13
+source_refs: [S002, S009, S010, S011, S012, S013, S014, S015]
+tags: [supabase, postgres, rls, migrations, calendar]
 ---
 
 # Data Model and RLS
@@ -50,6 +50,18 @@ verified `official_url` into the cache. Do not construct or guess issuer URLs.
 If the dividend row has no ticker, first establish a confirmed high-confidence
 alias; unresolved products remain unlinked until verified. These links do not
 modify user dividend records.
+
+### Calendar receipt estimates
+
+`useDividendData` uses `etf_distribution_history` as a read-only reference. It
+fetches current/next-month rows for visible official schedule events and, for
+historical actual receipts, additional rows whose payment date exactly matches
+an actual payment date for a candidate ETF ticker. `buildDividendCalendarEvents`
+uses those verified rows only when one unique ticker/date/currency match exists;
+it does not turn historical references into scheduled calendar events. The
+resulting approximate share count is display-only and never updates
+`dividend_entries` or actual-receipt totals. See [UI behavior and QA](./ui-quality-and-behavior.md)
+and source S015.
 
 ## Instrument matching
 
@@ -134,6 +146,7 @@ fixed ticker-only schedule.
 
 - [Architecture](./architecture.md)
 - [Input pipelines](./input-pipelines.md)
+- [UI behavior and QA](./ui-quality-and-behavior.md)
 - [Deployment and security](./deployment-and-security.md)
 - [Known gaps](./known-gaps.md)
 
@@ -146,6 +159,10 @@ fixed ticker-only schedule.
 - [S012 Samsung KODEX 284430 official product and name-change notice](../raw/sources.md)
 - [S013 SOL 490490 official product page and distribution API](../raw/sources.md)
 - [S014 SOL 0167B0 official product page and distribution API](../raw/sources.md)
+- [S015 Dividend Calendar Estimated Holding Count](../raw/2026-11-13-dividend-calendar-estimated-shares.md)
+- [`src/hooks/useDividendData.js`](../../src/hooks/useDividendData.js)
+- [`src/utils/dividendCalendarEvents.js`](../../src/utils/dividendCalendarEvents.js)
+- [`database/etf_distribution_history.sql`](../../database/etf_distribution_history.sql)
 - [`src/components/DividendData.jsx`](../../src/components/DividendData.jsx)
 - [`src/api/insertDividend.js`](../../src/api/insertDividend.js)
 - [`database/security_hardening.sql`](../../database/security_hardening.sql)

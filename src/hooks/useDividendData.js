@@ -64,14 +64,30 @@ export function useDividendData() {
             const monthStart = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`;
             const followingMonthDate = new Date(now.getFullYear(), now.getMonth() + 2, 1);
             const followingMonthStart = `${followingMonthDate.getFullYear()}-${String(followingMonthDate.getMonth() + 1).padStart(2, '0')}-01`;
-            const [distributionResult, instrumentResult, syncStatusResult, productResult] = await Promise.all([
+            const historicalPaymentDates = [...new Set(entries
+                .filter((entry) => {
+                    const paymentDate = String(entry.payment_date || '');
+                    const ticker = String(entry.ticker || '').trim().toUpperCase();
+                    return /^\d{4}-\d{2}-\d{2}$/.test(paymentDate)
+                        && paymentDate < monthStart
+                        && candidateTickers.includes(ticker);
+                })
+                .map((entry) => entry.payment_date))].sort();
+            const distributionColumns = 'ticker,ex_date,payment_date,distribution_per_share,currency,source_issuer,source_url,fetched_at,source_updated_at';
+            const [distributionResult, historicalDistributionResult, instrumentResult, syncStatusResult, productResult] = await Promise.all([
                 candidateTickers.length
                     ? supabase.from('etf_distribution_history')
-                        .select('ticker,ex_date,payment_date,distribution_per_share,currency,source_issuer,source_url,fetched_at,source_updated_at')
+                        .select(distributionColumns)
                         .in('ticker', candidateTickers)
                         .gte('payment_date', monthStart)
                         .lt('payment_date', followingMonthStart)
                         .order('payment_date', { ascending: true })
+                    : Promise.resolve({ data: [], error: null }),
+                candidateTickers.length && historicalPaymentDates.length
+                    ? supabase.from('etf_distribution_history')
+                        .select(distributionColumns)
+                        .in('ticker', candidateTickers)
+                        .in('payment_date', historicalPaymentDates)
                     : Promise.resolve({ data: [], error: null }),
                 candidateTickers.length
                     ? supabase.from('instrument_search_index').select('symbol,security_type').in('symbol', candidateTickers)
@@ -88,14 +104,24 @@ export function useDividendData() {
             setOfficialSyncStatus(syncStatusResult.error ? null : syncStatusResult.data);
             if (distributionResult.error) {
                 console.warn('공식 ETF 분배 내역 조회 오류:', distributionResult.error.message);
-                setOfficialDistributions([]);
+            }
+            if (historicalDistributionResult.error) {
+                console.warn('과거 공식 ETF 분배 내역 조회 오류:', historicalDistributionResult.error.message);
+            }
+            const productNames = getMatchedProductNames(productResult.error ? [] : productResult.data || []);
+            const distributions = [
+                ...(distributionResult.error ? [] : distributionResult.data || []),
+                ...(historicalDistributionResult.error ? [] : historicalDistributionResult.data || []),
+            ];
+            setOfficialDistributions(distributions.map((distribution) => ({
+                ...distribution,
+                product_name: productNames[String(distribution.ticker || '').trim().toUpperCase()] || null,
+            })));
+            if (distributionResult.error) {
                 setOfficialDataError('공식 배당 예정 내역을 조회할 수 없습니다.');
+            } else if (historicalDistributionResult.error) {
+                setOfficialDataError('과거 공식 분배 내역 일부를 조회할 수 없습니다.');
             } else {
-                const productNames = getMatchedProductNames(productResult.error ? [] : productResult.data || []);
-                setOfficialDistributions((distributionResult.data || []).map((distribution) => ({
-                    ...distribution,
-                    product_name: productNames[String(distribution.ticker || '').trim().toUpperCase()] || null,
-                })));
                 setOfficialDataError(null);
             }
             if (instrumentResult.error) {

@@ -118,3 +118,21 @@
 - Captured: 2026-10-27
 - Scope: official product identity SOL 200타겟위클리커버드콜 and verified product-page-to-API path for the legacy SOL adapter source template.
 - Status: active; API response schema and distribution history may change at the issuer.
+
+## S015 - Dividend Calendar Estimated Holding Count
+
+- Type: user-requested feature snapshot with code and regression-test evidence
+- Locator: [DiviDash PR #68](https://github.com/quenya/dividash-form/pull/68) and the request in the DiviDash development Telegram thread
+- Snapshot: [2026-11-13-dividend-calendar-estimated-shares.md](./2026-11-13-dividend-calendar-estimated-shares.md)
+- Captured: 2026-11-13
+- Scope: approximate ETF share-count display for actual dividend receipts using a unique official per-share schedule matched on ticker, exact payment date, and currency; estimates remain presentation-only.
+- Status: current behavior is defined by the source and tests linked from the snapshot; review finding on historical schedule lookup was addressed in the PR.
+
+## S016 - PR #68 Vercel Preview Runtime Check
+
+- Type: sanitized browser runtime snapshot
+- Locator: [DiviDash PR #68](https://github.com/quenya/dividash-form/pull/68)
+- Snapshot: [2026-11-13-pr68-preview-runtime.md](./2026-11-13-pr68-preview-runtime.md)
+- Captured: 2026-11-13
+- Scope: Vercel preview checks passed, but the browser app rendered blank with `supabaseUrl is required`; authenticated calendar preview and production runtime were not verified.
+- Status: point-in-time; preview environment configuration and browser behavior require revalidation.
