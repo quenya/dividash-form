@@ -3,7 +3,7 @@ title: UI Behavior and QA Invariants
 type: workflow
 status: current
 updated: 2026-11-13
-source_refs: [S002, S007, S015]
+source_refs: [S002, S007, S015, S017, S018]
 tags: [ui, charts, calendar, responsive, accessibility, qa]
 ---
 
@@ -41,6 +41,15 @@ tags: [ui, charts, calendar, responsive, accessibility, qa]
 - Missing, ambiguous, invalid, or currency-incompatible schedule matches produce no estimate. The UI notes that taxes and fees can make an actual receipt differ from the gross per-share schedule.
 - The visible official schedule window remains this month and next month. For historical actual receipts, the data hook separately fetches official rows for exact past payment dates of candidate ETF tickers; those rows are used as estimate inputs but are not shown as past scheduled events.
 - The feature is presentation-only and does not change `dividend_entries` or actual-receipt totals. Regression tests cover exact match, ambiguous matches, currency mismatch, historical lookup, and rendered estimate/caveat: `src/utils/dividendCalendarEvents.test.js`, `src/hooks/useDividendData.test.js`, and `src/components/DividendCalendar.test.jsx`.
+
+### Dividend data monthly view
+
+- The dividend data table opens at the current local calendar month and queries `payment_date >= month start` and `< next month start`, keeping rows from adjacent months out of the view.
+- Top-level previous/next month controls move the selected month and reset within-month pagination to page 1; an empty month remains navigable and shows the normal empty state.
+- Page size defaults to all rows in the selected month. The exact-count query fetches the full month in 500-row ranges with `id` as a stable tie-breaker; users can opt into 10, 25, or 50 rows per page for server-side pagination within that month.
+- Changing month, page, filter, or sort discards stale asynchronous responses. A rejected ledger query ends loading and shows an error; a rejected official-link lookup warns while preserving the ledger rows.
+- This is a read-only view of user-entered `dividend_entries`; month navigation and presentation do not write or alter ledger rows.
+- Regression tests cover current-month bounds, year rollover, previous/next navigation, all-row loading across multiple server ranges, numeric paging, stale-response suppression, query rejection, and link-metadata failure in `src/components/DividendData.test.jsx`.
 
 ### Mobile shell
 
@@ -91,12 +100,16 @@ tags: [ui, charts, calendar, responsive, accessibility, qa]
 
 - [S007 OMO UI and QA evidence](../raw/2026-08-23-omo-ui-qa-evidence.md)
 - [S015 Dividend Calendar Estimated Holding Count](../raw/2026-11-13-dividend-calendar-estimated-shares.md)
+- [S017 Monthly Dividend Data Navigation](../raw/2026-11-13-dividend-data-month-navigation.md)
+- [S018 Monthly Dividend Data Navigation Review Remediation](../raw/2026-11-13-dividend-data-month-navigation-review.md)
 - [`src/utils/dividendCalendarEvents.js`](../../src/utils/dividendCalendarEvents.js)
 - [`src/utils/dividendCalendarEvents.test.js`](../../src/utils/dividendCalendarEvents.test.js)
 - [`src/hooks/useDividendData.js`](../../src/hooks/useDividendData.js)
 - [`src/hooks/useDividendData.test.js`](../../src/hooks/useDividendData.test.js)
 - [`src/components/DividendCalendar.jsx`](../../src/components/DividendCalendar.jsx)
 - [`src/components/DividendCalendar.test.jsx`](../../src/components/DividendCalendar.test.jsx)
+- [`src/components/DividendData.jsx`](../../src/components/DividendData.jsx)
+- [`src/components/DividendData.test.jsx`](../../src/components/DividendData.test.jsx)
 - [`src/components/DividendChart.jsx`](../../src/components/DividendChart.jsx)
 - [`src/components/DividendForm.jsx`](../../src/components/DividendForm.jsx)
 - [`src/components/DividendForm.test.jsx`](../../src/components/DividendForm.test.jsx)

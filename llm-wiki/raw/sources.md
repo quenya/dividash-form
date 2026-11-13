@@ -136,3 +136,21 @@
 - Captured: 2026-11-13
 - Scope: Vercel preview checks passed, but the browser app rendered blank with `supabaseUrl is required`; authenticated calendar preview and production runtime were not verified.
 - Status: point-in-time; preview environment configuration and browser behavior require revalidation.
+
+## S017 - Monthly Dividend Data Navigation
+
+- Type: user-requested UI behavior change with code and regression-test evidence
+- Locator: user request in the DiviDash development Telegram thread
+- Snapshot: [2026-11-13-dividend-data-month-navigation.md](./2026-11-13-dividend-data-month-navigation.md)
+- Captured: 2026-11-13
+- Scope: month-by-month `DividendData` view, previous/next month controls, current local month as default, and all rows per month as the default page size.
+- Status: current implementation is defined by the linked source and tests; no dividend ledger writes were made.
+
+## S018 - Monthly Dividend Data Navigation Review Remediation
+
+- Type: sanitized code-review remediation and verification snapshot
+- Locator: local review findings for `feat/dividend-data-month-navigation`
+- Snapshot: [2026-11-13-dividend-data-month-navigation-review.md](./2026-11-13-dividend-data-month-navigation-review.md)
+- Captured: 2026-11-13
+- Scope: complete multi-range retrieval, stable ordering, stale-request suppression, rejected-query recovery, and non-blocking official-link metadata errors.
+- Status: current implementation evidence; authenticated table flow remains unverified.
