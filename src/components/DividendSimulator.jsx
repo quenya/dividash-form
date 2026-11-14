@@ -18,6 +18,7 @@ import { supabase } from '../api/supabaseClient';
 import { useAuth } from '../context/AuthContext';
 import { useChartTheme } from '../context/ThemeContext';
 import { withAlpha } from '../utils/chartTheme';
+import { formatKrwAxis } from '../utils/dividendChartData';
 
 ChartJS.register(
     CategoryScale,
@@ -301,10 +302,14 @@ function DividendSimulator() {
                                     }
                                 },
                                 datalabels: {
-                                    anchor: 'end',
-                                    align: 'top',
-                                    offset: 8,
-                                    font: { size: 10, weight: 'bold' },
+                                    // Label only the final year; every year is in the tooltip.
+                                    display: (context) => context.dataIndex === context.dataset.data.length - 1,
+                                    // The final point sits at the top-right corner, so place its label to the left.
+                                    anchor: 'center',
+                                    align: 'left',
+                                    offset: 10,
+                                    clamp: true,
+                                    font: { size: 12, weight: 'bold' },
                                     color: chartTheme.text,
                                     formatter: (value) => `₩${(value / 10000).toFixed(0)}만`,
                                     padding: 4
@@ -314,7 +319,7 @@ function DividendSimulator() {
                                 y: {
                                     beginAtZero: true,
                                     grid: { color: chartTheme.grid },
-                                    ticks: { color: chartTheme.text, callback: (value) => `₩ ${(value / 10000).toLocaleString()}만` }
+                                    ticks: { color: chartTheme.text, callback: (value) => formatKrwAxis(value) }
                                 },
                                 x: { grid: { display: false }, ticks: { color: chartTheme.text } }
                             },

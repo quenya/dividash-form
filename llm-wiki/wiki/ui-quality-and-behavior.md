@@ -3,7 +3,7 @@ title: UI Behavior and QA Invariants
 type: workflow
 status: current
 updated: 2026-11-14
-source_refs: [S002, S007, S015, S017, S018, S019, S020]
+source_refs: [S002, S007, S015, S017, S018, S019, S020, S021]
 tags: [ui, charts, calendar, responsive, accessibility, qa, theme]
 ---
 
@@ -16,9 +16,11 @@ tags: [ui, charts, calendar, responsive, accessibility, qa, theme]
 ### Dashboard charts
 
 - 전년 동월 비교 chart는 y-axis 내부에 추가 headroom을 두어 최고 막대, data label, tooltip이 chart 상단과 충돌하지 않아야 한다. 현재 [`DividendChart.jsx`](../../src/components/DividendChart.jsx)는 해당 chart에 `20%` grace를 적용한다.
-- 종목별 배당금은 순위와 긴 한국어 종목명을 읽을 수 있는 가로 Top-10 bar chart다. label truncation, 오른쪽 금액 label 공간, tooltip을 함께 확인한다.
+- 종목별 배당금은 순위와 긴 한국어 종목명을 읽을 수 있는 가로 Top-10 bar chart다. 막대는 accent 단색이다. label truncation, 오른쪽 금액 label 공간, tooltip을 함께 확인한다.
 - 연도별 합계는 정렬된 year index와 [`chartPalette.js`](../../src/utils/chartPalette.js)의 동일한 color mapping을 사용한다. DOM legend button은 hidden state와 접근 가능한 action name을 동기화해야 한다.
-- Portfolio sector doughnut은 고정 최대 크기와 responsive width를 가진 wrapper 안에 있어야 하며 card 밖으로 넘치지 않아야 한다.
+- Portfolio 섹터 비중은 가로 bar chart다. 높이는 섹터 수에 비례하고(최소 160px) card 밖으로 넘치지 않아야 한다. 알려진 섹터는 accent 단색, Unknown은 회색이며 막대 끝에 비중 %, tooltip에 금액과 비중을 표시한다(S021).
+- 월별 chart는 올해를 막대, 이전 연도를 선으로 그린다. 기본으로 지난해 선만 보이고 더 이전 연도는 legend에서 켠다. Tooltip은 같은 달의 보이는 모든 연도를 함께 보여준다(S021).
+- KRW 축은 `formatKrwAxis`로 만/억 단위를 쓰고, data label과 tooltip은 전체 금액을 유지한다. Data label은 월별·전년 대비 chart의 이번 달, simulator의 마지막 연도에만 붙인다(S021).
 - 아직 끝나지 않은 기간(월별·전년 동월 대비 chart의 이번 달, 연도별 chart의 올해)은 흐리게 그리고 tooltip 제목에 “(진행 중)”을 붙인다. Chart 위 caption 한 줄이 흐린 막대의 의미를 설명한다. 값과 합계는 바꾸지 않는다(S020).
 - 전년 동월 대비 chart에서 이번 달 이후의 달은 `null`이며 data label을 붙이지 않는다. 실제 증감 0은 `₩ 0`으로 표시한다. Helper와 회귀 테스트는 [`dividendChartData.js`](../../src/utils/dividendChartData.js)와 [`dividendChartData.test.js`](../../src/utils/dividendChartData.test.js)다.
 - 막대마다 색이 다른 단일 series chart(계좌별 합계, 전년 동월 대비)는 Chart.js legend를 숨긴다. 한 개의 swatch가 첫 막대 색만 보여 의미를 잘못 전달했기 때문이다.
@@ -115,6 +117,8 @@ tags: [ui, charts, calendar, responsive, accessibility, qa, theme]
 
 - [S019 Design token consistency](../raw/2026-11-14-design-token-consistency.md)
 - [S020 Chart period and label fixes](../raw/2026-11-14-chart-period-fixes.md)
+- [S021 Chart readability](../raw/2026-11-14-chart-readability.md)
+- [`src/components/PortfolioAnalysis.test.jsx`](../../src/components/PortfolioAnalysis.test.jsx)
 - [`src/utils/dividendChartData.js`](../../src/utils/dividendChartData.js)
 - [`src/utils/dividendChartData.test.js`](../../src/utils/dividendChartData.test.js)
 - [`DESIGN.md`](../../DESIGN.md)

@@ -21,7 +21,6 @@ test.each([
 
   expect(theme.text).toBe(tokens['--text-secondary']);
   expect(theme.grid).toBe(tokens['--chart-grid']);
-  expect(theme.surface).toBe(tokens['--bg-secondary']);
   expect(theme.accent).toBe(tokens['--accent-color']);
 });
 

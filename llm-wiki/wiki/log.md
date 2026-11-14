@@ -304,3 +304,16 @@
 
 - Wiki knowledge page 9개와 source 20개에 대해 index coverage, orphan, frontmatter, `Sources`/`Related`, source reference, 상대 링크를 검사했다.
 - Result: wiki와 raw의 상대 링크 230개, 오류 0개.
+
+## [2026-11-14] feature | Chart 가독성 개선
+
+- 월별 chart를 올해 막대·이전 연도 선으로 바꾸고 기본으로 지난해만 보이게 했으며, 같은 달의 연도를 함께 보여주는 index tooltip을 적용했다.
+- KRW 축을 만/억 단위로 통일하고, 전년 대비 chart의 data label을 이번 달 하나로, simulator label을 마지막 연도 하나로 줄였다.
+- Top 10과 섹터 비중을 accent 단색 가로 bar로 바꾸고 Unknown 섹터를 회색으로 구분했다. 섹터 doughnut 전용이던 chart theme 값은 제거했다.
+- Helper와 literal 기대값 테스트, 섹터 chart component 테스트를 추가하고 UI behavior·known gaps·index·`DESIGN.md`를 S021과 함께 갱신했다.
+- 검증: `TZ=Asia/Seoul`에서 전체 테스트 21개 suite/119개 통과, `CI=true` production build 성공. Synthetic data와 mocked Supabase로 S020 build와 1366/375px에서 비교 capture했다. 실제 인증 runtime은 미검증이며 DB 쓰기·배포는 수행하지 않았다.
+
+## [2026-11-14] lint | Chart 가독성 Wiki 무결성
+
+- Wiki knowledge page 9개와 source 21개에 대해 index coverage, orphan, frontmatter, `Sources`/`Related`, source reference, 상대 링크를 검사했다.
+- Result: wiki와 raw의 상대 링크 234개, 오류 0개.

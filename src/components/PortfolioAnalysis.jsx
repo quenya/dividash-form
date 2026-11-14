@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
-import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
-import { Doughnut } from 'react-chartjs-2';
+import { Chart as ChartJS, BarElement, CategoryScale, LinearScale, Tooltip, Legend } from 'chart.js';
+import { Bar } from 'react-chartjs-2';
 import ChartDataLabels from 'chartjs-plugin-datalabels';
 import { useDividendData } from '../hooks/useDividendData';
 import { buildPortfolioSummary, getPortfolioDisplayName, MATCH_STATUS } from '../utils/tickerMatching';
@@ -8,9 +8,9 @@ import { PieChart, AlertCircle, X } from 'lucide-react';
 import { supabase } from '../api/supabaseClient';
 import DividendForecast from './DividendForecast';
 import { useChartTheme } from '../context/ThemeContext';
-import { getChartColor } from '../utils/chartPalette';
+import { formatKrwAxis, sectorBarColors } from '../utils/dividendChartData';
 
-ChartJS.register(ArcElement, Tooltip, Legend, ChartDataLabels);
+ChartJS.register(BarElement, CategoryScale, LinearScale, Tooltip, Legend, ChartDataLabels);
 
 function PortfolioAnalysis() {
     const chartTheme = useChartTheme();
@@ -109,9 +109,10 @@ function PortfolioAnalysis() {
             sectorChartData: {
                 labels: summary.sectorChartData.labels,
                 datasets: [{
+                    label: '섹터별 배당금',
                     data: summary.sectorChartData.values,
-                    backgroundColor: summary.sectorChartData.labels.map((_, index) => getChartColor(index)),
-                    borderWidth: 1,
+                    borderRadius: 4,
+                    barThickness: 20,
                 }]
             },
             sectorTableData: summary.sectorTableData,
@@ -194,40 +195,57 @@ function PortfolioAnalysis() {
             {/* Sector Chart */}
             <div className="card" style={{ display: 'flex', gap: '24px', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'center' }}>
                 <div style={{ flex: '0 1 520px', width: '100%', minWidth: 'min(320px, 100%)' }}>
-                    <h4 style={{ textAlign: 'center', margin: '0 0 16px 0' }}>섹터별 배당 비중</h4>
-                    <div style={{ width: '100%', height: '360px', position: 'relative' }}>
-                        <Doughnut
-                            data={sectorChartData}
+                    <h4 style={{ margin: '0 0 16px 0' }}>섹터별 배당 비중</h4>
+                    <div style={{ width: '100%', height: `${Math.max(160, sectorChartData.labels.length * 40 + 48)}px`, position: 'relative' }}>
+                        <Bar
+                            data={{
+                                ...sectorChartData,
+                                datasets: sectorChartData.datasets.map((dataset) => {
+                                    const colors = sectorBarColors(sectorChartData.labels, chartTheme.accent);
+                                    return { ...dataset, backgroundColor: colors, borderColor: colors };
+                                }),
+                            }}
+                            aria-label={`섹터별 배당 비중 차트. ${sectorChartData.labels.join(', ')} 순서로 큰 섹터부터 표시합니다.`}
                             options={{
+                                indexAxis: 'y',
                                 responsive: true,
                                 maintainAspectRatio: false,
-                                elements: { arc: { borderColor: chartTheme.surface } },
-                                layout: {
-                                    padding: {
-                                        top: 12,
-                                        right: 16,
-                                        bottom: 12,
-                                        left: 16
-                                    }
-                                },
+                                layout: { padding: { top: 4, right: 56, bottom: 4, left: 4 } },
                                 plugins: {
-                                    legend: { position: 'right', labels: { boxWidth: 12, font: { size: 11 }, color: chartTheme.text } },
+                                    legend: { display: false },
                                     tooltip: {
+                                        backgroundColor: chartTheme.tooltipBg,
+                                        titleColor: chartTheme.tooltipText,
+                                        bodyColor: chartTheme.tooltipText,
                                         callbacks: {
                                             label: (context) => {
-                                                const label = context.label || '';
-                                                const value = context.raw;
-                                                return ` ${label}: ₩${Math.round(value).toLocaleString()}`;
+                                                const total = context.dataset.data.reduce((acc, curr) => acc + curr, 0);
+                                                const share = total ? ((context.raw / total) * 100).toFixed(1) : '0.0';
+                                                return ` ₩${Math.round(context.raw).toLocaleString()} (${share}%)`;
                                             }
                                         }
                                     },
                                     datalabels: {
-                                        color: chartTheme.onSlice,
+                                        anchor: 'end',
+                                        align: 'right',
+                                        clamp: true,
+                                        color: chartTheme.text,
+                                        font: { weight: 'bold', size: 11 },
                                         formatter: (value, ctx) => {
-                                            const dataset = ctx.chart.data.datasets[0];
-                                            const total = dataset.data.reduce((acc, curr) => acc + curr, 0);
-                                            return ((value / total) * 100).toFixed(1) + '%';
+                                            const total = ctx.dataset.data.reduce((acc, curr) => acc + curr, 0);
+                                            return total ? `${((value / total) * 100).toFixed(1)}%` : '';
                                         }
+                                    }
+                                },
+                                scales: {
+                                    x: {
+                                        beginAtZero: true,
+                                        ticks: { color: chartTheme.text, callback: (value) => formatKrwAxis(value) },
+                                        grid: { color: chartTheme.grid }
+                                    },
+                                    y: {
+                                        ticks: { color: chartTheme.text },
+                                        grid: { display: false }
                                     }
                                 }
                             }}

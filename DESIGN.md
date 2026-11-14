@@ -52,7 +52,8 @@ Success changed from `#28a745` to `#1a7f37` because the old value reached only 3
 - Form field: label plus input/select/textarea, full-width in narrow panels
 - Status message: `.status-message` (success) or `.status-message.is-error`, a bordered tonal block with `role="status"`.
 - Semantic text: `.text-success` and `.text-danger`. Prefer these classes where tests assert the meaning, because jsdom drops `var()` values from inline `color`.
-- Categorical chart: use the shared chart palette, one legend item per category, and an explicit tooltip label.
+- Categorical chart: use the shared chart palette only when color identifies the same category across charts (years, accounts), with one legend item per category and an explicit tooltip label.
+- Ranking chart: Top 10 securities and sector share are horizontal bars in one color (`--accent-color` via the chart theme); the Unknown sector is gray `#6b7280` (`UNKNOWN_SECTOR_COLOR`).
 
 ### Chart palette
 
@@ -66,10 +67,13 @@ The palette has eight colors; a chart with more categories repeats them in order
 - A period that has not ended yet (the current month, the current year) is drawn at 35% opacity (`IN_PROGRESS_OPACITY` in `src/utils/dividendChartData.js`) and its tooltip title ends with "(진행 중)". One caption above the dashboard charts explains faded bars.
 - A month with no value is `null` and gets no data label; a real zero change is still labeled `₩ 0`.
 - A single-series chart whose bars are colored per category (account totals, year-over-year change) hides the Chart.js legend: its one swatch would match only the first bar. Category names are already on the axis.
+- Data labels mark only the value the chart is about: the current month on the monthly and year-over-year charts, and the final year on the simulator. Every value stays in the tooltip.
+- KRW axes use `formatKrwAxis` (`30만`, `2.5억`); data labels and tooltips keep full amounts (`₩ 154,700`).
+- The monthly chart draws the current year as bars and earlier years as lines. Only last year's line is visible by default; older years start hidden and can be turned on from the legend. Its tooltip lists every visible year for the hovered month.
 
 ### Chart theme
 
-Chart.js draws on canvas, which cannot resolve CSS variables: a `var(--…)` string passed to a chart is ignored and falls back to the default color. Chart text, grid, tooltip, slice-border, and accent colors come from `useChartTheme()` (`src/context/ThemeContext.jsx`), backed by `src/utils/chartTheme.js`. Those values mirror the CSS tokens, and `chartTheme.test.js` fails if `--text-secondary`, `--chart-grid`, `--bg-secondary`, or `--accent-color` drift apart. Change both files together.
+Chart.js draws on canvas, which cannot resolve CSS variables: a `var(--…)` string passed to a chart is ignored and falls back to the default color. Chart text, grid, tooltip, and accent colors come from `useChartTheme()` (`src/context/ThemeContext.jsx`), backed by `src/utils/chartTheme.js`. Those values mirror the CSS tokens, and `chartTheme.test.js` fails if `--text-secondary`, `--chart-grid`, or `--accent-color` drift apart. Change both files together.
 
 ## 6. Accessibility
 

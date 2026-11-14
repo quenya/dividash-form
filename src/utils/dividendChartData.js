@@ -35,3 +35,59 @@ export function buildYoyComparison(monthYearMap, currentYear, currentMonth) {
 
   return { data, backgroundColor, borderColor };
 }
+
+const trimNumber = (value) => Number(value.toFixed(1)).toLocaleString('ko-KR');
+
+// Axis ticks in Korean units: 300000 → "30만", 250000000 → "2.5억".
+export const formatKrwAxis = (value) => {
+  const number = Number(value);
+  if (!Number.isFinite(number) || number === 0) return '0';
+  const abs = Math.abs(number);
+  if (abs >= 100000000) return `${trimNumber(number / 100000000)}억`;
+  if (abs >= 10000) return `${trimNumber(number / 10000)}만`;
+  return Math.round(number).toLocaleString('ko-KR');
+};
+
+export const UNKNOWN_SECTOR = 'Unknown';
+export const UNKNOWN_SECTOR_COLOR = '#6b7280';
+
+export const sectorBarColors = (labels, accent) =>
+  labels.map((label) => (label === UNKNOWN_SECTOR ? UNKNOWN_SECTOR_COLOR : accent));
+
+// Monthly chart: the current year as bars, earlier years as lines.
+// Only last year's line is shown by default; older years start hidden and can be turned on from the legend.
+export function buildMonthlyYearDatasets(monthYearMap, years, currentYear, currentMonth, colorFor) {
+  return years.map((year, index) => {
+    const color = colorFor(index);
+    const yearNumber = Number(year);
+
+    if (yearNumber === currentYear) {
+      const fill = monthYearMap[year].map((_, month) => periodFill(color, month === currentMonth));
+      return {
+        type: 'bar',
+        label: year,
+        data: monthYearMap[year],
+        backgroundColor: fill,
+        hoverBackgroundColor: fill,
+        borderColor: color,
+        borderWidth: 2,
+        order: 1,
+      };
+    }
+
+    return {
+      type: 'line',
+      label: year,
+      data: monthYearMap[year],
+      borderColor: color,
+      backgroundColor: color,
+      borderWidth: 2,
+      pointRadius: 3,
+      pointHoverRadius: 5,
+      tension: 0.25,
+      fill: false,
+      hidden: yearNumber < currentYear - 1,
+      order: 0,
+    };
+  });
+}

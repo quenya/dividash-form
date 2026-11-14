@@ -172,3 +172,12 @@
 - Captured: 2026-11-14
 - Scope: unlabeled empty months, legends on single-series per-category charts, and faded in-progress periods in `DividendChart`.
 - Status: current implementation evidence; authenticated runtime remains unverified.
+
+## S021 - Chart Readability
+
+- Type: sanitized user request and verification snapshot
+- Locator: Claude chat follow-up review of `quenya/dividash-form`, branch `agent/chart-readability` on top of S020
+- Snapshot: [2026-11-14-chart-readability.md](./2026-11-14-chart-readability.md)
+- Captured: 2026-11-14
+- Scope: monthly chart encoding, 만-unit axes, year-over-year labels, single-color ranking charts, sector horizontal bars, and the simulator final label.
+- Status: current implementation evidence; authenticated runtime remains unverified.
