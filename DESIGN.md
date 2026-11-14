@@ -61,6 +61,12 @@ Year and categorical series use these opaque colors in index order so related ch
 
 The palette has eight colors; a chart with more categories repeats them in order.
 
+### Chart periods and labels
+
+- A period that has not ended yet (the current month, the current year) is drawn at 35% opacity (`IN_PROGRESS_OPACITY` in `src/utils/dividendChartData.js`) and its tooltip title ends with "(진행 중)". One caption above the dashboard charts explains faded bars.
+- A month with no value is `null` and gets no data label; a real zero change is still labeled `₩ 0`.
+- A single-series chart whose bars are colored per category (account totals, year-over-year change) hides the Chart.js legend: its one swatch would match only the first bar. Category names are already on the axis.
+
 ### Chart theme
 
 Chart.js draws on canvas, which cannot resolve CSS variables: a `var(--…)` string passed to a chart is ignored and falls back to the default color. Chart text, grid, tooltip, slice-border, and accent colors come from `useChartTheme()` (`src/context/ThemeContext.jsx`), backed by `src/utils/chartTheme.js`. Those values mirror the CSS tokens, and `chartTheme.test.js` fails if `--text-secondary`, `--chart-grid`, `--bg-secondary`, or `--accent-color` drift apart. Change both files together.
@@ -77,4 +83,4 @@ Chart.js draws on canvas, which cannot resolve CSS variables: a `var(--…)` str
 - Layout properties (spacing, flex, sizing) are still inline styles in most components outside the app shell. Move them to classes per component, starting with `DividendForm` and `PortfolioAnalysis`, in changes that do not mix in behavior work.
 - White text on `--accent-color` is 3.2:1 in light mode and 3.7:1 in dark mode, below 4.5:1. Fixing it changes the brand accent and needs a design decision.
 - The mobile bottom nav has seven items; at 375px several Korean labels wrap to two lines.
-- Remaining literal colors: the modal overlay and notification shadow, the year-over-year comparison bars in `DividendChart`, the react-calendar dark-mode overrides, the scrollbar thumb, and the unused `DividendPredictionChart`.
+- Remaining literal colors: the modal overlay and notification shadow, the year-over-year comparison colors in `dividendChartData.js` (pending one rule for gain/loss colors), the react-calendar dark-mode overrides, the scrollbar thumb, and the unused `DividendPredictionChart`.

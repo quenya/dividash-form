@@ -3,7 +3,7 @@ title: Known Gaps and Open Risks
 type: risk
 status: current
 updated: 2026-11-14
-source_refs: [S002, S003, S007, S008, S009, S010, S012, S013, S016, S019]
+source_refs: [S002, S003, S007, S008, S009, S010, S012, S013, S016, S019, S020]
 tags: [risk, drift, follow-up]
 ---
 
@@ -63,6 +63,7 @@ tags: [risk, drift, follow-up]
 
 - Status: fresh full-surface visual verification required
 - Focused Issue 16과 Issue 17 review에서 대상 chart 밖의 일부 dashboard label collision 가능성이 non-blocking note로 남았다.
+- S020 synthetic-data capture에서 전년 동월 대비 chart의 막대별 금액 label이 서로 겹쳤다. 미래 달의 `₩ 0` label은 S020에서 제거했지만 막대별 label 정책은 아직 바꾸지 않았다.
 - Required evidence to close: current production-equivalent data와 authenticated desktop/mobile full-dashboard capture에서 CJK label, data label, tooltip, legend overlap을 모두 확인.
 
 ### Design system follow-ups
@@ -114,6 +115,7 @@ tags: [risk, drift, follow-up]
 - [S012 Samsung KODEX 284430 official product and name-change notice](../raw/sources.md)
 - [S013 SOL 490490 official product page and distribution API](../raw/sources.md)
 - [S019 Design token consistency](../raw/2026-11-14-design-token-consistency.md)
+- [S020 Chart period and label fixes](../raw/2026-11-14-chart-period-fixes.md)
 - [`src/api/llmService.js`](../../src/api/llmService.js)
 - [`src/api/ocrService.js`](../../src/api/ocrService.js)
 - [`sheet/supabase_setup.sql`](../../sheet/supabase_setup.sql)

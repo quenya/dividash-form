@@ -163,3 +163,12 @@
 - Captured: 2026-11-14
 - Scope: semantic color tokens, single theme source, canvas-safe chart theme, shared chart palette, status-message primitive, and app-shell accessibility.
 - Status: current implementation evidence; authenticated runtime remains unverified.
+
+## S020 - Chart Period and Label Fixes
+
+- Type: sanitized user request and verification snapshot
+- Locator: Claude chat follow-up review of `quenya/dividash-form`, branch `agent/chart-period-fixes` on top of S019
+- Snapshot: [2026-11-14-chart-period-fixes.md](./2026-11-14-chart-period-fixes.md)
+- Captured: 2026-11-14
+- Scope: unlabeled empty months, legends on single-series per-category charts, and faded in-progress periods in `DividendChart`.
+- Status: current implementation evidence; authenticated runtime remains unverified.

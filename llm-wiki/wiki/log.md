@@ -292,3 +292,15 @@
 
 - Wiki knowledge page 9개와 source 19개에 대해 index coverage, orphan, frontmatter, `Sources`/`Related`, source reference, 상대 링크를 검사했다.
 - Result: wiki와 raw의 상대 링크 223개, 오류 0개. 변경한 UI/design claim을 `App.css`, `chartTheme.js`, `Layout.jsx`와 테스트에 대조했다.
+
+## [2026-11-14] fix | Dashboard chart 진행 중 기간과 label
+
+- 전년 동월 대비 chart의 미래 달 `₩ 0` label을 없애고, 막대별 색과 맞지 않던 계좌별·전년 대비 chart의 단일 legend를 숨겼다.
+- 이번 달과 올해 막대를 흐리게 그리고 tooltip 제목에 “(진행 중)”을 붙였으며 chart 위 caption으로 의미를 설명한다. 값과 합계는 바꾸지 않았다.
+- 비교 계산과 label·opacity helper를 `dividendChartData.js`로 분리해 literal 기대값 테스트를 추가하고, UI behavior·known gaps·index·`DESIGN.md`를 S020과 함께 갱신했다.
+- 검증: `TZ=Asia/Seoul`에서 전체 테스트 21개 suite/114개 통과, `CI=true` production build 성공. Synthetic data와 mocked Supabase로 S019 build와 비교 capture했다. 실제 인증 runtime은 미검증이며 DB 쓰기·배포는 수행하지 않았다.
+
+## [2026-11-14] lint | Chart 진행 중 기간 Wiki 무결성
+
+- Wiki knowledge page 9개와 source 20개에 대해 index coverage, orphan, frontmatter, `Sources`/`Related`, source reference, 상대 링크를 검사했다.
+- Result: wiki와 raw의 상대 링크 230개, 오류 0개.
