@@ -6,7 +6,8 @@ function KPICard({ title, value, change, comparisonValue, comparisonLabel = '전
         && typeof comparisonValue === 'number'
         && Number.isFinite(comparisonValue)
         && comparisonValue > 0;
-    const isPositive = hasComparison && change >= 0;
+    const direction = !hasComparison || change === 0 ? 'unchanged' : change > 0 ? 'gain' : 'loss';
+    const marker = { gain: '▲', loss: '▼', unchanged: '' }[direction];
 
     return (
         <div className="card" style={{ flex: 1, minWidth: '200px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
@@ -20,7 +21,7 @@ function KPICard({ title, value, change, comparisonValue, comparisonLabel = '전
             </div>
 
             {hasComparison && (
-                <div className={isPositive ? 'text-success' : 'text-danger'} style={{
+                <div className={`text-${direction}`} style={{
                     fontSize: '0.85rem',
                     display: 'flex',
                     alignItems: 'center',
@@ -29,7 +30,7 @@ function KPICard({ title, value, change, comparisonValue, comparisonLabel = '전
                     lineHeight: 1.4
                 }}>
                     <span>
-                        {comparisonLabel} {isPositive ? '▲' : '▼'}{Math.abs(change)}%
+                        {comparisonLabel} {marker}{Math.abs(change)}%
                         {' '}({comparisonPeriodLabel} ₩ {comparisonValue.toLocaleString()})
                     </span>
                 </div>

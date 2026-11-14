@@ -17,20 +17,28 @@ describe('KPICard comparison', () => {
     expect(screen.queryByText(/0%/)).not.toBeInTheDocument();
   });
 
-  test('keeps the negative change direction and color', () => {
+  test('marks a decrease with the loss color', () => {
     render(<KPICard title="올해 누적 배당금" value="₩ 1,200" change={-25} comparisonValue={1600} />);
 
     const comparison = screen.getByText('전년 동기 대비 ▼25% (작년 동기 ₩ 1,600)');
 
-    expect(comparison.parentElement).toHaveClass('text-danger');
+    expect(comparison.parentElement).toHaveClass('text-loss');
   });
 
-  test('uses the success token for a positive change', () => {
+  test('marks an increase with the gain color', () => {
     render(<KPICard title="올해 누적 배당금" value="₩ 2,000" change={25} comparisonValue={1600} />);
 
     const comparison = screen.getByText('전년 동기 대비 ▲25% (작년 동기 ₩ 1,600)');
 
-    expect(comparison.parentElement).toHaveClass('text-success');
+    expect(comparison.parentElement).toHaveClass('text-gain');
+  });
+
+  test('shows an unchanged period without a direction marker', () => {
+    render(<KPICard title="올해 누적 배당금" value="₩ 1,600" change={0} comparisonValue={1600} />);
+
+    const comparison = screen.getByText('전년 동기 대비 0% (작년 동기 ₩ 1,600)');
+
+    expect(comparison.parentElement).toHaveClass('text-unchanged');
   });
 
   test('supports a month-specific comparison label', () => {

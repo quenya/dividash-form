@@ -5,6 +5,7 @@ import {
   formatKrwLabel,
   periodFill,
   sectorBarColors,
+  yoyBarColors,
 } from './dividendChartData';
 
 describe('formatKrwLabel', () => {
@@ -40,18 +41,6 @@ describe('buildYoyComparison', () => {
 
     expect(result.data.slice(0, 4)).toEqual([50, -50, 0, -350]);
     expect(result.data.slice(4)).toEqual(Array(8).fill(null));
-    expect(result.backgroundColor.slice(4)).toEqual(Array(8).fill('transparent'));
-  });
-
-  test('fades the current month and keeps sign colors', () => {
-    const { backgroundColor, borderColor } = buildYoyComparison({
-      2025: months([100, 200]),
-      2026: months([150, 100]),
-    }, 2026, 1);
-
-    expect(backgroundColor[0]).toBe('rgba(75, 192, 192, 0.7)');
-    expect(backgroundColor[1]).toBe('rgba(255, 99, 132, 0.245)');
-    expect(borderColor.slice(0, 2)).toEqual(['#4bc0c0', '#ff6384']);
   });
 
   test('treats a missing previous year as zero', () => {
@@ -100,5 +89,22 @@ describe('buildMonthlyYearDatasets', () => {
   test('keeps every year as a line when this year has no data yet', () => {
     const datasets = buildMonthlyYearDatasets({ 2025: twelve(2) }, ['2025'], 2026, 0, (index) => colors[index]);
     expect(datasets[0]).toMatchObject({ type: 'line', hidden: false });
+  });
+});
+
+describe('yoyBarColors', () => {
+  const theme = { gain: '#d62b3c', loss: '#1b64da' };
+
+  test('uses red for increases and blue for decreases, fading the current month', () => {
+    const { backgroundColor, borderColor } = yoyBarColors([50, -50, 0, -20, null], 3, theme);
+
+    expect(backgroundColor).toEqual([
+      'rgba(214, 43, 60, 0.7)',
+      'rgba(27, 100, 218, 0.7)',
+      'rgba(214, 43, 60, 0.7)',
+      'rgba(27, 100, 218, 0.245)',
+      'transparent',
+    ]);
+    expect(borderColor).toEqual(['#d62b3c', '#1b64da', '#d62b3c', '#1b64da', 'transparent']);
   });
 });

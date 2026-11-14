@@ -6,6 +6,8 @@ export const CHART_THEME = {
     text: '#636e72', // --text-secondary
     grid: 'rgba(0, 0, 0, 0.06)', // --chart-grid
     accent: '#4f8cff', // --accent-color
+    gain: '#d62b3c', // --gain
+    loss: '#1b64da', // --loss
     tooltipBg: 'rgba(0, 0, 0, 0.8)',
     tooltipText: '#ffffff',
   },
@@ -13,6 +15,8 @@ export const CHART_THEME = {
     text: '#a1a1aa',
     grid: 'rgba(255, 255, 255, 0.08)',
     accent: '#5c7cfa',
+    gain: '#ff6b6b',
+    loss: '#74a7ff',
     tooltipBg: 'rgba(0, 0, 0, 0.85)',
     tooltipText: '#ffffff',
   },
