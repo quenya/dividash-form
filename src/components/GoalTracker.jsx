@@ -90,14 +90,16 @@ function GoalTracker({ currentAmount }) {
                         <button
                             onClick={handleSave}
                             disabled={saving}
-                            style={{ padding: '4px', background: 'transparent', color: '#2ecc71', border: '1px solid #2ecc71', cursor: 'pointer' }}
+                            aria-label="목표 저장"
+                            style={{ padding: '4px', background: 'transparent', color: 'var(--success)', border: '1px solid var(--success)', cursor: 'pointer' }}
                         >
                             {saving ? <Loader2 size={16} className="animate-spin" /> : <Check size={16} />}
                         </button>
                         <button
                             onClick={() => { setTempGoal(goal); setIsEditing(false); }}
                             disabled={saving}
-                            style={{ padding: '4px', background: 'transparent', color: '#e74c3c', border: '1px solid #e74c3c', cursor: 'pointer' }}
+                            aria-label="목표 편집 취소"
+                            style={{ padding: '4px', background: 'transparent', color: 'var(--danger)', border: '1px solid var(--danger)', cursor: 'pointer' }}
                         >
                             <X size={16} />
                         </button>
@@ -105,6 +107,7 @@ function GoalTracker({ currentAmount }) {
                 ) : (
                     <button
                         onClick={() => setIsEditing(true)}
+                        aria-label="목표 금액 편집"
                         style={{ padding: '4px', background: 'transparent', color: 'var(--text-secondary)', border: 'none', cursor: 'pointer' }}
                     >
                         <Edit2 size={16} />
@@ -117,7 +120,7 @@ function GoalTracker({ currentAmount }) {
                     style={{
                         width: `${percentage}%`,
                         height: '100%',
-                        backgroundColor: percentage >= 100 ? '#2ecc71' : 'var(--accent-color)',
+                        backgroundColor: percentage >= 100 ? 'var(--success)' : 'var(--accent-color)',
                         transition: 'width 1s ease-in-out'
                     }}
                 />

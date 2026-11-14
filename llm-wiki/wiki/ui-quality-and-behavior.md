@@ -2,9 +2,9 @@
 title: UI Behavior and QA Invariants
 type: workflow
 status: current
-updated: 2026-11-13
-source_refs: [S002, S007, S015, S017, S018]
-tags: [ui, charts, calendar, responsive, accessibility, qa]
+updated: 2026-11-14
+source_refs: [S002, S007, S015, S017, S018, S019]
+tags: [ui, charts, calendar, responsive, accessibility, qa, theme]
 ---
 
 # UI Behavior and QA Invariants
@@ -56,6 +56,17 @@ tags: [ui, charts, calendar, responsive, accessibility, qa]
 - Mobile layout은 `header / minmax(0, 1fr) main / bottom navigation`의 세 grid row를 사용한다.
 - `main`만 세로 scroll container이며 bottom navigation은 fixed overlay가 아니라 별도 row다.
 - bottom safe-area inset을 포함하고 375px에서 body horizontal overflow, chart/card overflow, navigation overlap이 없어야 한다.
+- Desktop sidebar와 mobile bottom navigation은 `aria-label="주 메뉴"`인 `nav` landmark이며, 현재 화면 버튼에 `aria-current="page"`를 둔다. 수동·화면 캡처·텍스트 입력 화면은 모두 `입력`을 현재 화면으로 표시한다. Mobile header의 icon-only 테마·로그아웃 버튼은 accessible name을 가진다. Shell style은 [`App.css`](../../src/styles/App.css)의 `.app-*` class에 있고 회귀 테스트는 [`Layout.test.jsx`](../../src/components/Layout.test.jsx)다.
+- 7개 bottom navigation item은 375px에서 일부 한국어 label이 두 줄로 줄바꿈된다. 변경 전후 동일한 기존 상태이며 [Known gaps](./known-gaps.md)에서 추적한다.
+
+### Theme and design tokens
+
+- 색은 [`DESIGN.md`](../../DESIGN.md)와 [`App.css`](../../src/styles/App.css)의 token만 사용한다. Light 값은 `:root`, dark 값은 `body.dark-mode`에 있고 [`ThemeContext.jsx`](../../src/context/ThemeContext.jsx)는 class만 전환한다. Body에 inline 색을 쓰지 않는다.
+- Light 전용 literal(`#fff`, `#f5f5f5`, `#f8f9fa`)은 dark mode에서 흰 block과 저대비 text를 만든다. 표 header·inset block은 `--bg-primary`, 입력·내부 block은 `--bg-secondary`를 쓴다.
+- Chart.js canvas는 `var(--…)`를 해석하지 못하고 기본색으로 그린다. Chart 색은 `useChartTheme()`와 [`chartTheme.js`](../../src/utils/chartTheme.js)에서 가져오며 [`chartTheme.test.js`](../../src/utils/chartTheme.test.js)가 CSS token과의 일치를 검사한다.
+- Sector doughnut과 Top-10 종목 chart도 [`chartPalette.js`](../../src/utils/chartPalette.js)를 쓴다. 8개를 넘는 category는 색이 순서대로 반복된다.
+- Success/error message는 `.status-message`와 `.status-message.is-error`(`role="status"`)를 쓴다. jsdom은 inline `color`의 `var()`를 버리므로 의미 색을 검증해야 하는 곳은 `.text-success`/`.text-danger` class를 쓴다.
+- Focus ring은 전역 `:focus-visible` rule이 그린다. Inline `outline: none`을 두지 않는다.
 
 ### KPI and annual-chart behavior
 
@@ -81,6 +92,7 @@ tags: [ui, charts, calendar, responsive, accessibility, qa]
 - Fixed bottom navigation은 body width가 정상이어도 chart 위를 가릴 수 있었다. Full-page visual inspection이 geometry-only check의 빈틈을 발견했다.
 - Concurrent branch amend로 QA 대상 SHA가 바뀐 사례가 있었다. 결과는 목적이 아니라 artifact revision에 귀속해야 한다.
 - Unauthenticated 375px screenshot은 authenticated product shell의 no-overlay 근거가 될 수 없었다.
+- Simulator chart가 Chart.js에 `var(--accent-color)`를 넘겨 dark mode에서 선이 검은색으로 거의 보이지 않았다. Unit test로는 드러나지 않았고 dark-mode capture에서 확인됐다(S019).
 
 ## Risks
 
@@ -98,6 +110,13 @@ tags: [ui, charts, calendar, responsive, accessibility, qa]
 
 ## Sources
 
+- [S019 Design token consistency](../raw/2026-11-14-design-token-consistency.md)
+- [`DESIGN.md`](../../DESIGN.md)
+- [`src/styles/App.css`](../../src/styles/App.css)
+- [`src/context/ThemeContext.jsx`](../../src/context/ThemeContext.jsx)
+- [`src/utils/chartTheme.js`](../../src/utils/chartTheme.js)
+- [`src/utils/chartTheme.test.js`](../../src/utils/chartTheme.test.js)
+- [`src/components/Layout.test.jsx`](../../src/components/Layout.test.jsx)
 - [S007 OMO UI and QA evidence](../raw/2026-08-23-omo-ui-qa-evidence.md)
 - [S015 Dividend Calendar Estimated Holding Count](../raw/2026-11-13-dividend-calendar-estimated-shares.md)
 - [S017 Monthly Dividend Data Navigation](../raw/2026-11-13-dividend-data-month-navigation.md)

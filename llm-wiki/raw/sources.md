@@ -154,3 +154,12 @@
 - Captured: 2026-11-13
 - Scope: complete multi-range retrieval, stable ordering, stale-request suppression, rejected-query recovery, and non-blocking official-link metadata errors.
 - Status: current implementation evidence; authenticated table flow remains unverified.
+
+## S019 - Design Token Consistency
+
+- Type: sanitized user request, review findings, and verification snapshot
+- Locator: Claude chat review of `quenya/dividash-form` at `fc53f0a`, branch `agent/design-token-consistency`
+- Snapshot: [2026-11-14-design-token-consistency.md](./2026-11-14-design-token-consistency.md)
+- Captured: 2026-11-14
+- Scope: semantic color tokens, single theme source, canvas-safe chart theme, shared chart palette, status-message primitive, and app-shell accessibility.
+- Status: current implementation evidence; authenticated runtime remains unverified.

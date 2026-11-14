@@ -22,7 +22,15 @@ describe('KPICard comparison', () => {
 
     const comparison = screen.getByText('전년 동기 대비 ▼25% (작년 동기 ₩ 1,600)');
 
-    expect(comparison.parentElement).toHaveStyle({ color: '#e74c3c' });
+    expect(comparison.parentElement).toHaveClass('text-danger');
+  });
+
+  test('uses the success token for a positive change', () => {
+    render(<KPICard title="올해 누적 배당금" value="₩ 2,000" change={25} comparisonValue={1600} />);
+
+    const comparison = screen.getByText('전년 동기 대비 ▲25% (작년 동기 ₩ 1,600)');
+
+    expect(comparison.parentElement).toHaveClass('text-success');
   });
 
   test('supports a month-specific comparison label', () => {

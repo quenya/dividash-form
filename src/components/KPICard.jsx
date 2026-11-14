@@ -15,14 +15,13 @@ function KPICard({ title, value, change, comparisonValue, comparisonLabel = '전
                 {Icon && <Icon size={18} />}
             </div>
 
-            <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'var(--text-primary)' }}>
+            <div className="tabular-nums" style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'var(--text-primary)' }}>
                 {value}
             </div>
 
             {hasComparison && (
-                <div style={{
+                <div className={isPositive ? 'text-success' : 'text-danger'} style={{
                     fontSize: '0.85rem',
-                    color: isPositive ? '#2ecc71' : '#e74c3c',
                     display: 'flex',
                     alignItems: 'center',
                     gap: '4px',

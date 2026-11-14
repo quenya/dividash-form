@@ -280,3 +280,15 @@
 
 - Wiki knowledge page 9개와 source 18개에 대해 index coverage, orphan, frontmatter, `Sources`/`Related`, source reference, 상대 링크를 재검사했다.
 - Result: 상대 링크 210개, 오류 0개. 수정한 architecture/UI claim을 component와 회귀 테스트에 대조해 오래된 주장을 남기지 않았다.
+
+## [2026-11-14] feature | DESIGN.md 기준 디자인 token 일관성
+
+- 의미 색 token(danger/success/warning, on-accent, tonal status, chart grid, radius, 한국어 system font stack)을 light/dark 값으로 추가하고 component의 raw 색을 token으로 교체했다. `ThemeContext`는 body inline 색을 쓰지 않고 class만 전환한다.
+- Canvas chart는 `useChartTheme()`/`chartTheme.js`를 쓰도록 바꾸고 CSS token과의 일치 테스트를 추가했다. Simulator chart의 해석되지 않는 `var()` 색, sector doughnut·Top-10 chart의 비공용 palette를 수정했다.
+- App shell을 `.app-*` class로 옮기고 `nav` landmark, `aria-current`, icon button accessible name, 통화 탭 focus ring과 `aria-pressed`를 보완했다. `DESIGN.md`, UI behavior, known gaps, index를 S019와 함께 갱신했다.
+- 검증: `TZ=Asia/Seoul`에서 전체 테스트 20개 suite/108개 통과, `CI=true` production build 성공. Synthetic data와 mocked Supabase로 변경 전후 build를 1366/375px, light/dark에서 capture했다. 실제 인증 runtime과 768px은 미검증이며 DB 쓰기·배포는 수행하지 않았다.
+
+## [2026-11-14] lint | 디자인 token Wiki 무결성
+
+- Wiki knowledge page 9개와 source 19개에 대해 index coverage, orphan, frontmatter, `Sources`/`Related`, source reference, 상대 링크를 검사했다.
+- Result: wiki와 raw의 상대 링크 223개, 오류 0개. 변경한 UI/design claim을 `App.css`, `chartTheme.js`, `Layout.jsx`와 테스트에 대조했다.

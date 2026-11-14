@@ -199,7 +199,7 @@ function DividendData() {
   const sortIndicator = (key) => sort.key === key ? (sort.ascending ? " ↑" : " ↓") : " ↕";
 
   const sortableHeader = (label, key, align = "left") => (
-    <th aria-sort={sort.key === key ? (sort.ascending ? "ascending" : "descending") : "none"} style={{ border: "1px solid #ddd", padding: "6px", textAlign: align }}>
+    <th aria-sort={sort.key === key ? (sort.ascending ? "ascending" : "descending") : "none"} style={{ border: "1px solid var(--border-color)", padding: "6px", textAlign: align }}>
       <button type="button" onClick={() => handleSort(key)} style={{ border: 0, background: "transparent", cursor: "pointer", fontWeight: "bold", padding: 0, width: "100%", textAlign: align }}>
         {label}{sortIndicator(key)}
       </button>
@@ -236,7 +236,7 @@ function DividendData() {
           <button type="button" aria-label="다음달" onClick={() => handleMonthChange(1)} disabled={loading}>다음달 ›</button>
         </div>
         <div style={{ marginLeft: "auto", display: "flex", gap: 8, alignItems: "center" }}>
-          <label htmlFor="pageSize" style={{ fontSize: "0.9em", color: "#555" }}>
+          <label htmlFor="pageSize" style={{ fontSize: "0.9em", color: "var(--text-secondary)" }}>
             페이지당 표시
           </label>
           <select
@@ -264,14 +264,14 @@ function DividendData() {
       </form>
 
       {error && (
-        <div style={{ color: "#d32f2f", marginBottom: 12 }}>
+        <div style={{ color: "var(--danger)", marginBottom: 12 }}>
           {error}
         </div>
       )}
 
       <table style={{ borderCollapse: "collapse", width: "100%", fontSize: "0.95em" }}>
         <thead>
-          <tr style={{ background: "#f5f5f5" }}>
+          <tr style={{ background: "var(--bg-primary)" }}>
             {sortableHeader("계좌명", "account_name")}
             {sortableHeader("종목명", "company_name")}
             {sortableHeader("금액", "dividend_amount", "right")}
@@ -287,17 +287,17 @@ function DividendData() {
           )}
           {!loading && rows.map((item) => (
             <tr key={item.id}>
-              <td style={{ border: "1px solid #ddd", padding: "6px" }}>{item.account_name || "-"}</td>
-              <td style={{ border: "1px solid #ddd", padding: "6px" }}>
+              <td style={{ border: "1px solid var(--border-color)", padding: "6px" }}>{item.account_name || "-"}</td>
+              <td style={{ border: "1px solid var(--border-color)", padding: "6px" }}>
                 {(() => {
                   const name = item.company_name || item.stock || "-";
                   const url = sourceLinks[String(item.ticker || name).trim().toUpperCase()] || sourceLinks[String(name).trim().toUpperCase()];
                   return url ? <a href={url} target="_blank" rel="noreferrer">{name}</a> : name;
                 })()}
               </td>
-              <td style={{ border: "1px solid #ddd", padding: "6px", textAlign: "right" }}>{formatAmount(item.dividend_amount, item.currency)}</td>
-              <td style={{ border: "1px solid #ddd", padding: "6px" }}>{item.currency || "-"}</td>
-              <td style={{ border: "1px solid #ddd", padding: "6px" }}>{item.payment_date || "-"}</td>
+              <td style={{ border: "1px solid var(--border-color)", padding: "6px", textAlign: "right" }}>{formatAmount(item.dividend_amount, item.currency)}</td>
+              <td style={{ border: "1px solid var(--border-color)", padding: "6px" }}>{item.currency || "-"}</td>
+              <td style={{ border: "1px solid var(--border-color)", padding: "6px" }}>{item.payment_date || "-"}</td>
             </tr>
           ))}
           {!loading && rows.length === 0 && (
@@ -309,7 +309,7 @@ function DividendData() {
       </table>
 
       <div style={{ marginTop: 16, display: "flex", flexWrap: "wrap", gap: 12, alignItems: "center" }}>
-        <span style={{ fontSize: "0.9em", color: "#555" }}>
+        <span style={{ fontSize: "0.9em", color: "var(--text-secondary)" }}>
           총 {totalCount.toLocaleString()}건 중 {startItem.toLocaleString()}-{endItem.toLocaleString()} 표시
         </span>
         <div style={{ marginLeft: "auto", display: "flex", gap: 8, alignItems: "center" }}>

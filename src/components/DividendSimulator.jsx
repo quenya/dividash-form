@@ -16,6 +16,8 @@ import { TrendingUp, Calculator, RefreshCw, Loader2, Save } from 'lucide-react';
 import { useDividendData } from '../hooks/useDividendData';
 import { supabase } from '../api/supabaseClient';
 import { useAuth } from '../context/AuthContext';
+import { useChartTheme } from '../context/ThemeContext';
+import { withAlpha } from '../utils/chartTheme';
 
 ChartJS.register(
     CategoryScale,
@@ -30,6 +32,7 @@ ChartJS.register(
 );
 
 function DividendSimulator() {
+    const chartTheme = useChartTheme();
     const { data, exchangeRate, loading: dataLoading } = useDividendData();
     const { user } = useAuth();
 
@@ -166,15 +169,15 @@ function DividendSimulator() {
                     fill: true,
                     label: '예상 월 배당금',
                     data: monthlyData,
-                    borderColor: 'var(--accent-color)',
-                    backgroundColor: 'rgba(78, 115, 223, 0.1)',
+                    borderColor: chartTheme.accent,
+                    backgroundColor: withAlpha(chartTheme.accent, 0.12),
                     tension: 0.4,
                     pointRadius: 4,
-                    pointBackgroundColor: 'var(--accent-color)',
+                    pointBackgroundColor: chartTheme.accent,
                 },
             ],
         };
-    }, [initialAnnualDividend, monthlyAddition, expectedYield, dividendGrowth, reinvest]);
+    }, [initialAnnualDividend, monthlyAddition, expectedYield, dividendGrowth, reinvest, chartTheme]);
 
     const finalMonthlyDividend = simulationData.datasets[0].data[simulationData.datasets[0].data.length - 1];
 
@@ -198,7 +201,7 @@ function DividendSimulator() {
                         style={{
                             display: 'flex', alignItems: 'center', gap: '8px',
                             padding: '10px 20px', borderRadius: '10px',
-                            backgroundColor: 'var(--accent-color)', color: '#fff',
+                            backgroundColor: 'var(--accent-color)', color: 'var(--text-on-accent)',
                             border: 'none', cursor: 'pointer', fontWeight: 'bold'
                         }}
                     >
@@ -248,10 +251,11 @@ function DividendSimulator() {
 
                         <button
                             onClick={() => setReinvest(!reinvest)}
+                            aria-pressed={reinvest}
                             style={{
                                 padding: '12px', borderRadius: '12px', border: 'none',
                                 backgroundColor: reinvest ? 'var(--accent-color)' : 'var(--bg-secondary)',
-                                color: reinvest ? '#fff' : 'var(--text-secondary)',
+                                color: reinvest ? 'var(--text-on-accent)' : 'var(--text-secondary)',
                                 cursor: 'pointer', fontWeight: 'bold', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px'
                             }}
                         >
@@ -301,7 +305,7 @@ function DividendSimulator() {
                                     align: 'top',
                                     offset: 8,
                                     font: { size: 10, weight: 'bold' },
-                                    color: 'var(--text-secondary)',
+                                    color: chartTheme.text,
                                     formatter: (value) => `₩${(value / 10000).toFixed(0)}만`,
                                     padding: 4
                                 }
@@ -309,10 +313,10 @@ function DividendSimulator() {
                             scales: {
                                 y: {
                                     beginAtZero: true,
-                                    grid: { color: 'rgba(0,0,0,0.05)' },
-                                    ticks: { callback: (value) => `₩ ${(value / 10000).toLocaleString()}만` }
+                                    grid: { color: chartTheme.grid },
+                                    ticks: { color: chartTheme.text, callback: (value) => `₩ ${(value / 10000).toLocaleString()}만` }
                                 },
-                                x: { grid: { display: false } }
+                                x: { grid: { display: false }, ticks: { color: chartTheme.text } }
                             },
                             interaction: { mode: 'index', intersect: false }
                         }}

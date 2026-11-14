@@ -440,7 +440,7 @@ function DividendForm() {
                   <button type="button" onClick={() => setIsAddingAccount(false)}>취소</button>
                 </div>
               </div>
-              {accountError && <div style={{ color: '#d32f2f', marginTop: 6 }}>{accountError}</div>}
+              {accountError && <div style={{ color: 'var(--danger)', marginTop: 6 }}>{accountError}</div>}
               <small style={{ display: 'block', marginTop: 6, color: 'var(--text-secondary)' }}>
                 계좌번호는 저장 전에 중간 숫자를 자동 마스킹합니다. 전체 번호를 직접 입력하지 않는 것을 권장합니다.
               </small>
@@ -485,7 +485,7 @@ function DividendForm() {
               style={{ minWidth: 120, maxWidth: 220 }}
             />
             {instrumentSearchLoading && <small>검색 중…</small>}
-            {instrumentSearchError && <small style={{ color: '#d32f2f' }}>{instrumentSearchError}</small>}
+            {instrumentSearchError && <small style={{ color: 'var(--danger)' }}>{instrumentSearchError}</small>}
             {instrumentCandidates.length > 0 && (
               <div role="listbox" aria-label="실시간 종목 검색 결과" style={{ width: '100%', display: 'grid', gap: 4 }}>
                 {instrumentCandidates.map((instrument) => (
@@ -508,18 +508,18 @@ function DividendForm() {
         </label>
         <div style={{ margin: '12px 0' }}>
           <span style={{ marginRight: 8 }}>통화:</span>
-          <div style={{ display: 'inline-flex', borderBottom: '2px solid #e0e0e0', borderRadius: 4 }}>
+          <div style={{ display: 'inline-flex', borderBottom: '2px solid var(--border-color)', borderRadius: 4 }}>
             <button
               type="button"
+              aria-pressed={form.currency === 'KRW'}
               style={{
                 border: 'none',
                 background: 'none',
                 padding: '8px 24px',
                 cursor: 'pointer',
                 fontWeight: form.currency === 'KRW' ? 'bold' : 'normal',
-                borderBottom: form.currency === 'KRW' ? '3px solid #1976d2' : 'none',
-                color: form.currency === 'KRW' ? '#1976d2' : '#555',
-                outline: 'none',
+                borderBottom: form.currency === 'KRW' ? '3px solid var(--accent-color)' : 'none',
+                color: form.currency === 'KRW' ? 'var(--accent-color)' : 'var(--text-secondary)',
                 fontSize: '1em',
                 transition: 'border-bottom 0.2s'
               }}
@@ -529,15 +529,15 @@ function DividendForm() {
             </button>
             <button
               type="button"
+              aria-pressed={form.currency === 'USD'}
               style={{
                 border: 'none',
                 background: 'none',
                 padding: '8px 24px',
                 cursor: 'pointer',
                 fontWeight: form.currency === 'USD' ? 'bold' : 'normal',
-                borderBottom: form.currency === 'USD' ? '3px solid #1976d2' : 'none',
-                color: form.currency === 'USD' ? '#1976d2' : '#555',
-                outline: 'none',
+                borderBottom: form.currency === 'USD' ? '3px solid var(--accent-color)' : 'none',
+                color: form.currency === 'USD' ? 'var(--accent-color)' : 'var(--text-secondary)',
                 fontSize: '1em',
                 transition: 'border-bottom 0.2s'
               }}
@@ -551,7 +551,7 @@ function DividendForm() {
           <span style={{
             minWidth: 24,
             fontSize: '1.1em',
-            color: '#888',
+            color: 'var(--text-secondary)',
             marginRight: 4
           }}>
             {form.currency === 'KRW' ? '₩' : form.currency === 'USD' ? '$' : ''}
@@ -573,22 +573,22 @@ function DividendForm() {
         <h4>최근 등록된 배당내역</h4>
         <table style={{ borderCollapse: 'collapse', width: '100%', fontSize: '0.95em' }}>
           <thead>
-            <tr style={{ background: '#f5f5f5' }}>
-              <th style={{ border: '1px solid #ddd', padding: '6px' }}>계좌명</th>
-              <th style={{ border: '1px solid #ddd', padding: '6px' }}>종목명</th>
-              <th style={{ border: '1px solid #ddd', padding: '6px' }}>금액</th>
-              <th style={{ border: '1px solid #ddd', padding: '6px' }}>통화</th>
-              <th style={{ border: '1px solid #ddd', padding: '6px' }}>날짜</th>
+            <tr style={{ background: 'var(--bg-primary)' }}>
+              <th style={{ border: '1px solid var(--border-color)', padding: '6px' }}>계좌명</th>
+              <th style={{ border: '1px solid var(--border-color)', padding: '6px' }}>종목명</th>
+              <th style={{ border: '1px solid var(--border-color)', padding: '6px' }}>금액</th>
+              <th style={{ border: '1px solid var(--border-color)', padding: '6px' }}>통화</th>
+              <th style={{ border: '1px solid var(--border-color)', padding: '6px' }}>날짜</th>
             </tr>
           </thead>
           <tbody>
             {recentDividends.map((item, idx) => (
               <tr key={item.id || idx}>
-                <td style={{ border: '1px solid #ddd', padding: '6px' }}>{item.account_name}</td>
-                <td style={{ border: '1px solid #ddd', padding: '6px' }}>{item.company_name}</td>
-                <td style={{ border: '1px solid #ddd', padding: '6px', textAlign: 'right' }}>{formatAmount(item.dividend_amount, item.currency)}</td>
-                <td style={{ border: '1px solid #ddd', padding: '6px' }}>{item.currency}</td>
-                <td style={{ border: '1px solid #ddd', padding: '6px' }}>{item.payment_date}</td>
+                <td style={{ border: '1px solid var(--border-color)', padding: '6px' }}>{item.account_name}</td>
+                <td style={{ border: '1px solid var(--border-color)', padding: '6px' }}>{item.company_name}</td>
+                <td style={{ border: '1px solid var(--border-color)', padding: '6px', textAlign: 'right' }}>{formatAmount(item.dividend_amount, item.currency)}</td>
+                <td style={{ border: '1px solid var(--border-color)', padding: '6px' }}>{item.currency}</td>
+                <td style={{ border: '1px solid var(--border-color)', padding: '6px' }}>{item.payment_date}</td>
               </tr>
             ))}
             {recentDividends.length === 0 && (

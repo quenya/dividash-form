@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { getChartTheme } from '../utils/chartTheme';
 
 const ThemeContext = createContext();
 
@@ -15,16 +16,8 @@ export function ThemeProvider({ children }) {
     useEffect(() => {
         localStorage.setItem('theme', isDarkMode ? 'dark' : 'light');
 
-        // Apply theme to body for global styles
-        if (isDarkMode) {
-            document.body.classList.add('dark-mode');
-            document.body.style.backgroundColor = '#1a1b1e'; // Dark background
-            document.body.style.color = '#e0e0e0'; // Light text
-        } else {
-            document.body.classList.remove('dark-mode');
-            document.body.style.backgroundColor = '#f8f9fa'; // Light background
-            document.body.style.color = '#212529'; // Dark text
-        }
+        // Colors come from the CSS tokens in styles/App.css; only the class switches here.
+        document.body.classList.toggle('dark-mode', isDarkMode);
     }, [isDarkMode]);
 
     const toggleTheme = () => {
@@ -40,4 +33,10 @@ export function ThemeProvider({ children }) {
 
 export function useTheme() {
     return useContext(ThemeContext);
+}
+
+// Chart colors for the current theme. Falls back to light outside a ThemeProvider (tests).
+export function useChartTheme() {
+    const theme = useContext(ThemeContext);
+    return getChartTheme(Boolean(theme?.isDarkMode));
 }

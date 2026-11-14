@@ -87,7 +87,7 @@ function AuthGate({ children }) {
             border: 'none',
             borderRadius: 4,
             background: 'var(--accent-color)',
-            color: '#fff',
+            color: 'var(--text-on-accent)',
             fontWeight: 700,
             cursor: submitting ? 'not-allowed' : 'pointer',
             opacity: submitting ? 0.7 : 1
