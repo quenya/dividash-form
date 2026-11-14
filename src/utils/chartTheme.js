@@ -5,18 +5,14 @@ export const CHART_THEME = {
   light: {
     text: '#636e72', // --text-secondary
     grid: 'rgba(0, 0, 0, 0.06)', // --chart-grid
-    surface: '#ffffff', // --bg-secondary (slice separators)
     accent: '#4f8cff', // --accent-color
-    onSlice: '#ffffff',
     tooltipBg: 'rgba(0, 0, 0, 0.8)',
     tooltipText: '#ffffff',
   },
   dark: {
     text: '#a1a1aa',
     grid: 'rgba(255, 255, 255, 0.08)',
-    surface: '#25262b',
     accent: '#5c7cfa',
-    onSlice: '#ffffff',
     tooltipBg: 'rgba(0, 0, 0, 0.85)',
     tooltipText: '#ffffff',
   },

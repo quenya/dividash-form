@@ -4,7 +4,9 @@ import PortfolioAnalysis from './PortfolioAnalysis';
 
 jest.mock('chart.js', () => ({
   Chart: { register: jest.fn() },
-  ArcElement: jest.fn(),
+  BarElement: jest.fn(),
+  CategoryScale: jest.fn(),
+  LinearScale: jest.fn(),
   Legend: jest.fn(),
   Tooltip: jest.fn()
 }));
@@ -12,7 +14,14 @@ jest.mock('chart.js', () => ({
 jest.mock('chartjs-plugin-datalabels', () => ({}));
 
 jest.mock('react-chartjs-2', () => ({
-  Doughnut: () => <div>Doughnut Chart Mock</div>
+  Bar: ({ data, options }) => (
+    <div
+      data-testid="sector-chart"
+      data-index-axis={options.indexAxis}
+      data-labels={JSON.stringify(data.labels)}
+      data-colors={JSON.stringify(data.datasets[0].backgroundColor)}
+    />
+  )
 }));
 
 jest.mock('../api/supabaseClient', () => ({
@@ -74,4 +83,14 @@ test('renders verified names and keeps unconfirmed candidates out of the contrib
   expect(contributionTableView.getByText('LEGACY (확인 대기)')).toBeInTheDocument();
   expect(contributionTableView.queryByText('Possible match')).not.toBeInTheDocument();
   expect(contributionTableView.getByText('UNVERIFIED FUND (확인 대기)')).toHaveClass('portfolio-security-name');
+});
+
+test('draws sectors as horizontal bars with Unknown in gray', () => {
+  render(<PortfolioAnalysis />);
+
+  const chart = screen.getByTestId('sector-chart');
+
+  expect(chart.dataset.indexAxis).toBe('y');
+  expect(JSON.parse(chart.dataset.labels)).toEqual(['Technology', 'Unknown']);
+  expect(JSON.parse(chart.dataset.colors)).toEqual(['#4f8cff', '#6b7280']);
 });

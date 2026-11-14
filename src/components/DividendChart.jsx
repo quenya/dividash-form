@@ -5,6 +5,9 @@ import {
   CategoryScale,
   LinearScale,
   BarElement,
+  LineController,
+  LineElement,
+  PointElement,
   Title,
   Tooltip,
   Legend,
@@ -17,9 +20,16 @@ import GoalTracker from './GoalTracker';
 import { calculateYtdKpi } from '../utils/dividendKpi';
 import { getChartColor } from '../utils/chartPalette';
 import { useChartTheme } from '../context/ThemeContext';
-import { buildYoyComparison, formatKrwLabel, IN_PROGRESS_SUFFIX, periodFill } from '../utils/dividendChartData';
+import {
+  buildMonthlyYearDatasets,
+  buildYoyComparison,
+  formatKrwAxis,
+  formatKrwLabel,
+  IN_PROGRESS_SUFFIX,
+  periodFill,
+} from '../utils/dividendChartData';
 
-ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, ChartDataLabels);
+ChartJS.register(CategoryScale, LinearScale, BarElement, LineController, LineElement, PointElement, Title, Tooltip, Legend, ChartDataLabels);
 
 const MONTH_LABELS = [
   '1월', '2월', '3월', '4월', '5월', '6월',
@@ -148,19 +158,7 @@ function DividendChart() {
 
         setMonthChart({
           labels: MONTH_LABELS,
-          datasets: years.map((year, idx) => {
-            const fill = MONTH_LABELS.map((_, month) => (
-              periodFill(getChartColor(idx), Number(year) === currentYear && month === currentMonth)
-            ));
-            return {
-              label: year,
-              data: monthYearMap[year],
-              backgroundColor: fill,
-              borderColor: getChartColor(idx),
-              borderWidth: 2,
-              hoverBackgroundColor: fill,
-            };
-          }),
+          datasets: buildMonthlyYearDatasets(monthYearMap, years, currentYear, currentMonth, getChartColor),
         });
 
         // Comparison Chart
@@ -216,15 +214,11 @@ function DividendChart() {
         stockArr.sort((a, b) => b[1] - a[1]);
         stockArr = stockArr.slice(0, 10);
 
-        const stockColors = stockArr.map((_, i) => getChartColor(i));
-
         setStockChart({
           labels: stockArr.map(([name]) => name),
           datasets: [{
             label: '종목별 배당금',
             data: stockArr.map(([, value]) => value),
-            backgroundColor: stockColors,
-            borderColor: stockColors,
             borderWidth: 1,
             borderRadius: 4,
             barThickness: 22,
@@ -245,9 +239,15 @@ function DividendChart() {
   const currentYearLabel = String(today.getFullYear());
   const currentMonthIndex = today.getMonth();
 
-  const chartOptions = (title, unit = '₩', { showLegend = true, isInProgress = () => false } = {}) => ({
+  const chartOptions = (title, unit = '₩', {
+    showLegend = true,
+    isInProgress = () => false,
+    showLabel = () => true,
+    interaction,
+  } = {}) => ({
     responsive: true,
     maintainAspectRatio: false,
+    interaction,
     layout: {
       padding: {
         top: 8,
@@ -263,13 +263,7 @@ function DividendChart() {
         anchor: 'end',
         align: 'top',
         formatter: (value, context) => {
-          // Show datalabel only for current year and current month in monthly chart
-          if (context.chart.config.type === 'bar' && title.includes('월별')) {
-            const isCurrentMonth = context.dataIndex === currentMonthIndex;
-            const isCurrentYear = context.dataset.label === currentYearLabel;
-
-            if (!isCurrentMonth || !isCurrentYear) return '';
-          }
+          if (!showLabel(context)) return '';
           if (unit === '₩') return formatKrwLabel(value);
           return value;
         },
@@ -286,7 +280,7 @@ function DividendChart() {
         callbacks: {
           title: (items) => {
             const label = items[0]?.label || '';
-            const suffix = items[0] && isInProgress(items[0]) ? IN_PROGRESS_SUFFIX : '';
+            const suffix = items.some(isInProgress) ? IN_PROGRESS_SUFFIX : '';
             return `${title === YEAR_CHART_TITLE ? `${label}년` : label}${suffix}`;
           },
           label: (context) => {
@@ -305,7 +299,7 @@ function DividendChart() {
       },
       y: {
         grace: title.includes('전년 동월') ? '20%' : undefined,
-        ticks: { color: chartTheme.text },
+        ticks: { color: chartTheme.text, callback: (value) => formatKrwAxis(value) },
         grid: { color: chartTheme.grid }
       }
     }
@@ -379,7 +373,9 @@ function DividendChart() {
       <div style={{ display: 'flex', gap: '24px', flexWrap: 'wrap' }}>
         <div className="card" style={{ flex: 1, minWidth: 'min(320px, 100%)', height: '400px' }}>
           {monthChart ? <Bar data={monthChart} options={chartOptions('월별 배당금 (연도별 비교)', '₩', {
+            interaction: { mode: 'index', intersect: false },
             isInProgress: (item) => item.dataset.label === currentYearLabel && item.dataIndex === currentMonthIndex,
+            showLabel: (context) => context.dataset.label === currentYearLabel && context.dataIndex === currentMonthIndex,
           })} /> : <div>데이터 불러오는 중...</div>}
         </div>
 
@@ -388,6 +384,7 @@ function DividendChart() {
             <Bar data={comparisonChart} options={chartOptions(`전년 동월 대비 증감 (${comparisonChart.currentYear} vs ${comparisonChart.prevYear})`, '₩', {
               showLegend: false,
               isInProgress: (item) => item.dataIndex === currentMonthIndex,
+              showLabel: (context) => context.dataIndex === currentMonthIndex,
             })} />
           </div>
         )}
@@ -441,7 +438,14 @@ function DividendChart() {
         <h4 style={{ margin: '0 0 20px 0', color: 'var(--text-secondary)' }}>종목별 배당금 (Top 10)</h4>
         <div style={{ flex: 1, width: '100%', minHeight: 0, position: 'relative' }}>
           {stockChart ? (
-            <Bar data={stockChart} options={{
+            <Bar data={{
+              ...stockChart,
+              datasets: stockChart.datasets.map((dataset) => ({
+                ...dataset,
+                backgroundColor: chartTheme.accent,
+                borderColor: chartTheme.accent,
+              })),
+            }} options={{
               indexAxis: 'y',
               responsive: true,
               maintainAspectRatio: false,
@@ -477,7 +481,7 @@ function DividendChart() {
                   beginAtZero: true,
                   ticks: {
                     color: chartTheme.text,
-                    callback: (value) => `₩${Number(value).toLocaleString()}`
+                    callback: (value) => formatKrwAxis(value)
                   },
                   grid: { color: chartTheme.grid }
                 },
