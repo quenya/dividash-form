@@ -109,7 +109,7 @@ function OCRUpload() {
           <img
             src={imagePreview}
             alt="Uploaded"
-            style={{ maxWidth: 400, maxHeight: 300, border: '1px solid #ddd' }}
+            style={{ maxWidth: 400, maxHeight: 300, border: '1px solid var(--border-color)' }}
           />
         </div>
       )}
@@ -119,7 +119,7 @@ function OCRUpload() {
           <h3>추출된 정보:</h3>
           
           {/* 공통 계좌 정보 */}
-          <div style={{ marginBottom: 20, padding: 15, backgroundColor: '#f8f9fa', borderRadius: 4 }}>
+          <div style={{ marginBottom: 20, padding: 15, backgroundColor: 'var(--bg-primary)', borderRadius: 4 }}>
             <h4>계좌 정보:</h4>
             <div style={{ display: 'grid', gap: 10, maxWidth: 400 }}>
               <div>
@@ -162,9 +162,9 @@ function OCRUpload() {
                 <div key={index} style={{ 
                   marginBottom: 15, 
                   padding: 10, 
-                  border: '1px solid #ddd', 
+                  border: '1px solid var(--border-color)',
                   borderRadius: 4,
-                  backgroundColor: '#fff'
+                  backgroundColor: 'var(--bg-secondary)'
                 }}>
                   <h5>배당금 #{index + 1}</h5>
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
@@ -231,8 +231,8 @@ function OCRUpload() {
             onClick={handleSave}
             style={{
               padding: '10px 20px',
-              backgroundColor: '#007bff',
-              color: 'white',
+              backgroundColor: 'var(--accent-color)',
+              color: 'var(--text-on-accent)',
               border: 'none',
               borderRadius: 4,
               cursor: 'pointer',
@@ -245,7 +245,7 @@ function OCRUpload() {
           </button>
 
           {extractedData.confidence && (
-            <div style={{ marginTop: 10, fontSize: '0.9em', color: '#666' }}>
+            <div style={{ marginTop: 10, fontSize: '0.9em', color: 'var(--text-secondary)' }}>
               신뢰도: {Math.round(extractedData.confidence * 100)}%
             </div>
           )}
@@ -253,14 +253,7 @@ function OCRUpload() {
       )}
 
       {message && (
-        <div style={{
-          padding: 10,
-          marginTop: 10,
-          backgroundColor: message.includes('오류') ? '#f8d7da' : '#d4edda',
-          color: message.includes('오류') ? '#721c24' : '#155724',
-          border: `1px solid ${message.includes('오류') ? '#f5c6cb' : '#c3e6cb'}`,
-          borderRadius: 4
-        }}>
+        <div role="status" className={`status-message${message.includes('오류') ? ' is-error' : ''}`}>
           {message}
         </div>
       )}

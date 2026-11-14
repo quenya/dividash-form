@@ -94,7 +94,7 @@ function NotificationCenter() {
     <div style={{ position: 'relative' }} ref={dropdownRef}>
       <button aria-label={`알림 ${result.count}개`} aria-expanded={isOpen} onClick={toggleOpen} style={{ background: 'transparent', border: 'none', cursor: 'pointer', position: 'relative', padding: '8px', color: 'var(--text-secondary)' }}>
         {result.count > 0 ? <BellRing size={20} color="var(--accent-color)" /> : <Bell size={20} />}
-        {result.count > 0 && <span style={{ position: 'absolute', top: 0, right: 0, backgroundColor: '#e74c3c', color: 'white', fontSize: '10px', padding: '2px 5px', borderRadius: '50%', fontWeight: 'bold' }}>{result.count}</span>}
+        {result.count > 0 && <span style={{ position: 'absolute', top: 0, right: 0, backgroundColor: 'var(--danger)', color: 'var(--text-on-danger)', fontSize: '10px', padding: '2px 5px', borderRadius: '50%', fontWeight: 'bold' }}>{result.count}</span>}
       </button>
       {isOpen && <div style={{ position: 'absolute', top: '40px', right: '-10px', width: '280px', backgroundColor: 'var(--bg-secondary)', border: '1px solid var(--border-color)', borderRadius: '8px', boxShadow: '0 4px 12px rgba(0,0,0,0.15)', zIndex: 1000, overflow: 'hidden' }}>
         <div style={{ padding: '12px', borderBottom: '1px solid var(--border-color)', fontWeight: 'bold' }}>오늘·내일·모레 공식 배당 예정 ({result.count})</div>

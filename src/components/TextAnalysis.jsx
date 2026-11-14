@@ -134,7 +134,7 @@ function TextAnalysis() {
             padding: 10,
             marginTop: 10,
             marginBottom: 10,
-            border: '1px solid #ddd',
+            border: '1px solid var(--border-color)',
             borderRadius: 4
           }}
         />
@@ -143,8 +143,8 @@ function TextAnalysis() {
           disabled={!inputText.trim() || isAnalyzing}
           style={{
             padding: '8px 16px',
-            backgroundColor: '#28a745',
-            color: 'white',
+            backgroundColor: 'var(--accent-color)',
+            color: 'var(--text-on-accent)',
             border: 'none',
             borderRadius: 4,
             cursor: 'pointer'
@@ -246,8 +246,8 @@ function TextAnalysis() {
               onClick={handleSave}
               style={{
                 padding: '10px 20px',
-                backgroundColor: '#007bff',
-                color: 'white',
+                backgroundColor: 'var(--accent-color)',
+                color: 'var(--text-on-accent)',
                 border: 'none',
                 borderRadius: 4,
                 cursor: 'pointer'
@@ -258,7 +258,7 @@ function TextAnalysis() {
           </div>
 
           {extractedData.confidence && (
-            <div style={{ marginTop: 10, fontSize: '0.9em', color: '#666' }}>
+            <div style={{ marginTop: 10, fontSize: '0.9em', color: 'var(--text-secondary)' }}>
               신뢰도: {Math.round(extractedData.confidence * 100)}%
               {extractedData.account_type && (
                 <> • 계좌유형: {extractedData.account_type}</>
@@ -272,23 +272,16 @@ function TextAnalysis() {
       )}
 
       {message && (
-        <div style={{
-          padding: 10,
-          marginTop: 10,
-          backgroundColor: message.includes('오류') ? '#f8d7da' : '#d4edda',
-          color: message.includes('오류') ? '#721c24' : '#155724',
-          border: `1px solid ${message.includes('오류') ? '#f5c6cb' : '#c3e6cb'}`,
-          borderRadius: 4
-        }}>
+        <div role="status" className={`status-message${message.includes('오류') ? ' is-error' : ''}`}>
           {message}
         </div>
       )}
 
-      <div style={{ marginTop: 30, padding: 15, backgroundColor: '#f8f9fa', borderRadius: 4 }}>
+      <div style={{ marginTop: 30, padding: 15, backgroundColor: 'var(--bg-primary)', borderRadius: 4 }}>
         <h4>지원하는 텍스트 형식 예시:</h4>
-        <div style={{ fontSize: '0.9em', color: '#666' }}>
+        <div style={{ fontSize: '0.9em', color: 'var(--text-secondary)' }}>
           <p><strong>예시 입력:</strong></p>
-          <div style={{ backgroundColor: '#fff', padding: 10, borderRadius: 4, fontFamily: 'monospace' }}>
+          <div style={{ backgroundColor: 'var(--bg-secondary)', padding: 10, borderRadius: 4, fontFamily: 'monospace' }}>
             [미래에셋증권] 권리 입금 안내<br/>
             이종현 고객님<br/>
             133-46-****62<br/>

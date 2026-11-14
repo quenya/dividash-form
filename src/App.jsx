@@ -24,7 +24,7 @@ function AppContent() {
           onClick={() => setPage('form')}
           style={{
             backgroundColor: page === 'form' ? 'var(--accent-color)' : 'transparent',
-            color: page === 'form' ? '#fff' : 'var(--text-secondary)',
+            color: page === 'form' ? 'var(--text-on-accent)' : 'var(--text-secondary)',
             opacity: page === 'form' ? 1 : 0.7,
             border: 'none',
             fontSize: '1rem',
@@ -39,7 +39,7 @@ function AppContent() {
           onClick={() => setPage('ocr')}
           style={{
             backgroundColor: page === 'ocr' ? 'var(--accent-color)' : 'transparent',
-            color: page === 'ocr' ? '#fff' : 'var(--text-secondary)',
+            color: page === 'ocr' ? 'var(--text-on-accent)' : 'var(--text-secondary)',
             opacity: page === 'ocr' ? 1 : 0.7,
             border: 'none',
             fontSize: '1rem',
@@ -54,7 +54,7 @@ function AppContent() {
           onClick={() => setPage('text')}
           style={{
             backgroundColor: page === 'text' ? 'var(--accent-color)' : 'transparent',
-            color: page === 'text' ? '#fff' : 'var(--text-secondary)',
+            color: page === 'text' ? 'var(--text-on-accent)' : 'var(--text-secondary)',
             opacity: page === 'text' ? 1 : 0.7,
             border: 'none',
             fontSize: '1rem',

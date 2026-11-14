@@ -4,8 +4,6 @@ import {
     Calendar,
     Database,
     PlusCircle,
-    Settings,
-    Menu,
     Moon,
     Sun,
     PieChart,
@@ -39,180 +37,90 @@ function Layout({ children, currentPage, setPage }) {
         { id: 'add', label: '입력', icon: PlusCircle },
     ];
 
-    const NavContent = () => (
-        <>
-            <div style={{ marginBottom: '32px', padding: '0 12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <h2 style={{ margin: 0, color: 'var(--accent-color)' }}>Dividash</h2>
-                {!isMobile && <NotificationCenter />}
-            </div>
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', flex: 1 }}>
-                {navItems.map(item => (
-                    <button
-                        key={item.id}
-                        onClick={() => setPage(item.id === 'add' ? 'form' : item.id)}
-                        style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '12px',
-                            padding: '12px',
-                            borderRadius: '8px',
-                            backgroundColor: currentPage === item.id || (item.id === 'add' && ['form', 'ocr', 'text'].includes(currentPage))
-                                ? 'var(--accent-color)'
-                                : 'transparent',
-                            color: currentPage === item.id || (item.id === 'add' && ['form', 'ocr', 'text'].includes(currentPage))
-                                ? '#fff'
-                                : 'var(--text-secondary)',
-                            border: 'none',
-                            cursor: 'pointer',
-                            fontSize: '1rem',
-                            textAlign: 'left',
-                            width: '100%',
-                            transition: 'all 0.2s'
-                        }}
-                    >
-                        <item.icon size={20} />
-                        {(!isMobile || window.innerWidth > 768) && <span>{item.label}</span>}
-                    </button>
-                ))}
-            </div>
-
-            <div style={{ padding: '12px', borderTop: '1px solid var(--border-color)' }}>
-                {user?.email && (
-                    <div style={{ marginBottom: '8px', color: 'var(--text-secondary)', fontSize: '0.85rem', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                        {user.email}
-                    </div>
-                )}
-                <button
-                    onClick={toggleTheme}
-                    style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '12px',
-                        background: 'transparent',
-                        border: 'none',
-                        color: 'var(--text-secondary)',
-                        cursor: 'pointer',
-                        width: '100%',
-                        padding: '8px'
-                    }}
-                >
-                    {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
-                    <span>{isDarkMode ? '라이트 모드' : '다크 모드'}</span>
-                </button>
-                <button
-                    onClick={signOut}
-                    style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '12px',
-                        background: 'transparent',
-                        border: 'none',
-                        color: 'var(--text-secondary)',
-                        cursor: 'pointer',
-                        width: '100%',
-                        padding: '8px'
-                    }}
-                >
-                    <LogOut size={20} />
-                    <span>로그아웃</span>
-                </button>
-            </div>
-        </>
-    );
+    const isActive = (id) => currentPage === id || (id === 'add' && ['form', 'ocr', 'text'].includes(currentPage));
+    const goTo = (id) => setPage(id === 'add' ? 'form' : id);
+    const themeLabel = isDarkMode ? '라이트 모드' : '다크 모드';
 
     if (isMobile) {
         return (
-            <div style={{
-                display: 'grid',
-                gridTemplateRows: 'auto minmax(0, 1fr) auto',
-                minHeight: '100dvh',
-                maxHeight: '100dvh',
-                overflow: 'hidden',
-                background: 'var(--bg-primary)'
-            }}>
-                {/* Mobile Header */}
-                <div style={{
-                    padding: '16px',
-                    background: 'var(--bg-secondary)',
-                    borderBottom: '1px solid var(--border-color)',
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    zIndex: 100
-                }}>
-                    <h3 style={{ margin: 0 }}>Dividash</h3>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+            <div className="app-mobile-shell">
+                <header className="app-mobile-header">
+                    <h3>DiviDash</h3>
+                    <div className="app-mobile-actions">
                         <NotificationCenter />
-                        <button onClick={toggleTheme} style={{ background: 'transparent', color: 'var(--text-primary)', padding: 4, border: 'none' }}>
-                            {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
+                        <button type="button" className="app-icon-button" onClick={toggleTheme} aria-label={`${themeLabel}로 전환`}>
+                            {isDarkMode ? <Sun size={20} aria-hidden="true" /> : <Moon size={20} aria-hidden="true" />}
                         </button>
-                        <button onClick={signOut} style={{ background: 'transparent', color: 'var(--text-primary)', padding: 4, border: 'none' }}>
-                            <LogOut size={20} />
+                        <button type="button" className="app-icon-button" onClick={signOut} aria-label="로그아웃">
+                            <LogOut size={20} aria-hidden="true" />
                         </button>
                     </div>
-                </div>
+                </header>
 
-                {/* Content */}
-                <main style={{ padding: '16px', minHeight: 0, overflowY: 'auto' }}>
+                <main className="app-mobile-main">
                     {children}
                 </main>
 
-                {/* Mobile Bottom Tab */}
-                <div style={{
-                    backgroundColor: 'var(--bg-secondary)',
-                    borderTop: '1px solid var(--border-color)',
-                    display: 'flex',
-                    justifyContent: 'space-around',
-                    padding: '8px 0 calc(8px + env(safe-area-inset-bottom))',
-                    zIndex: 1000
-                }}>
+                <nav className="app-bottom-nav" aria-label="주 메뉴">
                     {navItems.map(item => (
                         <button
                             key={item.id}
-                            onClick={() => setPage(item.id === 'add' ? 'form' : item.id)}
-                            style={{
-                                background: 'transparent',
-                                border: 'none',
-                                display: 'flex',
-                                flexDirection: 'column',
-                                alignItems: 'center',
-                                gap: '4px',
-                                color: currentPage === item.id || (item.id === 'add' && ['form', 'ocr', 'text'].includes(currentPage))
-                                    ? 'var(--accent-color)'
-                                    : 'var(--text-secondary)',
-                                fontSize: '0.75rem'
-                            }}
+                            type="button"
+                            className={`app-bottom-nav-item${isActive(item.id) ? ' is-active' : ''}`}
+                            aria-current={isActive(item.id) ? 'page' : undefined}
+                            onClick={() => goTo(item.id)}
                         >
-                            <item.icon size={24} />
+                            <item.icon size={24} aria-hidden="true" />
                             <span>{item.label}</span>
                         </button>
                     ))}
-                </div>
+                </nav>
             </div>
         );
     }
 
     // Desktop Layout
     return (
-        <div style={{ display: 'flex', minHeight: '100vh', background: 'var(--bg-primary)' }}>
-            {/* Sidebar */}
-            <aside style={{
-                width: '250px',
-                backgroundColor: 'var(--bg-secondary)',
-                borderRight: '1px solid var(--border-color)',
-                padding: '24px',
-                display: 'flex',
-                flexDirection: 'column',
-                position: 'sticky',
-                top: 0,
-                height: '100vh'
-            }}>
-                <NavContent />
+        <div className="app-shell">
+            <aside className="app-sidebar">
+                <div className="app-brand">
+                    <h2>DiviDash</h2>
+                    <NotificationCenter />
+                </div>
+
+                <nav className="app-nav" aria-label="주 메뉴">
+                    {navItems.map(item => (
+                        <button
+                            key={item.id}
+                            type="button"
+                            className={`app-nav-item${isActive(item.id) ? ' is-active' : ''}`}
+                            aria-current={isActive(item.id) ? 'page' : undefined}
+                            onClick={() => goTo(item.id)}
+                        >
+                            <item.icon size={20} aria-hidden="true" />
+                            <span>{item.label}</span>
+                        </button>
+                    ))}
+                </nav>
+
+                <div className="app-sidebar-footer">
+                    {user?.email && (
+                        <div className="app-user-email" title={user.email}>
+                            {user.email}
+                        </div>
+                    )}
+                    <button type="button" className="app-sidebar-action" onClick={toggleTheme}>
+                        {isDarkMode ? <Sun size={20} aria-hidden="true" /> : <Moon size={20} aria-hidden="true" />}
+                        <span>{themeLabel}</span>
+                    </button>
+                    <button type="button" className="app-sidebar-action" onClick={signOut}>
+                        <LogOut size={20} aria-hidden="true" />
+                        <span>로그아웃</span>
+                    </button>
+                </div>
             </aside>
 
-            {/* Main Content */}
-            <main style={{ flex: 1, padding: '32px', overflowY: 'auto' }}>
+            <main className="app-main">
                 {children}
             </main>
         </div>

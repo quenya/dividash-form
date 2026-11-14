@@ -7,10 +7,13 @@ import { buildPortfolioSummary, getPortfolioDisplayName, MATCH_STATUS } from '..
 import { PieChart, AlertCircle, X } from 'lucide-react';
 import { supabase } from '../api/supabaseClient';
 import DividendForecast from './DividendForecast';
+import { useChartTheme } from '../context/ThemeContext';
+import { getChartColor } from '../utils/chartPalette';
 
 ChartJS.register(ArcElement, Tooltip, Legend, ChartDataLabels);
 
 function PortfolioAnalysis() {
+    const chartTheme = useChartTheme();
     const { data, tickersMap, tickerMatchesMap, exchangeRate, loading, refetch } = useDividendData();
 
     const [registeringRow, setRegisteringRow] = useState(null);
@@ -107,10 +110,7 @@ function PortfolioAnalysis() {
                 labels: summary.sectorChartData.labels,
                 datasets: [{
                     data: summary.sectorChartData.values,
-                    backgroundColor: [
-                        '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40',
-                        '#8e44ad', '#34495e', '#2ecc71', '#e74c3c', '#95a5a6', '#7f8c8d'
-                    ],
+                    backgroundColor: summary.sectorChartData.labels.map((_, index) => getChartColor(index)),
                     borderWidth: 1,
                 }]
             },
@@ -134,10 +134,10 @@ function PortfolioAnalysis() {
                     <div className="card" style={{ width: '90%', maxWidth: '520px', padding: '24px', maxHeight: '90vh', overflowY: 'auto' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px' }}>
                             <h3 style={{ margin: 0 }}>종목 매칭 정보 확인</h3>
-                            <button onClick={handleCloseModal} style={{ border: 'none', background: 'none', cursor: 'pointer' }}><X /></button>
+                            <button type="button" onClick={handleCloseModal} aria-label="닫기" style={{ border: 'none', background: 'none', color: 'var(--text-primary)', cursor: 'pointer' }}><X /></button>
                         </div>
                         <div style={{ marginBottom: '16px' }}>
-                            <label style={{ fontSize: '0.8rem', color: '#666' }}>원본 입력값</label>
+                            <label style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>원본 입력값</label>
                             <div style={{ fontWeight: 'bold', fontSize: '1.1rem' }}>{registeringRow.sourceInput}</div>
                             <p style={{ margin: '6px 0 0', color: 'var(--text-secondary)', fontSize: '0.85rem' }}>확정 매칭은 입력한 종목명·티커·시장·섹터·산업군과 검증 근거가 모두 있어야 저장할 수 있습니다.</p>
                         </div>
@@ -182,8 +182,8 @@ function PortfolioAnalysis() {
                             <textarea value={evidence} onChange={e => setEvidence(e.target.value)} required rows={3} placeholder="공식 거래소·발행사·공시 등 확인 가능한 근거를 기록하세요." style={{ display: 'block', width: '100%', marginTop: '6px', padding: '10px', resize: 'vertical' }} />
                         </label>
                         <div style={{ display: 'flex', gap: '10px' }}>
-                            <button onClick={handleCloseModal} style={{ flex: 1, padding: '12px', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'none', cursor: 'pointer' }}>취소</button>
-                            <button onClick={handleRegister} disabled={isSubmitting || !evidence.trim()} style={{ flex: 1, padding: '12px', borderRadius: '8px', border: 'none', backgroundColor: 'var(--accent-color)', color: '#fff', fontWeight: 'bold', cursor: 'pointer' }}>
+                            <button onClick={handleCloseModal} style={{ flex: 1, padding: '12px', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'none', color: 'var(--text-primary)', cursor: 'pointer' }}>취소</button>
+                            <button onClick={handleRegister} disabled={isSubmitting || !evidence.trim()} style={{ flex: 1, padding: '12px', borderRadius: '8px', border: 'none', backgroundColor: 'var(--accent-color)', color: 'var(--text-on-accent)', fontWeight: 'bold', cursor: 'pointer' }}>
                                 {isSubmitting ? '처리 중...' : '매칭 정보 저장'}
                             </button>
                         </div>
@@ -201,6 +201,7 @@ function PortfolioAnalysis() {
                             options={{
                                 responsive: true,
                                 maintainAspectRatio: false,
+                                elements: { arc: { borderColor: chartTheme.surface } },
                                 layout: {
                                     padding: {
                                         top: 12,
@@ -210,7 +211,7 @@ function PortfolioAnalysis() {
                                     }
                                 },
                                 plugins: {
-                                    legend: { position: 'right', labels: { boxWidth: 12, font: { size: 11 }, color: '#666' } },
+                                    legend: { position: 'right', labels: { boxWidth: 12, font: { size: 11 }, color: chartTheme.text } },
                                     tooltip: {
                                         callbacks: {
                                             label: (context) => {
@@ -221,7 +222,7 @@ function PortfolioAnalysis() {
                                         }
                                     },
                                     datalabels: {
-                                        color: '#fff',
+                                        color: chartTheme.onSlice,
                                         formatter: (value, ctx) => {
                                             const dataset = ctx.chart.data.datasets[0];
                                             const total = dataset.data.reduce((acc, curr) => acc + curr, 0);
@@ -266,8 +267,8 @@ function PortfolioAnalysis() {
                                         <td style={{ padding: '12px' }}>
                                             <span style={{
                                                 padding: '2px 8px', borderRadius: '12px',
-                                                backgroundColor: row.sector === 'Unknown' ? 'rgba(231, 74, 59, 0.1)' : 'rgba(0,0,0,0.05)',
-                                                color: row.sector === 'Unknown' ? '#e74a3b' : 'inherit'
+                                                backgroundColor: row.sector === 'Unknown' ? 'var(--danger-bg)' : 'var(--bg-primary)',
+                                                color: row.sector === 'Unknown' ? 'var(--danger)' : 'inherit'
                                             }}>
                                                 {row.sector}
                                             </span>
@@ -287,10 +288,10 @@ function PortfolioAnalysis() {
 
             {/* Unknown Action Table */}
             {unknownItems.length > 0 && (
-                <div className="card" style={{ border: '1px solid #e74a3b' }}>
+                <div className="card" style={{ border: '1px solid var(--danger)' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
-                        <AlertCircle color="#e74a3b" size={20} />
-                        <h4 style={{ margin: 0, color: '#e74a3b' }}>분류 미확인 종목 정보 보완</h4>
+                        <AlertCircle size={20} style={{ color: 'var(--danger)' }} aria-hidden="true" />
+                        <h4 style={{ margin: 0, color: 'var(--danger)' }}>분류 미확인 종목 정보 보완</h4>
                     </div>
                     <div className="portfolio-table-scroll" style={{ overflowX: 'auto' }}>
                         <table className="portfolio-table" style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.9rem' }}>
@@ -315,7 +316,7 @@ function PortfolioAnalysis() {
                                                 type="button"
                                                 onClick={() => handleOpenModal(row)}
                                                 style={{
-                                                    padding: '6px 12px', fontSize: '0.8rem', backgroundColor: '#e74a3b', color: '#fff',
+                                                    padding: '6px 12px', fontSize: '0.8rem', backgroundColor: 'var(--danger)', color: 'var(--text-on-danger)',
                                                     border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold'
                                                 }}
                                             >

@@ -84,12 +84,12 @@ function DividendCalendar() {
                         </span>
                     </h4>
 
-                    {officialDataError && <p role="status" style={{ color: '#9a6700' }}>{officialDataError}</p>}
-                    {officialSyncWarning && <p role="status" style={{ color: '#9a6700' }}>{officialSyncWarning}</p>}
+                    {officialDataError && <p role="status" style={{ color: 'var(--warning)' }}>{officialDataError}</p>}
+                    {officialSyncWarning && <p role="status" style={{ color: 'var(--warning)' }}>{officialSyncWarning}</p>}
                     {loading ? (
                         <p role="status">데이터 로딩 중...</p>
                     ) : error ? (
-                        <p role="alert" style={{ color: '#d32f2f' }}>배당 캘린더 데이터를 불러오지 못했습니다.</p>
+                        <p role="alert" style={{ color: 'var(--danger)' }}>배당 캘린더 데이터를 불러오지 못했습니다.</p>
                     ) : selectedEvents.length > 0 ? (
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                             {selectedEvents.map((item, idx) => (

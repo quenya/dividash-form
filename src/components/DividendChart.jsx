@@ -16,6 +16,7 @@ import KPICard from './KPICard';
 import GoalTracker from './GoalTracker';
 import { calculateYtdKpi } from '../utils/dividendKpi';
 import { getChartColor } from '../utils/chartPalette';
+import { useChartTheme } from '../context/ThemeContext';
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, ChartDataLabels);
 
@@ -26,6 +27,7 @@ const MONTH_LABELS = [
 const YEAR_CHART_TITLE = '연도별 배당금 합계';
 
 function DividendChart() {
+  const chartTheme = useChartTheme();
   const [monthChart, setMonthChart] = useState(null);
   const [yearChart, setYearChart] = useState(null);
   const [accountChart, setAccountChart] = useState(null);
@@ -235,26 +237,15 @@ function DividendChart() {
         stockArr.sort((a, b) => b[1] - a[1]);
         stockArr = stockArr.slice(0, 10);
 
-        const colorPalette = [
-          'rgba(255, 99, 132, 0.7)',
-          'rgba(54, 162, 235, 0.7)',
-          'rgba(255, 206, 86, 0.7)',
-          'rgba(75, 192, 192, 0.7)',
-          'rgba(153, 102, 255, 0.7)',
-          'rgba(255, 159, 64, 0.7)',
-          'rgba(199, 199, 199, 0.7)',
-          'rgba(83, 102, 255, 0.7)',
-          'rgba(40, 159, 64, 0.7)',
-          'rgba(210, 99, 132, 0.7)',
-        ];
+        const stockColors = stockArr.map((_, i) => getChartColor(i));
 
         setStockChart({
           labels: stockArr.map(([name]) => name),
           datasets: [{
             label: '종목별 배당금',
             data: stockArr.map(([, value]) => value),
-            backgroundColor: colorPalette,
-            borderColor: colorPalette.map(color => color.replace('0.7', '1')),
+            backgroundColor: stockColors,
+            borderColor: stockColors,
             borderWidth: 1,
             borderRadius: 4,
             barThickness: 22,
@@ -283,8 +274,8 @@ function DividendChart() {
       }
     },
     plugins: {
-      legend: { position: 'top', labels: { color: '#666' } },
-      title: { display: true, text: title, color: '#666' },
+      legend: { position: 'top', labels: { color: chartTheme.text } },
+      title: { display: true, text: title, color: chartTheme.text },
       datalabels: {
         anchor: 'end',
         align: 'top',
@@ -301,13 +292,13 @@ function DividendChart() {
           return value;
         },
         font: { weight: 'bold' },
-        color: '#666',
+        color: chartTheme.text,
       },
       tooltip: {
         yAlign: title.includes('전년 동월') ? 'bottom' : undefined,
-        backgroundColor: 'rgba(0, 0, 0, 0.8)',
-        titleColor: '#fff',
-        bodyColor: '#fff',
+        backgroundColor: chartTheme.tooltipBg,
+        titleColor: chartTheme.tooltipText,
+        bodyColor: chartTheme.tooltipText,
         padding: 10,
         cornerRadius: 4,
         callbacks: {
@@ -326,13 +317,13 @@ function DividendChart() {
     },
     scales: {
       x: {
-        ticks: { color: '#666' },
-        grid: { color: 'rgba(0,0,0,0.05)' }
+        ticks: { color: chartTheme.text },
+        grid: { color: chartTheme.grid }
       },
       y: {
         grace: title.includes('전년 동월') ? '20%' : undefined,
-        ticks: { color: '#666' },
-        grid: { color: 'rgba(0,0,0,0.05)' }
+        ticks: { color: chartTheme.text },
+        grid: { color: chartTheme.grid }
       }
     }
   });
@@ -434,7 +425,7 @@ function DividendChart() {
                         aria-pressed={!isHidden}
                         aria-label={`${year}년 배당금 ${isHidden ? '표시' : '숨김'}`}
                         onClick={() => toggleYearVisibility(index)}
-                        style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: 0, border: 0, background: 'transparent', color: '#666', whiteSpace: 'nowrap', cursor: 'pointer' }}
+                        style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: 0, border: 0, background: 'transparent', color: 'var(--text-secondary)', whiteSpace: 'nowrap', cursor: 'pointer' }}
                       >
                         <span aria-hidden="true" style={{ width: 28, height: 14, backgroundColor: getChartColor(index), opacity: isHidden ? 0.35 : 1 }} />
                         {year}
@@ -453,7 +444,7 @@ function DividendChart() {
       </div>
 
       <div className="card" style={{ height: '520px', display: 'flex', flexDirection: 'column' }}>
-        <h4 style={{ margin: '0 0 20px 0', color: '#666' }}>종목별 배당금 (Top 10)</h4>
+        <h4 style={{ margin: '0 0 20px 0', color: 'var(--text-secondary)' }}>종목별 배당금 (Top 10)</h4>
         <div style={{ flex: 1, width: '100%', minHeight: 0, position: 'relative' }}>
           {stockChart ? (
             <Bar data={stockChart} options={{
@@ -474,7 +465,7 @@ function DividendChart() {
                   anchor: 'end',
                   align: 'right',
                   clamp: true,
-                  color: '#666',
+                  color: chartTheme.text,
                   formatter: (value) => `₩${Math.round(value).toLocaleString()}`,
                   font: { weight: 'bold', size: 11 }
                 },
@@ -491,14 +482,14 @@ function DividendChart() {
                 x: {
                   beginAtZero: true,
                   ticks: {
-                    color: '#666',
+                    color: chartTheme.text,
                     callback: (value) => `₩${Number(value).toLocaleString()}`
                   },
-                  grid: { color: 'rgba(0,0,0,0.05)' }
+                  grid: { color: chartTheme.grid }
                 },
                 y: {
                   ticks: {
-                    color: '#666',
+                    color: chartTheme.text,
                     callback: function(value) {
                       const label = this.getLabelForValue(value);
                       return label.length > 20 ? `${label.slice(0, 20)}...` : label;

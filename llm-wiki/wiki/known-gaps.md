@@ -2,8 +2,8 @@
 title: Known Gaps and Open Risks
 type: risk
 status: current
-updated: 2026-11-13
-source_refs: [S002, S003, S007, S008, S009, S010, S012, S013, S016]
+updated: 2026-11-14
+source_refs: [S002, S003, S007, S008, S009, S010, S012, S013, S016, S019]
 tags: [risk, drift, follow-up]
 ---
 
@@ -65,6 +65,14 @@ tags: [risk, drift, follow-up]
 - Focused Issue 16과 Issue 17 review에서 대상 chart 밖의 일부 dashboard label collision 가능성이 non-blocking note로 남았다.
 - Required evidence to close: current production-equivalent data와 authenticated desktop/mobile full-dashboard capture에서 CJK label, data label, tooltip, legend overlap을 모두 확인.
 
+### Design system follow-ups
+
+- Status: open after S019 token consistency; authenticated runtime and 768px capture not yet verified.
+- Accent contrast: white text on `--accent-color` is 3.2:1 (light) and 3.7:1 (dark), below 4.5:1, on the active navigation item and primary buttons. Closing it changes the brand accent and needs a design decision.
+- Mobile navigation: seven bottom-nav items wrap several Korean labels to two lines at 375px. Options include fewer top-level items or shorter labels.
+- Inline layout styles remain in most components outside the app shell; [`DESIGN.md`](../../DESIGN.md) lists them as accepted debt to move per component.
+- Required evidence to close: authenticated 375/768/desktop capture in both themes after the accent and navigation decisions, plus per-component class migration with tests.
+
 ### Official ETF sync coverage
 
 - Status: coverage migration applied and read back; subsequent Actions dry-run still had partial source failures. A local dry-run and write run later collected all five sources successfully. Long-term source reliability and notification delivery remain open.
@@ -105,6 +113,7 @@ tags: [risk, drift, follow-up]
 - [S010 KB RISE 0094M0 official product page](../raw/sources.md)
 - [S012 Samsung KODEX 284430 official product and name-change notice](../raw/sources.md)
 - [S013 SOL 490490 official product page and distribution API](../raw/sources.md)
+- [S019 Design token consistency](../raw/2026-11-14-design-token-consistency.md)
 - [`src/api/llmService.js`](../../src/api/llmService.js)
 - [`src/api/ocrService.js`](../../src/api/ocrService.js)
 - [`sheet/supabase_setup.sql`](../../sheet/supabase_setup.sql)

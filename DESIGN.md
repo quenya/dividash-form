@@ -6,16 +6,33 @@ DiviDash is an operational finance dashboard. The UI should preserve the existin
 
 ## 2. Tokens
 
-- Background: `var(--bg-primary)`, `var(--bg-secondary)`, `var(--bg-card)`
-- Text: `var(--text-primary)`, `var(--text-secondary)`
-- Accent: `var(--accent-color)`
-- Border: `var(--border-color)`
-- Danger: `#dc3545`
-- Success: `#28a745`
+All colors come from CSS custom properties in `src/styles/App.css`: light values on `:root`, dark values on `body.dark-mode`. Components use `var(--token)` instead of raw hex values.
+
+| Token | Light | Dark | Use |
+| --- | --- | --- | --- |
+| `--bg-primary` | `#f5f6fa` | `#1a1b1e` | Page background, table headers, inset blocks |
+| `--bg-secondary`, `--bg-card` | `#ffffff` | `#25262b` | Cards, sidebar, inputs |
+| `--text-primary` | `#2d3436` | `#e0e0e0` | Body text |
+| `--text-secondary` | `#636e72` | `#a1a1aa` | Labels, helper text, chart text |
+| `--accent-color` | `#4f8cff` | `#5c7cfa` | Primary actions, active navigation |
+| `--text-on-accent` | `#ffffff` | `#ffffff` | Text on accent fills |
+| `--border-color` | `#dfe6e9` | `#373a40` | Borders, table rules |
+| `--danger` | `#dc3545` | `#ff6b6b` | Errors, negative change, unresolved items |
+| `--text-on-danger` | `#ffffff` | `#1a1b1e` | Text on danger fills |
+| `--success` | `#1a7f37` | `#51cf66` | Saved state, positive change, goal reached |
+| `--warning` | `#9a6700` | `#d29922` | Partial or stale data notices |
+| `--danger-bg` / `--danger-border`, `--success-bg` / `--success-border` | tonal rgba | tonal rgba | Status message blocks |
+| `--chart-grid` | `rgba(0,0,0,0.06)` | `rgba(255,255,255,0.08)` | Chart grid lines |
+| `--radius-sm` / `--radius-md` / `--radius-lg` | 6 / 8 / 12px | same | Controls / nav items / cards |
+
+Success changed from `#28a745` to `#1a7f37` because the old value reached only 3.1:1 on white; the new value meets 4.5:1 for text. Dark-mode semantic colors are lighter variants chosen for at least 4.5:1 on `--bg-secondary`.
+
+`color-scheme` follows the theme, so native controls (buttons, date inputs, range sliders, scrollbars) also switch. `ThemeContext` only toggles the `dark-mode` class; it does not write colors.
 
 ## 3. Typography
 
-- Base font: existing system sans-serif stack from `src/styles/App.css`
+- Base font: `--font-sans`, the system sans-serif stack with Korean system faces (`Apple SD Gothic Neo`, `Malgun Gothic`, `Noto Sans KR`). No web font is loaded.
+- Amounts: tables and `.tabular-nums` use tabular figures so digits line up.
 - Page titles: existing dashboard heading scale
 - Form labels and helper text: compact, readable, no marketing copy
 
@@ -29,11 +46,12 @@ DiviDash is an operational finance dashboard. The UI should preserve the existin
 
 ## 5. Primitives
 
-- App shell: fixed desktop sidebar, mobile top header plus bottom nav
+- App shell: fixed desktop sidebar, mobile top header plus bottom nav. Implemented with `.app-*` classes in `App.css`; navigation is a `nav` landmark and marks the current page with `aria-current="page"`.
 - Card: single-level framed surface only, no nested decorative cards
-- Button: visible focus, explicit disabled state, command text only
+- Button: visible focus, explicit disabled state, command text only. Never set `outline: none`; the global `:focus-visible` rule draws the focus ring. Icon-only buttons need an `aria-label`; toggles expose `aria-pressed`.
 - Form field: label plus input/select/textarea, full-width in narrow panels
-- Status message: bordered tonal block for success/error
+- Status message: `.status-message` (success) or `.status-message.is-error`, a bordered tonal block with `role="status"`.
+- Semantic text: `.text-success` and `.text-danger`. Prefer these classes where tests assert the meaning, because jsdom drops `var()` values from inline `color`.
 - Categorical chart: use the shared chart palette, one legend item per category, and an explicit tooltip label.
 
 ### Chart palette
@@ -41,12 +59,22 @@ DiviDash is an operational finance dashboard. The UI should preserve the existin
 Year and categorical series use these opaque colors in index order so related charts keep the same category mapping:
 `#4e73df`, `#d94b3d`, `#168a63`, `#b87800`, `#2e8fa3`, `#6b7280`, `#d46213`, `#805bbf`.
 
+The palette has eight colors; a chart with more categories repeats them in order.
+
+### Chart theme
+
+Chart.js draws on canvas, which cannot resolve CSS variables: a `var(--…)` string passed to a chart is ignored and falls back to the default color. Chart text, grid, tooltip, slice-border, and accent colors come from `useChartTheme()` (`src/context/ThemeContext.jsx`), backed by `src/utils/chartTheme.js`. Those values mirror the CSS tokens, and `chartTheme.test.js` fails if `--text-secondary`, `--chart-grid`, `--bg-secondary`, or `--accent-color` drift apart. Change both files together.
+
 ## 6. Accessibility
 
 - Every auth input must have a label and autocomplete attribute.
 - Buttons that submit remote actions must expose disabled/loading state.
 - Security messages should be factual and avoid exposing internal error payloads unless needed for debugging.
+- Text tokens meet 4.5:1 on their intended surfaces, with the exception listed under Accepted Debt.
 
 ## 7. Accepted Debt
 
-- Existing components still contain inline styles and raw colors. Security hardening preserves that structure to avoid mixing a broad design refactor into this change.
+- Layout properties (spacing, flex, sizing) are still inline styles in most components outside the app shell. Move them to classes per component, starting with `DividendForm` and `PortfolioAnalysis`, in changes that do not mix in behavior work.
+- White text on `--accent-color` is 3.2:1 in light mode and 3.7:1 in dark mode, below 4.5:1. Fixing it changes the brand accent and needs a design decision.
+- The mobile bottom nav has seven items; at 375px several Korean labels wrap to two lines.
+- Remaining literal colors: the modal overlay and notification shadow, the year-over-year comparison bars in `DividendChart`, the react-calendar dark-mode overrides, the scrollbar thumb, and the unused `DividendPredictionChart`.

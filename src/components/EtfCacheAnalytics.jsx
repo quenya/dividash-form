@@ -1,6 +1,9 @@
 import React, { useState } from 'react';
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend } from 'chart.js';
 import { Line } from 'react-chartjs-2';
+import { useChartTheme } from '../context/ThemeContext';
+import { getChartColor } from '../utils/chartPalette';
+import { withAlpha } from '../utils/chartTheme';
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend);
 
@@ -8,9 +11,11 @@ const number = (value, digits = 0) => Number.isFinite(Number(value)) ? Number(va
 const percent = (value) => Number.isFinite(Number(value)) ? `${number(value, 1)}%` : '비교 불가';
 
 function TrendChart({ points, currency }) {
+  const chartTheme = useChartTheme();
+  const lineColor = getChartColor(4);
   if (!points || points.length < 2) return <p style={{ color: 'var(--text-secondary)' }}>지급일이 2개 이상인 데이터가 없어 트렌드를 표시할 수 없습니다.</p>;
-  const data = { labels: points.map((point) => point.date), datasets: [{ label: `분배금 (${currency || '통화 미상'})`, data: points.map((point) => point.value), borderColor: '#4bc0c0', backgroundColor: 'rgba(75, 192, 192, 0.18)', pointBackgroundColor: '#4bc0c0', pointRadius: 4, pointHoverRadius: 7, tension: 0.3, fill: true }] };
-  const options = { responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false }, plugins: { legend: { position: 'top', labels: { color: '#666' } }, title: { display: false }, tooltip: { position: 'nearest', mode: 'index', intersect: false, backgroundColor: 'rgba(0, 0, 0, 0.8)', padding: 10, callbacks: { title: (context) => `지급일: ${context[0]?.label || ''}`, label: (context) => ` 분배금: ${number(context.raw, 2)} ${currency || ''}`, afterBody: (context) => { const rate = points[context[0]?.dataIndex]?.distributionRate; return ` 분배율: ${Number.isFinite(Number(rate)) ? `${number(rate, 2)}%` : '공식 정보 없음'}`; } } } }, scales: { x: { ticks: { color: '#666' }, grid: { color: 'rgba(0,0,0,0.05)' } }, y: { beginAtZero: true, ticks: { color: '#666', callback: (value) => number(value, 2) }, grid: { color: 'rgba(0,0,0,0.05)' }, title: { display: true, text: `분배금 (${currency || '통화 미상'})` } } } };
+  const data = { labels: points.map((point) => point.date), datasets: [{ label: `분배금 (${currency || '통화 미상'})`, data: points.map((point) => point.value), borderColor: lineColor, backgroundColor: withAlpha(lineColor, 0.18), pointBackgroundColor: lineColor, pointRadius: 4, pointHoverRadius: 7, tension: 0.3, fill: true }] };
+  const options = { responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false }, plugins: { legend: { position: 'top', labels: { color: chartTheme.text } }, title: { display: false }, tooltip: { position: 'nearest', mode: 'index', intersect: false, backgroundColor: chartTheme.tooltipBg, titleColor: chartTheme.tooltipText, bodyColor: chartTheme.tooltipText, padding: 10, callbacks: { title: (context) => `지급일: ${context[0]?.label || ''}`, label: (context) => ` 분배금: ${number(context.raw, 2)} ${currency || ''}`, afterBody: (context) => { const rate = points[context[0]?.dataIndex]?.distributionRate; return ` 분배율: ${Number.isFinite(Number(rate)) ? `${number(rate, 2)}%` : '공식 정보 없음'}`; } } } }, scales: { x: { ticks: { color: chartTheme.text }, grid: { color: chartTheme.grid } }, y: { beginAtZero: true, ticks: { color: chartTheme.text, callback: (value) => number(value, 2) }, grid: { color: chartTheme.grid }, title: { display: true, color: chartTheme.text, text: `분배금 (${currency || '통화 미상'})` } } } };
   return <div style={{ width: '100%', height: '280px' }}><Line data={data} options={options} /></div>;
 }
 
