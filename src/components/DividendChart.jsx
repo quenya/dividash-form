@@ -27,6 +27,7 @@ import {
   formatKrwLabel,
   IN_PROGRESS_SUFFIX,
   periodFill,
+  yoyBarColors,
 } from '../utils/dividendChartData';
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, LineController, LineElement, PointElement, Title, Tooltip, Legend, ChartDataLabels);
@@ -170,8 +171,6 @@ function DividendChart() {
             datasets: [{
               label: '전년 대비 증감액',
               data: comparison.data,
-              backgroundColor: comparison.backgroundColor,
-              borderColor: comparison.borderColor,
               borderWidth: 1,
             }],
             currentYear,
@@ -381,7 +380,13 @@ function DividendChart() {
 
         {comparisonChart && (
           <div className="card" style={{ flex: 1, minWidth: 'min(320px, 100%)', height: '400px' }}>
-            <Bar data={comparisonChart} options={chartOptions(`전년 동월 대비 증감 (${comparisonChart.currentYear} vs ${comparisonChart.prevYear})`, '₩', {
+            <Bar data={{
+              ...comparisonChart,
+              datasets: comparisonChart.datasets.map((dataset) => ({
+                ...dataset,
+                ...yoyBarColors(dataset.data, currentMonthIndex, chartTheme),
+              })),
+            }} options={chartOptions(`전년 동월 대비 증감 (${comparisonChart.currentYear} vs ${comparisonChart.prevYear})`, '₩', {
               showLegend: false,
               isInProgress: (item) => item.dataIndex === currentMonthIndex,
               showLabel: (context) => context.dataIndex === currentMonthIndex,

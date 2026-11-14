@@ -317,3 +317,14 @@
 
 - Wiki knowledge page 9개와 source 21개에 대해 index coverage, orphan, frontmatter, `Sources`/`Related`, source reference, 상대 링크를 검사했다.
 - Result: wiki와 raw의 상대 링크 234개, 오류 0개.
+
+## [2026-11-14] feature | 한국식 증감 색
+
+- 사용자 결정에 따라 KPI 비교와 전년 동월 대비 chart의 증감 색을 한국 증시 관례로 바꿨다. 증가는 빨강(`--gain`)·▲, 감소는 파랑(`--loss`)·▼, 변화 0은 회색에 방향 표시 없음이다. `--success`/`--danger`는 상태 표시에만 쓴다.
+- Chart 증감 색은 theme에서 render 시점에 적용해 light/dark를 따르며, CSS token과의 일치 테스트를 확장했다. `DESIGN.md`, UI behavior, index를 S022와 함께 갱신했다.
+- 검증: `TZ=Asia/Seoul`에서 전체 테스트 21개 suite/120개 통과, `CI=true` production build 성공. 감소 달을 포함한 synthetic data로 S021 build와 light/dark 비교 capture했다. 실제 인증 runtime은 미검증이며 DB 쓰기·배포는 수행하지 않았다.
+
+## [2026-11-14] lint | 증감 색 Wiki 무결성
+
+- Wiki knowledge page 9개와 source 22개에 대해 index coverage, orphan, frontmatter, `Sources`/`Related`, source reference, 상대 링크를 검사했다.
+- Result: wiki와 raw의 상대 링크 237개, 오류 0개.

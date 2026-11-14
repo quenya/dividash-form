@@ -4,8 +4,6 @@ import { withAlpha } from './chartTheme';
 export const IN_PROGRESS_OPACITY = 0.35;
 export const IN_PROGRESS_SUFFIX = ' (진행 중)';
 
-const YOY_POSITIVE = '#4bc0c0';
-const YOY_NEGATIVE = '#ff6384';
 const YOY_FILL_OPACITY = 0.7;
 
 export const periodFill = (hex, inProgress, opacity = 1) =>
@@ -23,17 +21,18 @@ export function buildYoyComparison(monthYearMap, currentYear, currentMonth) {
   const current = monthYearMap[currentYear] || Array(12).fill(0);
   const previous = monthYearMap[currentYear - 1] || Array(12).fill(0);
   const data = current.map((value, index) => (index <= currentMonth ? value - previous[index] : null));
+  return { data };
+}
 
-  const backgroundColor = data.map((value, index) => {
-    if (value === null) return 'transparent';
-    return periodFill(value >= 0 ? YOY_POSITIVE : YOY_NEGATIVE, index === currentMonth, YOY_FILL_OPACITY);
-  });
-  const borderColor = data.map((value) => {
-    if (value === null) return 'transparent';
-    return value >= 0 ? YOY_POSITIVE : YOY_NEGATIVE;
-  });
-
-  return { data, backgroundColor, borderColor };
+// Colors are applied at render time from the chart theme so they follow light/dark mode.
+export function yoyBarColors(data, inProgressIndex, { gain, loss }) {
+  const colorFor = (value) => (value >= 0 ? gain : loss);
+  return {
+    backgroundColor: data.map((value, index) => (
+      value === null ? 'transparent' : periodFill(colorFor(value), index === inProgressIndex, YOY_FILL_OPACITY)
+    )),
+    borderColor: data.map((value) => (value === null ? 'transparent' : colorFor(value))),
+  };
 }
 
 const trimNumber = (value) => Number(value.toFixed(1)).toLocaleString('ko-KR');

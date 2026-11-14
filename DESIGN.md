@@ -21,6 +21,8 @@ All colors come from CSS custom properties in `src/styles/App.css`: light values
 | `--text-on-danger` | `#ffffff` | `#1a1b1e` | Text on danger fills |
 | `--success` | `#1a7f37` | `#51cf66` | Saved state, positive change, goal reached |
 | `--warning` | `#9a6700` | `#d29922` | Partial or stale data notices |
+| `--gain` | `#d62b3c` | `#ff6b6b` | Increase (▲), Korean market convention |
+| `--loss` | `#1b64da` | `#74a7ff` | Decrease (▼), Korean market convention |
 | `--danger-bg` / `--danger-border`, `--success-bg` / `--success-border` | tonal rgba | tonal rgba | Status message blocks |
 | `--chart-grid` | `rgba(0,0,0,0.06)` | `rgba(255,255,255,0.08)` | Chart grid lines |
 | `--radius-sm` / `--radius-md` / `--radius-lg` | 6 / 8 / 12px | same | Controls / nav items / cards |
@@ -51,7 +53,7 @@ Success changed from `#28a745` to `#1a7f37` because the old value reached only 3
 - Button: visible focus, explicit disabled state, command text only. Never set `outline: none`; the global `:focus-visible` rule draws the focus ring. Icon-only buttons need an `aria-label`; toggles expose `aria-pressed`.
 - Form field: label plus input/select/textarea, full-width in narrow panels
 - Status message: `.status-message` (success) or `.status-message.is-error`, a bordered tonal block with `role="status"`.
-- Semantic text: `.text-success` and `.text-danger`. Prefer these classes where tests assert the meaning, because jsdom drops `var()` values from inline `color`.
+- Change direction: follow the Korean market convention. An increase is red (`--gain`) with ▲, a decrease is blue (`--loss`) with ▼, and no change is `--text-secondary` with no marker. Always pair the color with the marker. `--success` and `--danger` are for status (saved, error, unresolved), never for direction. Use `.text-gain`, `.text-loss`, and `.text-unchanged` for text; tests assert these classes because jsdom drops `var()` values from inline `color`.
 - Categorical chart: use the shared chart palette only when color identifies the same category across charts (years, accounts), with one legend item per category and an explicit tooltip label.
 - Ranking chart: Top 10 securities and sector share are horizontal bars in one color (`--accent-color` via the chart theme); the Unknown sector is gray `#6b7280` (`UNKNOWN_SECTOR_COLOR`).
 
@@ -73,7 +75,7 @@ The palette has eight colors; a chart with more categories repeats them in order
 
 ### Chart theme
 
-Chart.js draws on canvas, which cannot resolve CSS variables: a `var(--…)` string passed to a chart is ignored and falls back to the default color. Chart text, grid, tooltip, and accent colors come from `useChartTheme()` (`src/context/ThemeContext.jsx`), backed by `src/utils/chartTheme.js`. Those values mirror the CSS tokens, and `chartTheme.test.js` fails if `--text-secondary`, `--chart-grid`, or `--accent-color` drift apart. Change both files together.
+Chart.js draws on canvas, which cannot resolve CSS variables: a `var(--…)` string passed to a chart is ignored and falls back to the default color. Chart text, grid, tooltip, accent, and gain/loss colors come from `useChartTheme()` (`src/context/ThemeContext.jsx`), backed by `src/utils/chartTheme.js`. Those values mirror the CSS tokens, and `chartTheme.test.js` fails if `--text-secondary`, `--chart-grid`, `--accent-color`, `--gain`, or `--loss` drift apart. Change both files together.
 
 ## 6. Accessibility
 
@@ -87,4 +89,4 @@ Chart.js draws on canvas, which cannot resolve CSS variables: a `var(--…)` str
 - Layout properties (spacing, flex, sizing) are still inline styles in most components outside the app shell. Move them to classes per component, starting with `DividendForm` and `PortfolioAnalysis`, in changes that do not mix in behavior work.
 - White text on `--accent-color` is 3.2:1 in light mode and 3.7:1 in dark mode, below 4.5:1. Fixing it changes the brand accent and needs a design decision.
 - The mobile bottom nav has seven items; at 375px several Korean labels wrap to two lines.
-- Remaining literal colors: the modal overlay and notification shadow, the year-over-year comparison colors in `dividendChartData.js` (pending one rule for gain/loss colors), the react-calendar dark-mode overrides, the scrollbar thumb, and the unused `DividendPredictionChart`.
+- Remaining literal colors: the modal overlay and notification shadow, the react-calendar dark-mode overrides, the scrollbar thumb, and the unused `DividendPredictionChart`.

@@ -181,3 +181,12 @@
 - Captured: 2026-11-14
 - Scope: monthly chart encoding, 만-unit axes, year-over-year labels, single-color ranking charts, sector horizontal bars, and the simulator final label.
 - Status: current implementation evidence; authenticated runtime remains unverified.
+
+## S022 - Gain and Loss Colors
+
+- Type: sanitized user decision and verification snapshot
+- Locator: Claude chat follow-up review of `quenya/dividash-form`, branch `agent/gain-loss-colors` on top of S021
+- Snapshot: [2026-11-14-gain-loss-colors.md](./2026-11-14-gain-loss-colors.md)
+- Captured: 2026-11-14
+- Scope: Korean-convention gain/loss colors for KPI comparisons and the year-over-year chart, including the unchanged state.
+- Status: current implementation evidence; authenticated runtime remains unverified.

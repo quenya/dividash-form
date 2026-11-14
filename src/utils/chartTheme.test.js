@@ -22,6 +22,8 @@ test.each([
   expect(theme.text).toBe(tokens['--text-secondary']);
   expect(theme.grid).toBe(tokens['--chart-grid']);
   expect(theme.accent).toBe(tokens['--accent-color']);
+  expect(theme.gain).toBe(tokens['--gain']);
+  expect(theme.loss).toBe(tokens['--loss']);
 });
 
 test('selects the theme by mode and builds translucent fills', () => {

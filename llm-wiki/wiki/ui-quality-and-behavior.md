@@ -3,7 +3,7 @@ title: UI Behavior and QA Invariants
 type: workflow
 status: current
 updated: 2026-11-14
-source_refs: [S002, S007, S015, S017, S018, S019, S020, S021]
+source_refs: [S002, S007, S015, S017, S018, S019, S020, S021, S022]
 tags: [ui, charts, calendar, responsive, accessibility, qa, theme]
 ---
 
@@ -70,14 +70,14 @@ tags: [ui, charts, calendar, responsive, accessibility, qa, theme]
 - Light 전용 literal(`#fff`, `#f5f5f5`, `#f8f9fa`)은 dark mode에서 흰 block과 저대비 text를 만든다. 표 header·inset block은 `--bg-primary`, 입력·내부 block은 `--bg-secondary`를 쓴다.
 - Chart.js canvas는 `var(--…)`를 해석하지 못하고 기본색으로 그린다. Chart 색은 `useChartTheme()`와 [`chartTheme.js`](../../src/utils/chartTheme.js)에서 가져오며 [`chartTheme.test.js`](../../src/utils/chartTheme.test.js)가 CSS token과의 일치를 검사한다.
 - Sector doughnut과 Top-10 종목 chart도 [`chartPalette.js`](../../src/utils/chartPalette.js)를 쓴다. 8개를 넘는 category는 색이 순서대로 반복된다.
-- Success/error message는 `.status-message`와 `.status-message.is-error`(`role="status"`)를 쓴다. jsdom은 inline `color`의 `var()`를 버리므로 의미 색을 검증해야 하는 곳은 `.text-success`/`.text-danger` class를 쓴다.
+- Success/error message는 `.status-message`와 `.status-message.is-error`(`role="status"`)를 쓴다. jsdom은 inline `color`의 `var()`를 버리므로 증감 색을 검증해야 하는 곳은 `.text-gain`/`.text-loss`/`.text-unchanged` class를 쓴다.
 - Focus ring은 전역 `:focus-visible` rule이 그린다. Inline `outline: none`을 두지 않는다.
 
 ### KPI and annual-chart behavior
 
 - 월 평균 KPI는 올해 1월부터 현재 월까지와 작년 같은 기간을 같은 month denominator로 비교한다.
 - KPI title과 prior-period label은 모두 같은 1월~현재 월 범위를 표시해 계산 기간과 화면 문구를 일치시킨다.
-- 비교값은 명시적인 `▲`/`▼` 방향, percentage, formatted prior KRW amount를 제공하고 shared `KPICard`의 typography와 positive/negative color rule을 유지한다.
+- 비교값은 명시적인 `▲`/`▼` 방향, percentage, formatted prior KRW amount를 제공하고 shared `KPICard`의 typography를 유지한다. 증감 색은 한국 증시 관례를 따라 증가는 빨강(`--gain`)과 ▲, 감소는 파랑(`--loss`)과 ▼, 변화 0은 회색에 방향 표시 없이 보여준다. 전년 동월 대비 chart도 같은 색을 chart theme에서 가져온다(S022).
 - 비교 가능한 prior-period total이 없으면 변화율, 방향, prior amount를 포함한 comparison row 전체를 숨긴다.
 - 연도별 chart의 palette, legend, tooltip, canvas accessible name은 375, 768, desktop에서 의미를 유지해야 한다.
 
@@ -118,6 +118,8 @@ tags: [ui, charts, calendar, responsive, accessibility, qa, theme]
 - [S019 Design token consistency](../raw/2026-11-14-design-token-consistency.md)
 - [S020 Chart period and label fixes](../raw/2026-11-14-chart-period-fixes.md)
 - [S021 Chart readability](../raw/2026-11-14-chart-readability.md)
+- [S022 Gain and loss colors](../raw/2026-11-14-gain-loss-colors.md)
+- [`src/components/KPICard.test.jsx`](../../src/components/KPICard.test.jsx)
 - [`src/components/PortfolioAnalysis.test.jsx`](../../src/components/PortfolioAnalysis.test.jsx)
 - [`src/utils/dividendChartData.js`](../../src/utils/dividendChartData.js)
 - [`src/utils/dividendChartData.test.js`](../../src/utils/dividendChartData.test.js)

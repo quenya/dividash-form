@@ -16,6 +16,9 @@
   --success-bg: rgba(26, 127, 55, 0.08);
   --success-border: rgba(26, 127, 55, 0.35);
   --warning: #9a6700;
+  /* Gain/loss follow the Korean market convention: increase red, decrease blue. */
+  --gain: #d62b3c;
+  --loss: #1b64da;
   /* Canvas charts cannot read CSS variables: keep src/utils/chartTheme.js in sync (chartTheme.test.js checks it). */
   --chart-grid: rgba(0, 0, 0, 0.06);
   --card-shadow: 0 2px 8px rgba(0,0,0,0.05);
@@ -47,6 +50,8 @@ body.dark-mode {
   --success-bg: rgba(81, 207, 102, 0.12);
   --success-border: rgba(81, 207, 102, 0.4);
   --warning: #d29922;
+  --gain: #ff6b6b;
+  --loss: #74a7ff;
   --chart-grid: rgba(255, 255, 255, 0.08);
   --card-shadow: 0 2px 8px rgba(0,0,0,0.3);
   color-scheme: dark;
@@ -156,9 +161,10 @@ table,
   outline-offset: 2px;
 }
 
-/* Semantic text colors (jsdom drops var() in inline styles, so tests assert these classes) */
-.text-success { color: var(--success); }
-.text-danger { color: var(--danger); }
+/* Change direction (jsdom drops var() in inline styles, so tests assert these classes) */
+.text-gain { color: var(--gain); }
+.text-loss { color: var(--loss); }
+.text-unchanged { color: var(--text-secondary); }
 
 /* Status message — DESIGN.md §5: bordered tonal block */
 .status-message {
