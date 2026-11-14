@@ -17,6 +17,7 @@ import GoalTracker from './GoalTracker';
 import { calculateYtdKpi } from '../utils/dividendKpi';
 import { getChartColor } from '../utils/chartPalette';
 import { useChartTheme } from '../context/ThemeContext';
+import { buildYoyComparison, formatKrwLabel, IN_PROGRESS_SUFFIX, periodFill } from '../utils/dividendChartData';
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, ChartDataLabels);
 
@@ -147,55 +148,33 @@ function DividendChart() {
 
         setMonthChart({
           labels: MONTH_LABELS,
-          datasets: years.map((year, idx) => ({
-            label: year,
-            data: monthYearMap[year],
-            backgroundColor: getChartColor(idx),
-            borderColor: getChartColor(idx),
-            borderWidth: 2,
-            hoverBackgroundColor: getChartColor(idx),
-          })),
+          datasets: years.map((year, idx) => {
+            const fill = MONTH_LABELS.map((_, month) => (
+              periodFill(getChartColor(idx), Number(year) === currentYear && month === currentMonth)
+            ));
+            return {
+              label: year,
+              data: monthYearMap[year],
+              backgroundColor: fill,
+              borderColor: getChartColor(idx),
+              borderWidth: 2,
+              hoverBackgroundColor: fill,
+            };
+          }),
         });
 
         // Comparison Chart
         if (years.length > 0) {
-          const currentYearData = monthYearMap[currentYear] || Array(12).fill(0);
-          const prevYearData = monthYearMap[currentYear - 1] || Array(12).fill(0);
-          const diffData = [];
-          const comparisonLabels = [];
-          const bgColors = [];
-          const borderColors = [];
-
-          for (let i = 0; i < 12; i++) {
-            if (i <= currentMonth) {
-              const val = currentYearData[i] - prevYearData[i];
-              const label = `${currentYear} vs ${currentYear - 1}`;
-              diffData.push(val);
-              comparisonLabels.push(label);
-              if (val >= 0) {
-                bgColors.push('rgba(75, 192, 192, 0.7)');
-                borderColors.push('rgb(75, 192, 192)');
-              } else {
-                bgColors.push('rgba(255, 99, 132, 0.7)');
-                borderColors.push('rgb(255, 99, 132)');
-              }
-            } else {
-              diffData.push(null);
-              comparisonLabels.push('');
-              bgColors.push('transparent');
-              borderColors.push('transparent');
-            }
-          }
+          const comparison = buildYoyComparison(monthYearMap, currentYear, currentMonth);
 
           setComparisonChart({
             labels: MONTH_LABELS,
             datasets: [{
               label: '전년 대비 증감액',
-              data: diffData,
-              backgroundColor: bgColors,
-              borderColor: borderColors,
+              data: comparison.data,
+              backgroundColor: comparison.backgroundColor,
+              borderColor: comparison.borderColor,
               borderWidth: 1,
-              comparisonLabels
             }],
             currentYear,
             prevYear: currentYear - 1
@@ -210,7 +189,7 @@ function DividendChart() {
           datasets: [{
             label: YEAR_CHART_TITLE,
             data: years.map(y => yearMap[y]),
-            backgroundColor: years.map((_, idx) => getChartColor(idx)),
+            backgroundColor: years.map((year, idx) => periodFill(getChartColor(idx), Number(year) === currentYear)),
             borderColor: years.map((_, idx) => getChartColor(idx)),
             borderWidth: 2,
           }],
@@ -262,7 +241,11 @@ function DividendChart() {
     return () => { isMounted = false; };
   }, []);
 
-  const chartOptions = (title, unit = '₩') => ({
+  const today = new Date();
+  const currentYearLabel = String(today.getFullYear());
+  const currentMonthIndex = today.getMonth();
+
+  const chartOptions = (title, unit = '₩', { showLegend = true, isInProgress = () => false } = {}) => ({
     responsive: true,
     maintainAspectRatio: false,
     layout: {
@@ -274,7 +257,7 @@ function DividendChart() {
       }
     },
     plugins: {
-      legend: { position: 'top', labels: { color: chartTheme.text } },
+      legend: showLegend ? { position: 'top', labels: { color: chartTheme.text } } : { display: false },
       title: { display: true, text: title, color: chartTheme.text },
       datalabels: {
         anchor: 'end',
@@ -282,13 +265,12 @@ function DividendChart() {
         formatter: (value, context) => {
           // Show datalabel only for current year and current month in monthly chart
           if (context.chart.config.type === 'bar' && title.includes('월별')) {
-            const today = new Date();
-            const isCurrentMonth = context.dataIndex === today.getMonth();
-            const isCurrentYear = context.dataset.label === today.getFullYear().toString();
+            const isCurrentMonth = context.dataIndex === currentMonthIndex;
+            const isCurrentYear = context.dataset.label === currentYearLabel;
 
             if (!isCurrentMonth || !isCurrentYear) return '';
           }
-          if (unit === '₩') return `₩ ${Math.round(Number(value)).toLocaleString()}`;
+          if (unit === '₩') return formatKrwLabel(value);
           return value;
         },
         font: { weight: 'bold' },
@@ -304,7 +286,8 @@ function DividendChart() {
         callbacks: {
           title: (items) => {
             const label = items[0]?.label || '';
-            return title === YEAR_CHART_TITLE ? `${label}년` : label;
+            const suffix = items[0] && isInProgress(items[0]) ? IN_PROGRESS_SUFFIX : '';
+            return `${title === YEAR_CHART_TITLE ? `${label}년` : label}${suffix}`;
           },
           label: (context) => {
             const label = context.dataset.label || '';
@@ -329,7 +312,9 @@ function DividendChart() {
   });
 
   const yearChartOptions = () => {
-    const options = chartOptions(YEAR_CHART_TITLE);
+    const options = chartOptions(YEAR_CHART_TITLE, '₩', {
+      isInProgress: (item) => item.label === currentYearLabel,
+    });
 
     options.layout.padding.top = 24;
     options.plugins.legend = {
@@ -352,7 +337,7 @@ function DividendChart() {
     ));
   };
 
-  const currentMonthNumber = new Date().getMonth() + 1;
+  const currentMonthNumber = currentMonthIndex + 1;
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
@@ -387,14 +372,23 @@ function DividendChart() {
         <GoalTracker currentAmount={kpiData.monthlyAverage} />
       </div>
 
+      <p style={{ margin: '-8px 0 0', color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
+        흐린 막대는 아직 끝나지 않은 기간(이번 달, 올해)입니다.
+      </p>
+
       <div style={{ display: 'flex', gap: '24px', flexWrap: 'wrap' }}>
         <div className="card" style={{ flex: 1, minWidth: 'min(320px, 100%)', height: '400px' }}>
-          {monthChart ? <Bar data={monthChart} options={chartOptions('월별 배당금 (연도별 비교)')} /> : <div>데이터 불러오는 중...</div>}
+          {monthChart ? <Bar data={monthChart} options={chartOptions('월별 배당금 (연도별 비교)', '₩', {
+            isInProgress: (item) => item.dataset.label === currentYearLabel && item.dataIndex === currentMonthIndex,
+          })} /> : <div>데이터 불러오는 중...</div>}
         </div>
 
         {comparisonChart && (
           <div className="card" style={{ flex: 1, minWidth: 'min(320px, 100%)', height: '400px' }}>
-            <Bar data={comparisonChart} options={chartOptions(`전년 동월 대비 증감 (${comparisonChart.currentYear} vs ${comparisonChart.prevYear})`)} />
+            <Bar data={comparisonChart} options={chartOptions(`전년 동월 대비 증감 (${comparisonChart.currentYear} vs ${comparisonChart.prevYear})`, '₩', {
+              showLegend: false,
+              isInProgress: (item) => item.dataIndex === currentMonthIndex,
+            })} />
           </div>
         )}
       </div>
@@ -439,7 +433,7 @@ function DividendChart() {
         </div>
 
         <div className="card" style={{ flex: 1, minWidth: 'min(320px, 100%)', height: '400px' }}>
-          {accountChart ? <Bar data={accountChart} options={chartOptions('계좌별 배당금 합계')} /> : <div>데이터 불러오는 중...</div>}
+          {accountChart ? <Bar data={accountChart} options={chartOptions('계좌별 배당금 합계', '₩', { showLegend: false })} /> : <div>데이터 불러오는 중...</div>}
         </div>
       </div>
 

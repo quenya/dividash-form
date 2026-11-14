@@ -3,7 +3,7 @@ title: UI Behavior and QA Invariants
 type: workflow
 status: current
 updated: 2026-11-14
-source_refs: [S002, S007, S015, S017, S018, S019]
+source_refs: [S002, S007, S015, S017, S018, S019, S020]
 tags: [ui, charts, calendar, responsive, accessibility, qa, theme]
 ---
 
@@ -19,6 +19,9 @@ tags: [ui, charts, calendar, responsive, accessibility, qa, theme]
 - 종목별 배당금은 순위와 긴 한국어 종목명을 읽을 수 있는 가로 Top-10 bar chart다. label truncation, 오른쪽 금액 label 공간, tooltip을 함께 확인한다.
 - 연도별 합계는 정렬된 year index와 [`chartPalette.js`](../../src/utils/chartPalette.js)의 동일한 color mapping을 사용한다. DOM legend button은 hidden state와 접근 가능한 action name을 동기화해야 한다.
 - Portfolio sector doughnut은 고정 최대 크기와 responsive width를 가진 wrapper 안에 있어야 하며 card 밖으로 넘치지 않아야 한다.
+- 아직 끝나지 않은 기간(월별·전년 동월 대비 chart의 이번 달, 연도별 chart의 올해)은 흐리게 그리고 tooltip 제목에 “(진행 중)”을 붙인다. Chart 위 caption 한 줄이 흐린 막대의 의미를 설명한다. 값과 합계는 바꾸지 않는다(S020).
+- 전년 동월 대비 chart에서 이번 달 이후의 달은 `null`이며 data label을 붙이지 않는다. 실제 증감 0은 `₩ 0`으로 표시한다. Helper와 회귀 테스트는 [`dividendChartData.js`](../../src/utils/dividendChartData.js)와 [`dividendChartData.test.js`](../../src/utils/dividendChartData.test.js)다.
+- 막대마다 색이 다른 단일 series chart(계좌별 합계, 전년 동월 대비)는 Chart.js legend를 숨긴다. 한 개의 swatch가 첫 막대 색만 보여 의미를 잘못 전달했기 때문이다.
 
 ### Manual-entry local date
 
@@ -111,6 +114,9 @@ tags: [ui, charts, calendar, responsive, accessibility, qa, theme]
 ## Sources
 
 - [S019 Design token consistency](../raw/2026-11-14-design-token-consistency.md)
+- [S020 Chart period and label fixes](../raw/2026-11-14-chart-period-fixes.md)
+- [`src/utils/dividendChartData.js`](../../src/utils/dividendChartData.js)
+- [`src/utils/dividendChartData.test.js`](../../src/utils/dividendChartData.test.js)
 - [`DESIGN.md`](../../DESIGN.md)
 - [`src/styles/App.css`](../../src/styles/App.css)
 - [`src/context/ThemeContext.jsx`](../../src/context/ThemeContext.jsx)
