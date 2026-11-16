@@ -356,3 +356,10 @@
 
 - Wiki knowledge page 9개와 source 24개에 대해 index coverage, orphan, frontmatter, `Sources`/`Related`, source reference, 상대 링크를 검사했다.
 - Result: wiki와 raw의 상대 링크 247개, 오류 0개.
+
+## [2026-11-16] fix | 예정 배당 알림 패널 뷰포트 배치
+
+- 데스크톱 사이드바에서는 종 아이콘 왼쪽에서 오른쪽으로 펼치고, 모바일 우측 헤더에서는 뷰포트 우측 여백에 맞춰 배치한다.
+- 패널 너비와 높이를 뷰포트에 맞춰 제한하고 긴 콘텐츠 줄바꿈과 내부 목록 스크롤을 유지한다. 배당 데이터와 조회 흐름은 변경하지 않았다.
+- 회귀 테스트는 `Layout`의 breakpoint별 정렬 전달과 `NotificationCenter`의 좌·우 정렬, 크기 제한, 내부 스크롤을 확인한다.
+- 검증: `TZ=Asia/Seoul CI=true npm test -- --watchAll=false` 전체 24 suites / 129 tests 통과, `CI=true npm run build` 성공(기존 caniuse-lite 경고), `git diff --check` 통과. Synthetic-data browser fixture에서 1024×320, 375×320, 280×320 모두 12px viewport inset 안에 패널이 들어오고, 목록은 내부 스크롤됐다. 실제 인증 앱과 사용자 데이터는 열지 않았다.

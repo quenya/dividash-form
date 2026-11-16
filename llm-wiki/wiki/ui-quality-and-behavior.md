@@ -37,7 +37,8 @@ tags: [ui, charts, calendar, responsive, accessibility, qa, theme]
 - Actual receipts are joined by exact payment date and same direct ticker, or by the existing unique confirmed high-confidence name resolver. Show each account receipt on its own line, then total valid amounts separately per currency; never combine ledger receipts with official per-share distributions. Missing/invalid amounts or currencies make the total explicitly incomplete. Missing ledger records mean unregistered, not non-payment; multiple official events on one ticker/date do not duplicate receipts.
 - Duplicate issuer schedules are collapsed. Amounts are shown in the issuer's currency per share, with a direct issuer-source link; do not imply account-level or portfolio totals.
 - Loading, official-data failures, and sync-status warnings are distinct. A failed query must not be presented as an authoritative empty schedule list.
-- Implementation and tests: `src/utils/threeDayScheduledNotifications.js` and its test; source data comes from `useDividendData`.
+- The popover stays within the viewport: desktop sidebar placement starts at the bell's left edge, while mobile header placement clamps to the viewport's right inset; width and height are capped, long content wraps, and the list remains internally scrollable.
+- Implementation and tests: `src/utils/threeDayScheduledNotifications.js` and its test; `src/components/NotificationCenter.jsx`, `NotificationCenter.test.jsx`, and `Layout.test.jsx` cover schedule content and responsive placement. Source data comes from `useDividendData`.
 
 ### Dividend calendar receipt share estimates
 
@@ -142,6 +143,8 @@ tags: [ui, charts, calendar, responsive, accessibility, qa, theme]
 - [`src/utils/chartTheme.js`](../../src/utils/chartTheme.js)
 - [`src/utils/chartTheme.test.js`](../../src/utils/chartTheme.test.js)
 - [`src/components/Layout.test.jsx`](../../src/components/Layout.test.jsx)
+- [`src/components/NotificationCenter.jsx`](../../src/components/NotificationCenter.jsx)
+- [`src/components/NotificationCenter.test.jsx`](../../src/components/NotificationCenter.test.jsx)
 - [S007 OMO UI and QA evidence](../raw/2026-08-23-omo-ui-qa-evidence.md)
 - [S015 Dividend Calendar Estimated Holding Count](../raw/2026-11-13-dividend-calendar-estimated-shares.md)
 - [S017 Monthly Dividend Data Navigation](../raw/2026-11-13-dividend-data-month-navigation.md)

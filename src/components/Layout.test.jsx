@@ -8,7 +8,7 @@ jest.mock('../context/AuthContext', () => ({
 jest.mock('../context/ThemeContext', () => ({
   useTheme: () => ({ isDarkMode: false, toggleTheme: jest.fn() }),
 }));
-jest.mock('./NotificationCenter', () => () => null);
+jest.mock('./NotificationCenter', () => ({ alignment }) => <div data-testid="notification-alignment">{alignment}</div>);
 
 const renderAtWidth = (width, currentPage) => {
   window.innerWidth = width;
@@ -27,6 +27,14 @@ test('desktop navigation marks the current page and groups input pages under 입
   expect(screen.getByRole('button', { name: '입력' })).toHaveAttribute('aria-current', 'page');
   expect(screen.getByRole('button', { name: '입력' })).toHaveClass('is-active');
   expect(screen.getByRole('button', { name: '대시보드' })).not.toHaveAttribute('aria-current');
+});
+
+test('passes right alignment on mobile and left alignment in the desktop sidebar', () => {
+  const mobile = renderAtWidth(375, 'chart');
+  expect(screen.getByTestId('notification-alignment')).toHaveTextContent('right');
+  mobile.unmount();
+  renderAtWidth(1024, 'chart');
+  expect(screen.getByTestId('notification-alignment')).toHaveTextContent('left');
 });
 
 test('mobile header icon buttons have accessible names', () => {
