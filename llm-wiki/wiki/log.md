@@ -340,3 +340,19 @@
 
 - Wiki knowledge page 9개와 source 23개에 대해 index coverage, orphan, frontmatter, `Sources`/`Related`, source reference, 상대 링크를 검사했다.
 - Result: wiki와 raw의 상대 링크 244개, 오류 0개.
+
+## [2026-11-16] feature | 공통 버튼 디자인
+
+- 차트 legend와 표 정렬 header를 제외한 모든 버튼을 `.btn`과 variant(`primary`, `secondary`, `ghost`, `danger`, `link`)·size(`sm`, `icon`, `block`, `option`) class로 통일했다. Hover, 눌림, 비활성, 처리 중 상태와 파일 선택 버튼 스타일을 포함한다.
+- 흰 글자가 올라가는 채움과 활성 navigation을 `--accent-strong`으로 바꿔 S019부터 추적하던 강조색 대비 문제를 닫았다. ETF 분석 기간 선택은 `SegmentedControl`로 바꿨다.
+- `DESIGN.md`, UI behavior, known gaps, index를 S024와 함께 갱신했다.
+- 검증: `TZ=Asia/Seoul`에서 전체 테스트 24개 suite/126개 통과, `CI=true` production build 성공. Synthetic data와 mocked Supabase로 S023 build와 light/dark 비교 capture했다. 실제 인증 runtime은 미검증이며 DB 쓰기·배포는 수행하지 않았다.
+
+## [2026-11-16] fix | S023 날짜 정정
+
+- 위의 `[2026-11-14] feature | 움직임과 저장 피드백`과 lint 항목, S023 snapshot은 실제로 2026-11-16에 작성·검증되었다. Raw와 log는 수정하지 않는 규칙에 따라 S024 snapshot의 정정 절로 대체한다.
+
+## [2026-11-16] lint | 버튼 디자인 Wiki 무결성
+
+- Wiki knowledge page 9개와 source 24개에 대해 index coverage, orphan, frontmatter, `Sources`/`Related`, source reference, 상대 링크를 검사했다.
+- Result: wiki와 raw의 상대 링크 247개, 오류 0개.

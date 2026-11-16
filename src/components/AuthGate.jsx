@@ -80,18 +80,9 @@ function AuthGate({ children }) {
         <button
           type="submit"
           disabled={submitting}
-          style={{
-            width: '100%',
-            marginBottom: 12,
-            padding: '10px 12px',
-            border: 'none',
-            borderRadius: 4,
-            background: 'var(--accent-color)',
-            color: 'var(--text-on-accent)',
-            fontWeight: 700,
-            cursor: submitting ? 'not-allowed' : 'pointer',
-            opacity: submitting ? 0.7 : 1
-          }}
+          aria-busy={submitting}
+          className="btn btn-primary btn-block"
+          style={{ marginBottom: 12 }}
         >
           {submitting ? '처리 중...' : mode === 'signIn' ? '로그인' : '가입'}
         </button>
@@ -102,16 +93,7 @@ function AuthGate({ children }) {
             setMode(mode === 'signIn' ? 'signUp' : 'signIn');
             setMessage('');
           }}
-          style={{
-            width: '100%',
-            padding: '10px 12px',
-            border: '1px solid var(--border-color)',
-            borderRadius: 4,
-            background: 'transparent',
-            color: 'var(--accent-color)',
-            fontWeight: 700,
-            cursor: 'pointer'
-          }}
+          className="btn btn-secondary btn-block"
         >
           {mode === 'signIn' ? '계정 만들기' : '로그인으로 돌아가기'}
         </button>

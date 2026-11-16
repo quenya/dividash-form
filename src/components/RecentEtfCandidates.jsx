@@ -2,6 +2,9 @@ import React, { useState } from 'react';
 import { RefreshCw } from 'lucide-react';
 import { useRecentEtfCandidates } from '../hooks/useRecentEtfCandidates';
 import EtfCacheAnalytics from './EtfCacheAnalytics';
+import SegmentedControl from './SegmentedControl';
+
+const WINDOW_OPTIONS = [1, 3, 6].map((months) => ({ value: months, label: `${months}개월` }));
 
 function RecentEtfCandidates() {
   const [windowMonths, setWindowMonths] = useState(1);
@@ -21,15 +24,14 @@ function RecentEtfCandidates() {
             </p>
           </div>
           <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-            <div role="group" aria-label="분석 기간 선택" style={{ display: 'flex', gap: '4px' }}>
-              {[1, 3, 6].map((months) => (
-                <button key={months} type="button" onClick={() => setWindowMonths(months)} aria-pressed={windowMonths === months}>
-                  {months}개월
-                </button>
-              ))}
-            </div>
-            <button type="button" onClick={refetch} aria-label="ETF 분석 새로고침" title="새로고침">
-              <RefreshCw size={16} />
+            <SegmentedControl
+              label="분석 기간 선택"
+              options={WINDOW_OPTIONS}
+              value={windowMonths}
+              onChange={setWindowMonths}
+            />
+            <button type="button" className="btn btn-secondary btn-icon" onClick={refetch} aria-label="ETF 분석 새로고침" title="새로고침">
+              <RefreshCw size={16} aria-hidden="true" />
             </button>
           </div>
         </div>

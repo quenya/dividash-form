@@ -60,8 +60,8 @@ export default function DividendForecast({ service = getDividendForecast }) {
           <h4 id="dividend-forecast-title">배당 전망</h4>
           <p className="dividend-forecast-subtitle">내 입력 이력과 공식 참고 전망을 분리해 표시합니다.</p>
         </div>
-        <button type="button" onClick={load} disabled={state.status === 'loading' || authLoading} aria-label="전망 새로고침">
-          <RefreshCw size={16} /> 새로고침
+        <button type="button" className="btn btn-secondary btn-sm" onClick={load} disabled={state.status === 'loading' || authLoading} aria-label="전망 새로고침">
+          <RefreshCw size={16} aria-hidden="true" /> 새로고침
         </button>
       </div>
 

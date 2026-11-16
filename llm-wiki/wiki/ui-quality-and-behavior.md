@@ -2,8 +2,8 @@
 title: UI Behavior and QA Invariants
 type: workflow
 status: current
-updated: 2026-11-14
-source_refs: [S002, S007, S015, S017, S018, S019, S020, S021, S022, S023]
+updated: 2026-11-16
+source_refs: [S002, S007, S015, S017, S018, S019, S020, S021, S022, S023, S024]
 tags: [ui, charts, calendar, responsive, accessibility, qa, theme]
 ---
 
@@ -79,6 +79,7 @@ tags: [ui, charts, calendar, responsive, accessibility, qa, theme]
 - Sector doughnut과 Top-10 종목 chart도 [`chartPalette.js`](../../src/utils/chartPalette.js)를 쓴다. 8개를 넘는 category는 색이 순서대로 반복된다.
 - Success/error message는 `.status-message`와 `.status-message.is-error`(`role="status"`)를 쓴다. jsdom은 inline `color`의 `var()`를 버리므로 증감 색을 검증해야 하는 곳은 `.text-gain`/`.text-loss`/`.text-unchanged` class를 쓴다.
 - Focus ring은 전역 `:focus-visible` rule이 그린다. Inline `outline: none`을 두지 않는다.
+- 버튼은 `.btn`과 variant·size class로만 꾸민다(S024). 흰 글자가 올라가는 채움은 `--accent-strong`을 쓰며 `--accent-color` 위에 흰 글자를 두지 않는다. 연도별 chart의 DOM legend와 데이터 표의 정렬 header는 의도적으로 제외한다.
 
 ### KPI and annual-chart behavior
 
@@ -129,6 +130,7 @@ tags: [ui, charts, calendar, responsive, accessibility, qa, theme]
 - [S021 Chart readability](../raw/2026-11-14-chart-readability.md)
 - [S022 Gain and loss colors](../raw/2026-11-14-gain-loss-colors.md)
 - [S023 Motion feedback](../raw/2026-11-14-motion-feedback.md)
+- [S024 Button system](../raw/2026-11-16-button-system.md)
 - [`src/components/ActionButton.test.jsx`](../../src/components/ActionButton.test.jsx)
 - [`src/components/KPICard.test.jsx`](../../src/components/KPICard.test.jsx)
 - [`src/components/PortfolioAnalysis.test.jsx`](../../src/components/PortfolioAnalysis.test.jsx)

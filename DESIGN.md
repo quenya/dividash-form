@@ -14,8 +14,11 @@ All colors come from CSS custom properties in `src/styles/App.css`: light values
 | `--bg-secondary`, `--bg-card` | `#ffffff` | `#25262b` | Cards, sidebar, inputs |
 | `--text-primary` | `#2d3436` | `#e0e0e0` | Body text |
 | `--text-secondary` | `#636e72` | `#a1a1aa` | Labels, helper text, chart text |
-| `--accent-color` | `#4f8cff` | `#5c7cfa` | Primary actions, active navigation |
-| `--text-on-accent` | `#ffffff` | `#ffffff` | Text on accent fills |
+| `--accent-color` | `#4f8cff` | `#5c7cfa` | Brand accent: focus ring, selected indicators, chart accent |
+| `--accent-strong` / `--accent-strong-hover` | `#3a6ad4` / `#2f62cf` | `#4263eb` / `#3b5bdb` | Fills that carry white text: primary buttons, active navigation (5.0:1 or better) |
+| `--accent-text` | `#3a6ad4` | `#748ffc` | Accent used as text, such as link buttons |
+| `--bg-hover` | `#eef1f6` | `#2c2e33` | Hover surface for secondary, ghost, and navigation items |
+| `--text-on-accent` | `#ffffff` | `#ffffff` | Text on `--accent-strong` fills |
 | `--border-color` | `#dfe6e9` | `#373a40` | Borders, table rules |
 | `--danger` | `#dc3545` | `#ff6b6b` | Errors, negative change, unresolved items |
 | `--text-on-danger` | `#ffffff` | `#1a1b1e` | Text on danger fills |
@@ -51,6 +54,7 @@ Success changed from `#28a745` to `#1a7f37` because the old value reached only 3
 - App shell: fixed desktop sidebar, mobile top header plus bottom nav. Implemented with `.app-*` classes in `App.css`; navigation is a `nav` landmark and marks the current page with `aria-current="page"`.
 - Card: single-level framed surface only, no nested decorative cards
 - Button: visible focus, explicit disabled state, command text only. Never set `outline: none`; the global `:focus-visible` rule draws the focus ring. Icon-only buttons need an `aria-label`; toggles expose `aria-pressed`.
+- Button styles: `.btn` plus one variant and optional sizes, never ad-hoc inline colors. `btn-primary` (one main action per view: 등록, 저장, 분석, 로그인, 검색), `btn-secondary` (neutral actions, paging, refresh), `btn-ghost` (cancel, reset, icon actions in toolbars), `btn-danger` (an action on an error state), `btn-link` (text that navigates or selects). Sizes: `btn-sm` (32px, in tables, filters, and inline forms), `btn-icon` (square, needs `aria-label`), `btn-block` (full width at the end of a form), `btn-option` (rows in a choose-one list). Pressed buttons scale to 0.97; disabled buttons fade to 45%, but a busy `ActionButton` stays fully visible. The native file picker button is styled like `btn-secondary`. Toggle groups use `SegmentedControl`, not a row of buttons.
 - Form field: label plus input/select/textarea, full-width in narrow panels
 - Status message: `.status-message` (success) or `.status-message.is-error`, a bordered tonal block with `role="status"` (`role="alert"` for errors raised by a submit).
 - Action button: `ActionButton` with `useActionStatus` for remote actions. It shows the loading label in place (disabled, `aria-busy`), then the success label for 1.6s and announces it through a visually hidden status region. All labels share one grid cell so the width does not jump. Where the form clears on success (OCR, text analysis), use loading only and let the status message confirm. Errors return the button to idle and appear as an error status message; no `alert()` for results.
@@ -99,6 +103,5 @@ Motion confirms an action or shows that a state changed. Nothing moves on its ow
 ## 8. Accepted Debt
 
 - Layout properties (spacing, flex, sizing) are still inline styles in most components outside the app shell. Move them to classes per component, starting with `DividendForm` and `PortfolioAnalysis`, in changes that do not mix in behavior work.
-- White text on `--accent-color` is 3.2:1 in light mode and 3.7:1 in dark mode, below 4.5:1. The input-method tabs no longer use it; the active navigation item and accent buttons still do. Fixing those changes the brand accent and needs a design decision.
 - The mobile bottom nav has seven items; at 375px several Korean labels wrap to two lines.
 - Remaining literal colors: the modal overlay and notification shadow, the react-calendar dark-mode overrides, the scrollbar thumb, and the unused `DividendPredictionChart`.
