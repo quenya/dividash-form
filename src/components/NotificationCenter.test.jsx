@@ -8,7 +8,7 @@ jest.mock('../hooks/useDividendData', () => ({ useDividendData: jest.fn() }));
 const row = { ticker: '069500', payment_date: '2026-11-03', distribution_per_share: 125, currency: 'KRW', source_issuer: 'Issuer', source_url: 'https://issuer.example' };
 const data = (overrides = {}) => ({ data: [], tickerMatchesMap: {}, officialDistributions: [row], eligibleEtfTickers: ['069500'], officialDataError: null, officialSyncStatus: { status: 'success', finished_at: new Date().toISOString(), has_coverage_gaps: false }, loading: false, tickersMap: { '069500': { company_name: 'KODEX 200' } }, error: null, refetch: jest.fn(), ...overrides });
 
-afterEach(() => { cleanup(); jest.useRealTimers(); jest.clearAllMocks(); });
+afterEach(() => { cleanup(); jest.useRealTimers(); jest.clearAllMocks(); window.innerWidth = 1024; window.innerHeight = 768; });
 
 test('shows a three-day schedule with registered account receipt separate from official per-share amount', () => {
   jest.useFakeTimers().setSystemTime(new Date('2026-11-03T10:00:00'));
@@ -128,6 +128,33 @@ test('marks totals incomplete when an amount or currency is missing or invalid',
   expect(screen.getByText('금액누락 금액 미확인')).toBeInTheDocument();
   expect(screen.getByText('통화누락 통화 미확인 · 10')).toBeInTheDocument();
   expect(screen.getByText('비정상 금액 미확인')).toBeInTheDocument();
+});
+
+test.each([
+  ['left', 'desktop-left-sidebar', 1024, 320, { left: 40, top: 24, width: 40, height: 40 }, 40],
+  ['right', 'mobile-right-header', 375, 320, { left: 220, top: 16, width: 40, height: 40 }, 83],
+])('keeps the panel within narrow viewport bounds from the %s-aligned %s bell', (alignment, anchor, viewportWidth, viewportHeight, bounds, expectedViewportLeft) => {
+  jest.useFakeTimers().setSystemTime(new Date('2026-11-03T10:00:00'));
+  Object.defineProperty(window, 'innerWidth', { configurable: true, writable: true, value: viewportWidth });
+  Object.defineProperty(window, 'innerHeight', { configurable: true, writable: true, value: viewportHeight });
+  useDividendData.mockReturnValue(data());
+  render(<NotificationCenter alignment={alignment} />);
+  const button = screen.getByRole('button', { name: '알림 1개' });
+  button.parentElement.getBoundingClientRect = jest.fn(() => bounds);
+  fireEvent.click(button);
+  const panel = screen.getByText('오늘·내일·모레 공식 배당 예정 (1)').parentElement;
+  const panelList = panel.querySelector('[data-notification-list]');
+  const viewportLeft = bounds.left + Number.parseFloat(panel.style.left);
+  const viewportTop = bounds.top + Number.parseFloat(panel.style.top);
+  expect(panel).toHaveClass('notification-panel');
+  expect(panel.style.width).toBe(`${Math.min(280, viewportWidth - 24)}px`);
+  expect(viewportLeft).toBe(expectedViewportLeft);
+  expect(viewportLeft).toBeGreaterThanOrEqual(12);
+  expect(viewportLeft + Math.min(280, viewportWidth - 24)).toBeLessThanOrEqual(viewportWidth - 12);
+  expect(viewportTop).toBeGreaterThanOrEqual(12);
+  expect(viewportTop + Number.parseFloat(panel.style.maxHeight)).toBeLessThanOrEqual(viewportHeight - 12);
+  expect(panel).toHaveStyle({ boxSizing: 'border-box', overflowWrap: 'anywhere', display: 'flex', flexDirection: 'column' });
+  expect(panelList).toHaveStyle({ maxHeight: '300px', overflowY: 'auto', flex: '1 1 auto', minHeight: '0' });
 });
 
 test('adds decimal receipt strings without floating-point artifacts', () => {

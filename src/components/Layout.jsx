@@ -47,7 +47,7 @@ function Layout({ children, currentPage, setPage }) {
                 <header className="app-mobile-header">
                     <h3>DiviDash</h3>
                     <div className="app-mobile-actions">
-                        <NotificationCenter />
+                        <NotificationCenter alignment="right" />
                         <button type="button" className="app-icon-button" onClick={toggleTheme} aria-label={`${themeLabel}로 전환`}>
                             {isDarkMode ? <Sun size={20} aria-hidden="true" /> : <Moon size={20} aria-hidden="true" />}
                         </button>
@@ -85,7 +85,7 @@ function Layout({ children, currentPage, setPage }) {
             <aside className="app-sidebar">
                 <div className="app-brand">
                     <h2>DiviDash</h2>
-                    <NotificationCenter />
+                    <NotificationCenter alignment="left" />
                 </div>
 
                 <nav className="app-nav" aria-label="주 메뉴">
