@@ -4,6 +4,13 @@ import { listAccounts, createAccount } from '../api/accounts';
 import { supabase } from '../api/supabaseClient';
 import { searchTossInstruments } from '../api/searchInstruments';
 import { buildTickerMatchesMap, getVerifiedMatchAliasKeys, isVerifiedMatch, normalizeTickerInput } from '../utils/tickerMatching';
+import ActionButton, { useActionStatus } from './ActionButton';
+import SegmentedControl from './SegmentedControl';
+
+const CURRENCY_OPTIONS = [
+  { value: 'KRW', label: '원화' },
+  { value: 'USD', label: '달러' },
+];
 
 export function getVerifiedMatchChoices(matchData) {
   const matchMap = buildTickerMatchesMap(matchData);
@@ -311,6 +318,9 @@ function DividendForm() {
     }
   };
 
+  const [submitStatus, runSubmit] = useActionStatus();
+  const [submitError, setSubmitError] = useState('');
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (customStock.trim() && !selectedInstrument) {
@@ -329,8 +339,13 @@ function DividendForm() {
       payment_date: form.payment_date,
       currency: form.currency,
     };
-    await insertDividend(payload);
-    alert('배당금이 등록되었습니다!');
+    setSubmitError('');
+    try {
+      await runSubmit(() => insertDividend(payload));
+    } catch (error) {
+      setSubmitError(error.message);
+      return;
+    }
     setForm({
       account_id: '',
       account_name: '',
@@ -508,44 +523,13 @@ function DividendForm() {
         </label>
         <div style={{ margin: '12px 0' }}>
           <span style={{ marginRight: 8 }}>통화:</span>
-          <div style={{ display: 'inline-flex', borderBottom: '2px solid var(--border-color)', borderRadius: 4 }}>
-            <button
-              type="button"
-              aria-pressed={form.currency === 'KRW'}
-              style={{
-                border: 'none',
-                background: 'none',
-                padding: '8px 24px',
-                cursor: 'pointer',
-                fontWeight: form.currency === 'KRW' ? 'bold' : 'normal',
-                borderBottom: form.currency === 'KRW' ? '3px solid var(--accent-color)' : 'none',
-                color: form.currency === 'KRW' ? 'var(--accent-color)' : 'var(--text-secondary)',
-                fontSize: '1em',
-                transition: 'border-bottom 0.2s'
-              }}
-              onClick={() => setForm({ ...form, currency: 'KRW' })}
-            >
-              원화
-            </button>
-            <button
-              type="button"
-              aria-pressed={form.currency === 'USD'}
-              style={{
-                border: 'none',
-                background: 'none',
-                padding: '8px 24px',
-                cursor: 'pointer',
-                fontWeight: form.currency === 'USD' ? 'bold' : 'normal',
-                borderBottom: form.currency === 'USD' ? '3px solid var(--accent-color)' : 'none',
-                color: form.currency === 'USD' ? 'var(--accent-color)' : 'var(--text-secondary)',
-                fontSize: '1em',
-                transition: 'border-bottom 0.2s'
-              }}
-              onClick={() => setForm({ ...form, currency: 'USD' })}
-            >
-              달러
-            </button>
-          </div>
+          <SegmentedControl
+            variant="underline"
+            label="통화"
+            options={CURRENCY_OPTIONS}
+            value={form.currency}
+            onChange={(currency) => setForm({ ...form, currency })}
+          />
         </div>
         <div style={{ display: 'flex', alignItems: 'center', marginBottom: 8 }}>
           <span style={{
@@ -567,7 +551,8 @@ function DividendForm() {
           />
         </div>
         <input name="date" value={form.payment_date} onChange={handleChange} placeholder="날짜" required type="date" />
-        <button type="submit">등록</button>
+        <ActionButton type="submit" status={submitStatus} label="등록" loadingLabel="등록 중…" successLabel="등록 완료" />
+        {submitError && <div role="alert" className="status-message is-error">{submitError}</div>}
       </form>
       <div style={{ marginTop: 24 }}>
         <h4>최근 등록된 배당내역</h4>

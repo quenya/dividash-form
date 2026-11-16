@@ -2,12 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '../api/supabaseClient';
 import { extractDividendFromText } from '../api/llmService';
 import insertDividend from '../api/insertDividend';
+import ActionButton, { useActionStatus } from './ActionButton';
 
 function TextAnalysis() {
   const [inputText, setInputText] = useState('');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [extractedData, setExtractedData] = useState(null);
   const [message, setMessage] = useState('');
+  const [saveStatus, runSave] = useActionStatus();
   const [accountNames, setAccountNames] = useState([]);
   const [accountNumbers, setAccountNumbers] = useState([]);
   const [accountMapping, setAccountMapping] = useState(new Map());
@@ -72,11 +74,12 @@ function TextAnalysis() {
     if (!extractedData) return;
 
     try {
-      await insertDividend({
+      // The form clears on success, so the button shows loading only; the status message confirms the save.
+      await runSave(() => insertDividend({
         ...extractedData,
         input_method: 'llm',
         confidence_score: extractedData.confidence || 0.9
-      });
+      }), { showSuccess: false });
       setMessage('배당금 정보가 성공적으로 저장되었습니다!');
       // Reset form
       setInputText('');
@@ -138,9 +141,12 @@ function TextAnalysis() {
             borderRadius: 4
           }}
         />
-        <button
+        <ActionButton
           onClick={analyzeText}
-          disabled={!inputText.trim() || isAnalyzing}
+          disabled={!inputText.trim()}
+          status={isAnalyzing ? 'loading' : 'idle'}
+          label="텍스트 분석"
+          loadingLabel="분석 중…"
           style={{
             padding: '8px 16px',
             backgroundColor: 'var(--accent-color)',
@@ -149,9 +155,7 @@ function TextAnalysis() {
             borderRadius: 4,
             cursor: 'pointer'
           }}
-        >
-          {isAnalyzing ? '분석 중...' : '텍스트 분석'}
-        </button>
+        />
       </div>
 
       {extractedData && (
@@ -242,8 +246,11 @@ function TextAnalysis() {
                 <option value="USD">USD</option>
               </select>
             </div>
-            <button
+            <ActionButton
               onClick={handleSave}
+              status={saveStatus}
+              label="저장"
+              loadingLabel="저장 중…"
               style={{
                 padding: '10px 20px',
                 backgroundColor: 'var(--accent-color)',
@@ -252,9 +259,7 @@ function TextAnalysis() {
                 borderRadius: 4,
                 cursor: 'pointer'
               }}
-            >
-              저장
-            </button>
+            />
           </div>
 
           {extractedData.confidence && (

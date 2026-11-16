@@ -328,3 +328,15 @@
 
 - Wiki knowledge page 9개와 source 22개에 대해 index coverage, orphan, frontmatter, `Sources`/`Related`, source reference, 상대 링크를 검사했다.
 - Result: wiki와 raw의 상대 링크 237개, 오류 0개.
+
+## [2026-11-14] feature | 움직임과 저장 피드백
+
+- DesignBookmark Motion 목록을 검토해 의존성 없이 적용 가능한 세 가지를 골랐다. 원격 저장 버튼의 처리 중·완료 표시(`ActionButton`), 입력 방식·통화 선택의 sliding indicator(`SegmentedControl`), 배당금 재투자 switch(`ToggleSwitch`)다.
+- 수동 등록과 시뮬레이터 설정 저장의 결과 `alert()`를 없애고 실패를 오류 status message로 보여준다. 수동 등록 실패 시 입력값을 유지한다.
+- 움직임 token과 전역 `prefers-reduced-motion` rule을 추가했고, 입력 영역이 render마다 remount되던 구조와 동작하지 않던 `animate-spin` class를 고쳤다. `DESIGN.md`, UI behavior, known gaps, index를 S023과 함께 갱신했다.
+- 검증: `TZ=Asia/Seoul`에서 전체 테스트 24개 suite/126개 통과, `CI=true` production build 성공. Synthetic data와 mocked Supabase로 S022 build와 비교 capture했고, 움직임은 transition을 약 6배 늦춰 frame 단위로 확인했다. 실제 인증 runtime과 기기 설정의 reduced motion은 미검증이며 DB 쓰기·배포는 수행하지 않았다.
+
+## [2026-11-14] lint | 움직임 Wiki 무결성
+
+- Wiki knowledge page 9개와 source 23개에 대해 index coverage, orphan, frontmatter, `Sources`/`Related`, source reference, 상대 링크를 검사했다.
+- Result: wiki와 raw의 상대 링크 244개, 오류 0개.

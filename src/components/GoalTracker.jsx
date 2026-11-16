@@ -72,7 +72,7 @@ function GoalTracker({ currentAmount }) {
     if (loading) {
         return (
             <div className="card" style={{ flex: 1, minWidth: '300px', display: 'flex', alignItems: 'center', justifyContent: 'center', height: '140px' }}>
-                <Loader2 className="animate-spin" color="var(--accent-color)" />
+                <Loader2 className="icon-spin" color="var(--accent-color)" />
             </div>
         );
     }
@@ -93,7 +93,7 @@ function GoalTracker({ currentAmount }) {
                             aria-label="목표 저장"
                             style={{ padding: '4px', background: 'transparent', color: 'var(--success)', border: '1px solid var(--success)', cursor: 'pointer' }}
                         >
-                            {saving ? <Loader2 size={16} className="animate-spin" /> : <Check size={16} />}
+                            {saving ? <Loader2 size={16} className="icon-spin" /> : <Check size={16} />}
                         </button>
                         <button
                             onClick={() => { setTempGoal(goal); setIsEditing(false); }}

@@ -52,7 +52,10 @@ Success changed from `#28a745` to `#1a7f37` because the old value reached only 3
 - Card: single-level framed surface only, no nested decorative cards
 - Button: visible focus, explicit disabled state, command text only. Never set `outline: none`; the global `:focus-visible` rule draws the focus ring. Icon-only buttons need an `aria-label`; toggles expose `aria-pressed`.
 - Form field: label plus input/select/textarea, full-width in narrow panels
-- Status message: `.status-message` (success) or `.status-message.is-error`, a bordered tonal block with `role="status"`.
+- Status message: `.status-message` (success) or `.status-message.is-error`, a bordered tonal block with `role="status"` (`role="alert"` for errors raised by a submit).
+- Action button: `ActionButton` with `useActionStatus` for remote actions. It shows the loading label in place (disabled, `aria-busy`), then the success label for 1.6s and announces it through a visually hidden status region. All labels share one grid cell so the width does not jump. Where the form clears on success (OCR, text analysis), use loading only and let the status message confirm. Errors return the button to idle and appear as an error status message; no `alert()` for results.
+- Segmented control: `SegmentedControl`, a labelled group of `aria-pressed` buttons with a sliding indicator. `pill` variant for switching views (input method), `underline` variant inside forms (currency). The selected option uses `--text-primary`, never white on accent.
+- Toggle switch: `ToggleSwitch` (`role="switch"`, `aria-checked`) for on/off settings such as dividend reinvestment.
 - Change direction: follow the Korean market convention. An increase is red (`--gain`) with ▲, a decrease is blue (`--loss`) with ▼, and no change is `--text-secondary` with no marker. Always pair the color with the marker. `--success` and `--danger` are for status (saved, error, unresolved), never for direction. Use `.text-gain`, `.text-loss`, and `.text-unchanged` for text; tests assert these classes because jsdom drops `var()` values from inline `color`.
 - Categorical chart: use the shared chart palette only when color identifies the same category across charts (years, accounts), with one legend item per category and an explicit tooltip label.
 - Ranking chart: Top 10 securities and sector share are horizontal bars in one color (`--accent-color` via the chart theme); the Unknown sector is gray `#6b7280` (`UNKNOWN_SECTOR_COLOR`).
@@ -77,16 +80,25 @@ The palette has eight colors; a chart with more categories repeats them in order
 
 Chart.js draws on canvas, which cannot resolve CSS variables: a `var(--…)` string passed to a chart is ignored and falls back to the default color. Chart text, grid, tooltip, accent, and gain/loss colors come from `useChartTheme()` (`src/context/ThemeContext.jsx`), backed by `src/utils/chartTheme.js`. Those values mirror the CSS tokens, and `chartTheme.test.js` fails if `--text-secondary`, `--chart-grid`, `--accent-color`, `--gain`, or `--loss` drift apart. Change both files together.
 
-## 6. Accessibility
+## 6. Motion
+
+Motion confirms an action or shows that a state changed. Nothing moves on its own or on page load: no count-up numbers, no scrambled text, no decorative loops. The only repeating animation is the loading spinner.
+
+- Durations and easing come from tokens: `--motion-fast` (150ms) for color and opacity, `--motion-base` (220ms) for position, `--ease-out` for both.
+- Animate `transform` and `opacity`. The segmented-control indicator also animates its `width`.
+- Under `prefers-reduced-motion: reduce`, a global rule cuts transitions and animations to almost zero. State must still be readable from labels, `aria-pressed`, and `aria-checked` without motion.
+- A component that animates between states must stay mounted across the change. Rendering it inside a component defined in another component's body remounts it on every render and silently removes the transition.
+
+## 7. Accessibility
 
 - Every auth input must have a label and autocomplete attribute.
 - Buttons that submit remote actions must expose disabled/loading state.
 - Security messages should be factual and avoid exposing internal error payloads unless needed for debugging.
 - Text tokens meet 4.5:1 on their intended surfaces, with the exception listed under Accepted Debt.
 
-## 7. Accepted Debt
+## 8. Accepted Debt
 
 - Layout properties (spacing, flex, sizing) are still inline styles in most components outside the app shell. Move them to classes per component, starting with `DividendForm` and `PortfolioAnalysis`, in changes that do not mix in behavior work.
-- White text on `--accent-color` is 3.2:1 in light mode and 3.7:1 in dark mode, below 4.5:1. Fixing it changes the brand accent and needs a design decision.
+- White text on `--accent-color` is 3.2:1 in light mode and 3.7:1 in dark mode, below 4.5:1. The input-method tabs no longer use it; the active navigation item and accent buttons still do. Fixing those changes the brand accent and needs a design decision.
 - The mobile bottom nav has seven items; at 375px several Korean labels wrap to two lines.
 - Remaining literal colors: the modal overlay and notification shadow, the react-calendar dark-mode overrides, the scrollbar thumb, and the unused `DividendPredictionChart`.

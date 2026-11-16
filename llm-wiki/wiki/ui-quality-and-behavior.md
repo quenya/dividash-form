@@ -3,7 +3,7 @@ title: UI Behavior and QA Invariants
 type: workflow
 status: current
 updated: 2026-11-14
-source_refs: [S002, S007, S015, S017, S018, S019, S020, S021, S022]
+source_refs: [S002, S007, S015, S017, S018, S019, S020, S021, S022, S023]
 tags: [ui, charts, calendar, responsive, accessibility, qa, theme]
 ---
 
@@ -64,6 +64,13 @@ tags: [ui, charts, calendar, responsive, accessibility, qa, theme]
 - Desktop sidebar와 mobile bottom navigation은 `aria-label="주 메뉴"`인 `nav` landmark이며, 현재 화면 버튼에 `aria-current="page"`를 둔다. 수동·화면 캡처·텍스트 입력 화면은 모두 `입력`을 현재 화면으로 표시한다. Mobile header의 icon-only 테마·로그아웃 버튼은 accessible name을 가진다. Shell style은 [`App.css`](../../src/styles/App.css)의 `.app-*` class에 있고 회귀 테스트는 [`Layout.test.jsx`](../../src/components/Layout.test.jsx)다.
 - 7개 bottom navigation item은 375px에서 일부 한국어 label이 두 줄로 줄바꿈된다. 변경 전후 동일한 기존 상태이며 [Known gaps](./known-gaps.md)에서 추적한다.
 
+### Motion and action feedback
+
+- 원격 저장 버튼은 [`ActionButton`](../../src/components/ActionButton.jsx)과 `useActionStatus`로 누른 자리에서 처리 중(비활성, `aria-busy`)과 완료(1.6초)를 보여준다. 결과 확인용 `alert()`은 쓰지 않는다. 수동 등록 실패는 입력값을 유지한 채 오류 status message로 알린다(S023).
+- 입력 방식 탭과 통화 선택은 [`SegmentedControl`](../../src/components/SegmentedControl.jsx), 배당금 재투자는 `role="switch"`인 [`ToggleSwitch`](../../src/components/ToggleSwitch.jsx)다.
+- 움직임은 `--motion-fast`/`--motion-base` token과 transform·opacity 위주이며, `prefers-reduced-motion: reduce`에서는 전역 rule로 거의 0이 된다. 상태는 label, `aria-pressed`, `aria-checked`만으로도 읽혀야 한다.
+- 상태 사이를 애니메이션하는 component는 변경 중에도 mount가 유지되어야 한다. `App.jsx`의 입력 영역은 내부 component가 아니라 element로 렌더링한다.
+
 ### Theme and design tokens
 
 - 색은 [`DESIGN.md`](../../DESIGN.md)와 [`App.css`](../../src/styles/App.css)의 token만 사용한다. Light 값은 `:root`, dark 값은 `body.dark-mode`에 있고 [`ThemeContext.jsx`](../../src/context/ThemeContext.jsx)는 class만 전환한다. Body에 inline 색을 쓰지 않는다.
@@ -97,6 +104,8 @@ tags: [ui, charts, calendar, responsive, accessibility, qa, theme]
 - Fixed bottom navigation은 body width가 정상이어도 chart 위를 가릴 수 있었다. Full-page visual inspection이 geometry-only check의 빈틈을 발견했다.
 - Concurrent branch amend로 QA 대상 SHA가 바뀐 사례가 있었다. 결과는 목적이 아니라 artifact revision에 귀속해야 한다.
 - Unauthenticated 375px screenshot은 authenticated product shell의 no-overlay 근거가 될 수 없었다.
+- `App.jsx`가 입력 영역을 render마다 새로 정의되는 내부 component로 만들고 있어, 탭을 바꿀 때마다 subtree 전체가 remount되었다. 이 상태에서는 CSS transition이 일어나지 않으므로 S023에서 element로 바꿨다.
+- Lucide spinner에 Tailwind의 `animate-spin` class를 썼지만 Tailwind가 없어 회전하지 않았다. S023에서 `icon-spin`으로 바꿨다.
 - Simulator chart가 Chart.js에 `var(--accent-color)`를 넘겨 dark mode에서 선이 검은색으로 거의 보이지 않았다. Unit test로는 드러나지 않았고 dark-mode capture에서 확인됐다(S019).
 
 ## Risks
@@ -119,6 +128,8 @@ tags: [ui, charts, calendar, responsive, accessibility, qa, theme]
 - [S020 Chart period and label fixes](../raw/2026-11-14-chart-period-fixes.md)
 - [S021 Chart readability](../raw/2026-11-14-chart-readability.md)
 - [S022 Gain and loss colors](../raw/2026-11-14-gain-loss-colors.md)
+- [S023 Motion feedback](../raw/2026-11-14-motion-feedback.md)
+- [`src/components/ActionButton.test.jsx`](../../src/components/ActionButton.test.jsx)
 - [`src/components/KPICard.test.jsx`](../../src/components/KPICard.test.jsx)
 - [`src/components/PortfolioAnalysis.test.jsx`](../../src/components/PortfolioAnalysis.test.jsx)
 - [`src/utils/dividendChartData.js`](../../src/utils/dividendChartData.js)

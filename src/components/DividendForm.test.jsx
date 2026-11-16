@@ -255,8 +255,26 @@ test('keeps payment date set to today after submitting a dividend', async () => 
 
     await waitFor(() => expect(insertDividend).toHaveBeenCalled());
     await waitFor(() => expect(dateInput).toHaveValue('2026-07-24'));
+    expect(screen.getByRole('button', { name: '등록 완료' })).toBeInTheDocument();
+    expect(alertSpy).not.toHaveBeenCalled();
   } finally {
     alertSpy.mockRestore();
     jest.useRealTimers();
   }
+});
+
+test('shows the save error and keeps the entered values when registration fails', async () => {
+  insertDividend.mockImplementationOnce(() => Promise.reject(new Error('배당금 입력 실패: network')));
+  render(<DividendForm />);
+
+  fireEvent.change(await screen.findByLabelText(/계좌명/i), { target: { value: 'IRP' } });
+  expect(await screen.findByRole('option', { name: '삼성전자' })).toBeInTheDocument();
+  fireEvent.change(screen.getByLabelText(/종목명/i), { target: { value: '삼성전자' } });
+  fireEvent.change(screen.getByPlaceholderText('금액'), { target: { value: '12000' } });
+
+  fireEvent.click(screen.getByRole('button', { name: '등록' }));
+
+  expect(await screen.findByRole('alert')).toHaveTextContent('배당금 입력 실패: network');
+  expect(screen.getByRole('button', { name: '등록' })).toBeEnabled();
+  expect(screen.getByPlaceholderText('금액')).toHaveValue(12000);
 });

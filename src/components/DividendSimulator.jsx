@@ -19,6 +19,8 @@ import { useAuth } from '../context/AuthContext';
 import { useChartTheme } from '../context/ThemeContext';
 import { withAlpha } from '../utils/chartTheme';
 import { formatKrwAxis } from '../utils/dividendChartData';
+import ActionButton, { useActionStatus } from './ActionButton';
+import ToggleSwitch from './ToggleSwitch';
 
 ChartJS.register(
     CategoryScale,
@@ -44,7 +46,8 @@ function DividendSimulator() {
     const [reinvest, setReinvest] = useState(true);
 
     const [settingsLoading, setSettingsLoading] = useState(true);
-    const [isSaving, setIsSaving] = useState(false);
+    const [saveStatus, runSave] = useActionStatus();
+    const [saveError, setSaveError] = useState('');
 
     // Fetch settings from Supabase
     const fetchSettings = useCallback(async () => {
@@ -77,27 +80,26 @@ function DividendSimulator() {
     }, [fetchSettings]);
 
     const handleSaveSettings = async () => {
-        setIsSaving(true);
+        setSaveError('');
         try {
-            const { error } = await supabase
-                .from('simulation_settings')
-                .upsert({
-                    user_id: user.id,
-                    id: 1,
-                    monthly_addition: monthlyAddition,
-                    expected_yield: expectedYield,
-                    dividend_growth: dividendGrowth,
-                    reinvest: reinvest,
-                    updated_at: new Date().toISOString()
-                }, { onConflict: 'user_id,id' });
+            await runSave(async () => {
+                const { error } = await supabase
+                    .from('simulation_settings')
+                    .upsert({
+                        user_id: user.id,
+                        id: 1,
+                        monthly_addition: monthlyAddition,
+                        expected_yield: expectedYield,
+                        dividend_growth: dividendGrowth,
+                        reinvest: reinvest,
+                        updated_at: new Date().toISOString()
+                    }, { onConflict: 'user_id,id' });
 
-            if (error) throw error;
-            alert('시뮬레이션 설정이 저장되었습니다.');
+                if (error) throw error;
+            });
         } catch (err) {
             console.error('Save settings error:', err);
-            alert('설정 저장 중 오류가 발생했습니다: ' + err.message);
-        } finally {
-            setIsSaving(false);
+            setSaveError('설정 저장 중 오류가 발생했습니다: ' + err.message);
         }
     };
 
@@ -184,7 +186,7 @@ function DividendSimulator() {
 
     if (dataLoading || settingsLoading) return (
         <div className="card" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '400px' }}>
-            <Loader2 className="animate-spin" size={32} color="var(--accent-color)" />
+            <Loader2 className="icon-spin" size={32} color="var(--accent-color)" />
         </div>
     );
 
@@ -196,20 +198,23 @@ function DividendSimulator() {
                         <TrendingUp size={24} color="var(--accent-color)" />
                         <h3 style={{ margin: 0 }}>10년 배당 성장 시뮬레이터</h3>
                     </div>
-                    <button
+                    <ActionButton
                         onClick={handleSaveSettings}
-                        disabled={isSaving}
+                        status={saveStatus}
+                        icon={<Save size={18} aria-hidden="true" />}
+                        label="설정 저장"
+                        loadingLabel="저장 중…"
+                        successLabel="저장 완료"
                         style={{
-                            display: 'flex', alignItems: 'center', gap: '8px',
                             padding: '10px 20px', borderRadius: '10px',
                             backgroundColor: 'var(--accent-color)', color: 'var(--text-on-accent)',
                             border: 'none', cursor: 'pointer', fontWeight: 'bold'
                         }}
-                    >
-                        {isSaving ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
-                        설정 저장
-                    </button>
+                    />
                 </div>
+                {saveError && (
+                    <div role="alert" className="status-message is-error" style={{ margin: '-16px 0 24px' }}>{saveError}</div>
+                )}
 
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '32px' }}>
                     {/* Controls */}
@@ -250,19 +255,12 @@ function DividendSimulator() {
                             />
                         </div>
 
-                        <button
-                            onClick={() => setReinvest(!reinvest)}
-                            aria-pressed={reinvest}
-                            style={{
-                                padding: '12px', borderRadius: '12px', border: 'none',
-                                backgroundColor: reinvest ? 'var(--accent-color)' : 'var(--bg-secondary)',
-                                color: reinvest ? 'var(--text-on-accent)' : 'var(--text-secondary)',
-                                cursor: 'pointer', fontWeight: 'bold', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px'
-                            }}
-                        >
-                            <RefreshCw size={18} />
-                            배당금 재투자 {reinvest ? 'ON' : 'OFF'}
-                        </button>
+                        <ToggleSwitch
+                            checked={reinvest}
+                            onChange={setReinvest}
+                            label="배당금 재투자"
+                            icon={<RefreshCw size={18} aria-hidden="true" />}
+                        />
                     </div>
 
                     {/* Result Card */}
