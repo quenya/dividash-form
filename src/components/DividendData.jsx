@@ -231,9 +231,9 @@ function DividendData() {
       <div style={{ marginBottom: 16, display: "flex", flexWrap: "wrap", gap: 12, alignItems: "center" }}>
         <h2 style={{ margin: 0 }}>배당 데이터</h2>
         <div role="group" aria-label="월 이동" style={{ display: "flex", gap: 8, alignItems: "center" }}>
-          <button type="button" aria-label="지난달" onClick={() => handleMonthChange(-1)} disabled={loading}>‹ 지난달</button>
+          <button type="button" className="btn btn-secondary btn-sm" aria-label="지난달" onClick={() => handleMonthChange(-1)} disabled={loading}>‹ 지난달</button>
           <strong aria-live="polite">{formatMonthLabel(selectedMonth)}</strong>
-          <button type="button" aria-label="다음달" onClick={() => handleMonthChange(1)} disabled={loading}>다음달 ›</button>
+          <button type="button" className="btn btn-secondary btn-sm" aria-label="다음달" onClick={() => handleMonthChange(1)} disabled={loading}>다음달 ›</button>
         </div>
         <div style={{ marginLeft: "auto", display: "flex", gap: 8, alignItems: "center" }}>
           <label htmlFor="pageSize" style={{ fontSize: "0.9em", color: "var(--text-secondary)" }}>
@@ -259,8 +259,8 @@ function DividendData() {
         <select id="etfBrand" value={brandInput} onChange={(event) => setBrandInput(event.target.value)} style={{ padding: "6px 8px" }}>
           {ETF_BRANDS.map((brand) => <option key={brand} value={brand}>{brand}</option>)}
         </select>
-        <button type="submit">검색</button>
-        <button type="button" onClick={clearFilters}>초기화</button>
+        <button type="submit" className="btn btn-primary btn-sm">검색</button>
+        <button type="button" className="btn btn-ghost btn-sm" onClick={clearFilters}>초기화</button>
       </form>
 
       {error && (
@@ -313,11 +313,11 @@ function DividendData() {
           총 {totalCount.toLocaleString()}건 중 {startItem.toLocaleString()}-{endItem.toLocaleString()} 표시
         </span>
         <div style={{ marginLeft: "auto", display: "flex", gap: 8, alignItems: "center" }}>
-          <button type="button" onClick={handlePrev} disabled={page === 1 || loading}>
+          <button type="button" className="btn btn-secondary btn-sm" onClick={handlePrev} disabled={page === 1 || loading}>
             이전
           </button>
           <span>페이지 {page} / {totalPages}</span>
-          <button type="button" onClick={handleNext} disabled={page === totalPages || loading}>
+          <button type="button" className="btn btn-secondary btn-sm" onClick={handleNext} disabled={page === totalPages || loading}>
             다음
           </button>
         </div>

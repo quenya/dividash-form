@@ -2,8 +2,8 @@
 title: Known Gaps and Open Risks
 type: risk
 status: current
-updated: 2026-11-14
-source_refs: [S002, S003, S007, S008, S009, S010, S012, S013, S016, S019, S020, S021, S023]
+updated: 2026-11-16
+source_refs: [S002, S003, S007, S008, S009, S010, S012, S013, S016, S019, S020, S021, S023, S024]
 tags: [risk, drift, follow-up]
 ---
 
@@ -69,10 +69,10 @@ tags: [risk, drift, follow-up]
 ### Design system follow-ups
 
 - Status: open after S019 token consistency; authenticated runtime and 768px capture not yet verified.
-- Accent contrast: white text on `--accent-color` is 3.2:1 (light) and 3.7:1 (dark), below 4.5:1, on the active navigation item and primary buttons. The input-method tabs stopped using it in S023. Closing the rest changes the brand accent and needs a design decision.
+- Accent contrast: closed in S024. Primary buttons and the active navigation item now use `--accent-strong` (5.0:1 with white in both themes), and no text sits white on `--accent-color`.
 - Mobile navigation: seven bottom-nav items wrap several Korean labels to two lines at 375px. Options include fewer top-level items or shorter labels.
 - Inline layout styles remain in most components outside the app shell; [`DESIGN.md`](../../DESIGN.md) lists them as accepted debt to move per component.
-- Required evidence to close: authenticated 375/768/desktop capture in both themes after the accent and navigation decisions, plus per-component class migration with tests.
+- Required evidence to close: authenticated 375/768/desktop capture in both themes after the navigation decision, plus per-component class migration with tests.
 
 ### Official ETF sync coverage
 
@@ -118,6 +118,7 @@ tags: [risk, drift, follow-up]
 - [S020 Chart period and label fixes](../raw/2026-11-14-chart-period-fixes.md)
 - [S021 Chart readability](../raw/2026-11-14-chart-readability.md)
 - [S023 Motion feedback](../raw/2026-11-14-motion-feedback.md)
+- [S024 Button system](../raw/2026-11-16-button-system.md)
 - [`src/api/llmService.js`](../../src/api/llmService.js)
 - [`src/api/ocrService.js`](../../src/api/ocrService.js)
 - [`sheet/supabase_setup.sql`](../../sheet/supabase_setup.sql)

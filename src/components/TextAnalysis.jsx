@@ -147,14 +147,7 @@ function TextAnalysis() {
           status={isAnalyzing ? 'loading' : 'idle'}
           label="텍스트 분석"
           loadingLabel="분석 중…"
-          style={{
-            padding: '8px 16px',
-            backgroundColor: 'var(--accent-color)',
-            color: 'var(--text-on-accent)',
-            border: 'none',
-            borderRadius: 4,
-            cursor: 'pointer'
-          }}
+          className="btn btn-primary"
         />
       </div>
 
@@ -251,14 +244,7 @@ function TextAnalysis() {
               status={saveStatus}
               label="저장"
               loadingLabel="저장 중…"
-              style={{
-                padding: '10px 20px',
-                backgroundColor: 'var(--accent-color)',
-                color: 'var(--text-on-accent)',
-                border: 'none',
-                borderRadius: 4,
-                cursor: 'pointer'
-              }}
+              className="btn btn-primary"
             />
           </div>
 

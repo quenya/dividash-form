@@ -135,7 +135,7 @@ function PortfolioAnalysis() {
                     <div className="card" style={{ width: '90%', maxWidth: '520px', padding: '24px', maxHeight: '90vh', overflowY: 'auto' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px' }}>
                             <h3 style={{ margin: 0 }}>종목 매칭 정보 확인</h3>
-                            <button type="button" onClick={handleCloseModal} aria-label="닫기" style={{ border: 'none', background: 'none', color: 'var(--text-primary)', cursor: 'pointer' }}><X /></button>
+                            <button type="button" onClick={handleCloseModal} aria-label="닫기" className="btn btn-ghost btn-icon"><X size={20} aria-hidden="true" /></button>
                         </div>
                         <div style={{ marginBottom: '16px' }}>
                             <label style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>원본 입력값</label>
@@ -183,8 +183,8 @@ function PortfolioAnalysis() {
                             <textarea value={evidence} onChange={e => setEvidence(e.target.value)} required rows={3} placeholder="공식 거래소·발행사·공시 등 확인 가능한 근거를 기록하세요." style={{ display: 'block', width: '100%', marginTop: '6px', padding: '10px', resize: 'vertical' }} />
                         </label>
                         <div style={{ display: 'flex', gap: '10px' }}>
-                            <button onClick={handleCloseModal} style={{ flex: 1, padding: '12px', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'none', color: 'var(--text-primary)', cursor: 'pointer' }}>취소</button>
-                            <button onClick={handleRegister} disabled={isSubmitting || !evidence.trim()} style={{ flex: 1, padding: '12px', borderRadius: '8px', border: 'none', backgroundColor: 'var(--accent-color)', color: 'var(--text-on-accent)', fontWeight: 'bold', cursor: 'pointer' }}>
+                            <button type="button" onClick={handleCloseModal} className="btn btn-secondary" style={{ flex: 1 }}>취소</button>
+                            <button type="button" onClick={handleRegister} disabled={isSubmitting || !evidence.trim()} aria-busy={isSubmitting} className="btn btn-primary" style={{ flex: 1 }}>
                                 {isSubmitting ? '처리 중...' : '매칭 정보 저장'}
                             </button>
                         </div>
@@ -333,10 +333,7 @@ function PortfolioAnalysis() {
                                             <button
                                                 type="button"
                                                 onClick={() => handleOpenModal(row)}
-                                                style={{
-                                                    padding: '6px 12px', fontSize: '0.8rem', backgroundColor: 'var(--danger)', color: 'var(--text-on-danger)',
-                                                    border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold'
-                                                }}
+                                                className="btn btn-danger btn-sm"
                                             >
                                                 정보 입력
                                             </button>

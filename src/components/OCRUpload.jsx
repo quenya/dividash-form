@@ -105,6 +105,7 @@ function OCRUpload() {
           status={isAnalyzing ? 'loading' : 'idle'}
           label="이미지 분석"
           loadingLabel="분석 중…"
+          className="btn btn-primary"
           style={{ marginLeft: 10 }}
         />
       </div>
@@ -240,15 +241,8 @@ function OCRUpload() {
               ? `${extractedData.entries.length}건 모두 저장`
               : '저장'}
             loadingLabel="저장 중…"
-            style={{
-              padding: '10px 20px',
-              backgroundColor: 'var(--accent-color)',
-              color: 'var(--text-on-accent)',
-              border: 'none',
-              borderRadius: 4,
-              cursor: 'pointer',
-              marginTop: 20
-            }}
+            className="btn btn-primary"
+            style={{ marginTop: 20 }}
           />
 
           {extractedData.confidence && (

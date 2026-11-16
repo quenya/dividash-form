@@ -199,3 +199,12 @@
 - Captured: 2026-11-14
 - Scope: in-place action feedback, sliding segmented controls, reinvestment switch, motion tokens, and reduced-motion handling.
 - Status: current implementation evidence; authenticated runtime remains unverified.
+
+## S024 - Button System
+
+- Type: sanitized user request and verification snapshot
+- Locator: Claude chat follow-up for `quenya/dividash-form`, branch `agent/button-system` on top of S023
+- Snapshot: [2026-11-16-button-system.md](./2026-11-16-button-system.md)
+- Captured: 2026-11-16
+- Scope: shared button variants and sizes, accent-strong fills, and the correction of S023's capture date to 2026-11-16.
+- Status: current implementation evidence; authenticated runtime remains unverified.

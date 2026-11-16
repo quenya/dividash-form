@@ -7,6 +7,11 @@
   --text-secondary: #636e72;
   --text-on-accent: #ffffff;
   --accent-color: #4f8cff;
+  /* Filled controls with white text use the stronger accent (5.0:1); --accent-text is accent used as text */
+  --accent-strong: #3a6ad4;
+  --accent-strong-hover: #2f62cf;
+  --accent-text: #3a6ad4;
+  --bg-hover: #eef1f6;
   --border-color: #dfe6e9;
   --danger: #dc3545;
   --danger-bg: rgba(220, 53, 69, 0.08);
@@ -45,6 +50,10 @@ body.dark-mode {
   --text-secondary: #a1a1aa;
   --text-on-accent: #ffffff;
   --accent-color: #5c7cfa;
+  --accent-strong: #4263eb;
+  --accent-strong-hover: #3b5bdb;
+  --accent-text: #748ffc;
+  --bg-hover: #2c2e33;
   --border-color: #373a40;
   --danger: #ff6b6b;
   --danger-bg: rgba(255, 107, 107, 0.12);
@@ -138,12 +147,6 @@ body {
 .dividend-forecast-columns p,
 .dividend-forecast-provenance,
 .dividend-forecast-warning { color: var(--text-secondary); font-size: 0.85rem; }
-.dividend-forecast-heading button {
-  display: inline-flex; align-items: center; gap: 6px; padding: 8px 12px;
-  border: 1px solid var(--border-color); border-radius: 6px; background: transparent;
-  color: var(--text-primary); cursor: pointer;
-}
-.dividend-forecast-heading button:disabled { opacity: 0.6; cursor: wait; }
 .dividend-forecast-columns > div { flex: 1 1 220px; padding: 12px; border: 1px solid var(--border-color); border-radius: 8px; }
 .dividend-forecast-list { list-style: none; padding: 0; margin: 16px 0; }
 .dividend-forecast-list li { display: grid; grid-template-columns: 1fr auto auto; gap: 12px; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border-color); }
@@ -267,8 +270,13 @@ input, select, textarea {
   transition: background-color 0.2s, color 0.2s;
 }
 
+.app-nav-item:hover {
+  background-color: var(--bg-hover);
+  color: var(--text-primary);
+}
+
 .app-nav-item.is-active {
-  background-color: var(--accent-color);
+  background-color: var(--accent-strong);
   color: var(--text-on-accent);
 }
 
@@ -286,7 +294,14 @@ input, select, textarea {
   white-space: nowrap;
 }
 
+.app-sidebar-action:hover,
+.app-icon-button:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
 .app-sidebar-action {
+  border-radius: var(--radius-sm);
   display: flex;
   align-items: center;
   gap: 12px;
@@ -335,6 +350,7 @@ input, select, textarea {
 }
 
 .app-icon-button {
+  border-radius: var(--radius-sm);
   padding: 4px;
   border: none;
   background: transparent;
@@ -562,4 +578,150 @@ input, select, textarea {
 .switch[aria-checked="true"] .switch-thumb {
   background: var(--text-on-accent);
   transform: translateX(19px);
+}
+
+/* Buttons — DESIGN.md §5. One base plus a variant and an optional size. */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 40px;
+  padding: 0 16px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--text-primary);
+  font: inherit;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  line-height: 1.2;
+  white-space: nowrap;
+  text-decoration: none;
+  cursor: pointer;
+  transition:
+    background-color var(--motion-fast) ease,
+    border-color var(--motion-fast) ease,
+    color var(--motion-fast) ease,
+    transform var(--motion-fast) ease;
+}
+
+.btn:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+.btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* A button that is busy with its own action stays fully visible */
+.btn[aria-busy="true"] {
+  opacity: 1;
+  cursor: progress;
+}
+
+.btn-primary {
+  background: var(--accent-strong);
+  color: var(--text-on-accent);
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: var(--accent-strong-hover);
+}
+
+.btn-secondary {
+  background: var(--bg-secondary);
+  border-color: var(--border-color);
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background: var(--bg-hover);
+}
+
+.btn-ghost {
+  color: var(--text-secondary);
+}
+
+.btn-ghost:hover:not(:disabled) {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.btn-danger {
+  background: var(--danger);
+  color: var(--text-on-danger);
+}
+
+.btn-danger:hover:not(:disabled) {
+  filter: brightness(0.92);
+}
+
+.btn-link {
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  color: var(--accent-text);
+  font-weight: 500;
+  text-align: left;
+  white-space: normal;
+}
+
+.btn-link:hover {
+  text-decoration: underline;
+}
+
+.btn-sm {
+  min-height: 32px;
+  padding: 0 12px;
+  font-size: 0.8125rem;
+  border-radius: var(--radius-sm);
+}
+
+.btn-block {
+  width: 100%;
+}
+
+.btn-icon {
+  width: 36px;
+  min-height: 36px;
+  padding: 0;
+}
+
+.btn-icon.btn-sm {
+  width: 30px;
+  min-height: 30px;
+}
+
+/* Search results and other choose-one rows */
+.btn-option {
+  justify-content: flex-start;
+  width: 100%;
+  min-height: 0;
+  padding: 8px 12px;
+  font-weight: 500;
+  text-align: left;
+  white-space: normal;
+}
+
+/* Native file picker button matches .btn-secondary */
+input[type="file"] {
+  padding: 6px;
+}
+
+input[type="file"]::file-selector-button {
+  margin-right: 12px;
+  padding: 8px 14px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color var(--motion-fast) ease;
+}
+
+input[type="file"]::file-selector-button:hover {
+  background: var(--bg-hover);
 }

@@ -92,7 +92,7 @@ function NotificationCenter() {
 
   return (
     <div style={{ position: 'relative' }} ref={dropdownRef}>
-      <button aria-label={`알림 ${result.count}개`} aria-expanded={isOpen} onClick={toggleOpen} style={{ background: 'transparent', border: 'none', cursor: 'pointer', position: 'relative', padding: '8px', color: 'var(--text-secondary)' }}>
+      <button aria-label={`알림 ${result.count}개`} aria-expanded={isOpen} onClick={toggleOpen} className="btn btn-ghost btn-icon" style={{ position: 'relative' }}>
         {result.count > 0 ? <BellRing size={20} color="var(--accent-color)" /> : <Bell size={20} />}
         {result.count > 0 && <span style={{ position: 'absolute', top: 0, right: 0, backgroundColor: 'var(--danger)', color: 'var(--text-on-danger)', fontSize: '10px', padding: '2px 5px', borderRadius: '50%', fontWeight: 'bold' }}>{result.count}</span>}
       </button>

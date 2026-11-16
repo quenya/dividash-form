@@ -205,11 +205,7 @@ function DividendSimulator() {
                         label="설정 저장"
                         loadingLabel="저장 중…"
                         successLabel="저장 완료"
-                        style={{
-                            padding: '10px 20px', borderRadius: '10px',
-                            backgroundColor: 'var(--accent-color)', color: 'var(--text-on-accent)',
-                            border: 'none', cursor: 'pointer', fontWeight: 'bold'
-                        }}
+                        className="btn btn-primary"
                     />
                 </div>
                 {saveError && (

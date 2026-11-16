@@ -49,7 +49,7 @@ function EtfCacheAnalytics({ items, analytics = [] }) {
           const a = analyticsMap.get(item.ticker) || {};
           return <tr key={item.ticker} style={{ borderBottom: '1px solid var(--border-color)' }}>
             <td style={{ padding: '10px', fontWeight: 'bold' }}>
-              <button type="button" onClick={() => setSelectedTicker(item.ticker)} style={{ padding: 0, border: 0, background: 'none', color: 'var(--accent-color)', cursor: 'pointer', textAlign: 'left' }}>
+              <button type="button" className="btn btn-link" onClick={() => setSelectedTicker(item.ticker)}>
                 {item.cache?.product_name || item.instrument?.name || item.companyNames?.[0] || item.ticker}
               </button>
             </td>

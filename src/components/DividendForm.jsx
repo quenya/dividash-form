@@ -386,7 +386,7 @@ function DividendForm() {
                 setIsAddingAccount(!isAddingAccount);
                 setAccountError('');
               }}
-              style={{ padding: '8px 12px' }}
+              className={`btn btn-sm ${isAddingAccount ? 'btn-ghost' : 'btn-secondary'}`}
             >
               {isAddingAccount ? '취소' : '+ 새 계좌 추가'}
             </button>
@@ -451,8 +451,8 @@ function DividendForm() {
                   aria-label="마스킹 계좌번호"
                 />
                 <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                  <button type="button" onClick={handleAddAccount}>저장 후 사용</button>
-                  <button type="button" onClick={() => setIsAddingAccount(false)}>취소</button>
+                  <button type="button" className="btn btn-primary btn-sm" onClick={handleAddAccount}>저장 후 사용</button>
+                  <button type="button" className="btn btn-ghost btn-sm" onClick={() => setIsAddingAccount(false)}>취소</button>
                 </div>
               </div>
               {accountError && <div style={{ color: 'var(--danger)', marginTop: 6 }}>{accountError}</div>}
@@ -508,7 +508,7 @@ function DividendForm() {
                     key={`${instrument.symbol}-${instrument.market || ''}`}
                     type="button"
                     onClick={() => handleInstrumentSelect(instrument)}
-                    style={{ textAlign: 'left', padding: '8px 10px' }}
+                    className="btn btn-secondary btn-option"
                   >
                     {instrument.name} · {instrument.symbol} · {instrument.market || '시장 확인'}
                     {instrument.securityType ? ` · ${instrument.securityType}` : ''}
@@ -551,7 +551,7 @@ function DividendForm() {
           />
         </div>
         <input name="date" value={form.payment_date} onChange={handleChange} placeholder="날짜" required type="date" />
-        <ActionButton type="submit" status={submitStatus} label="등록" loadingLabel="등록 중…" successLabel="등록 완료" />
+        <ActionButton type="submit" className="btn btn-primary btn-block" style={{ marginTop: 12 }} status={submitStatus} label="등록" loadingLabel="등록 중…" successLabel="등록 완료" />
         {submitError && <div role="alert" className="status-message is-error">{submitError}</div>}
       </form>
       <div style={{ marginTop: 24 }}>

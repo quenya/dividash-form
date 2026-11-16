@@ -91,7 +91,8 @@ function GoalTracker({ currentAmount }) {
                             onClick={handleSave}
                             disabled={saving}
                             aria-label="목표 저장"
-                            style={{ padding: '4px', background: 'transparent', color: 'var(--success)', border: '1px solid var(--success)', cursor: 'pointer' }}
+                            aria-busy={saving}
+                            className="btn btn-primary btn-icon btn-sm"
                         >
                             {saving ? <Loader2 size={16} className="icon-spin" /> : <Check size={16} />}
                         </button>
@@ -99,7 +100,7 @@ function GoalTracker({ currentAmount }) {
                             onClick={() => { setTempGoal(goal); setIsEditing(false); }}
                             disabled={saving}
                             aria-label="목표 편집 취소"
-                            style={{ padding: '4px', background: 'transparent', color: 'var(--danger)', border: '1px solid var(--danger)', cursor: 'pointer' }}
+                            className="btn btn-secondary btn-icon btn-sm"
                         >
                             <X size={16} />
                         </button>
@@ -108,7 +109,7 @@ function GoalTracker({ currentAmount }) {
                     <button
                         onClick={() => setIsEditing(true)}
                         aria-label="목표 금액 편집"
-                        style={{ padding: '4px', background: 'transparent', color: 'var(--text-secondary)', border: 'none', cursor: 'pointer' }}
+                        className="btn btn-ghost btn-icon btn-sm"
                     >
                         <Edit2 size={16} />
                     </button>
