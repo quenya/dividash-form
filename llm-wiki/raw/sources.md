@@ -190,3 +190,12 @@
 - Captured: 2026-11-14
 - Scope: Korean-convention gain/loss colors for KPI comparisons and the year-over-year chart, including the unchanged state.
 - Status: current implementation evidence; authenticated runtime remains unverified.
+
+## S023 - Motion Feedback
+
+- Type: sanitized user request, external reference review, and verification snapshot
+- Locator: Claude chat follow-up on `https://designbookmark.com/motion` for `quenya/dividash-form`, branch `agent/motion-feedback` on top of S022
+- Snapshot: [2026-11-14-motion-feedback.md](./2026-11-14-motion-feedback.md)
+- Captured: 2026-11-14
+- Scope: in-place action feedback, sliding segmented controls, reinvestment switch, motion tokens, and reduced-motion handling.
+- Status: current implementation evidence; authenticated runtime remains unverified.

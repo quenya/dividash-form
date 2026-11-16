@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { extractDividendFromImage } from '../api/ocrService';
 import insertDividend from '../api/insertDividend';
+import ActionButton, { useActionStatus } from './ActionButton';
 
 function OCRUpload() {
   const [image, setImage] = useState(null);
@@ -8,6 +9,7 @@ function OCRUpload() {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [extractedData, setExtractedData] = useState(null);
   const [message, setMessage] = useState('');
+  const [saveStatus, runSave] = useActionStatus();
 
   const handleImageUpload = (e) => {
     const file = e.target.files[0];
@@ -40,36 +42,39 @@ function OCRUpload() {
     if (!extractedData) return;
 
     try {
-      // entries 배열이 있고 2건 이상인 경우 모든 배당금을 저장
-      if (extractedData.entries && extractedData.entries.length > 1) {
-        let savedCount = 0;
-        
-        for (const entry of extractedData.entries) {
+      // The form clears on success, so the button shows loading only; the status message confirms the save.
+      await runSave(async () => {
+        // entries 배열이 있고 2건 이상인 경우 모든 배당금을 저장
+        if (extractedData.entries && extractedData.entries.length > 1) {
+          let savedCount = 0;
+
+          for (const entry of extractedData.entries) {
+            await insertDividend({
+              account_name: extractedData.account_name,
+              account_type: extractedData.account_type,
+              account_number: extractedData.account_number,
+              stock: entry.stock,
+              dividend_amount: entry.amount,
+              payment_date: entry.date,
+              currency: entry.currency,
+              input_method: 'ocr',
+              confidence_score: extractedData.confidence || 0.8
+            });
+            savedCount++;
+          }
+
+          setMessage(`${savedCount}건의 배당금 정보가 성공적으로 저장되었습니다!`);
+        } else {
+          // 단일 배당금인 경우 기존 방식으로 저장
           await insertDividend({
-            account_name: extractedData.account_name,
-            account_type: extractedData.account_type,
-            account_number: extractedData.account_number,
-            stock: entry.stock,
-            dividend_amount: entry.amount,
-            payment_date: entry.date,
-            currency: entry.currency,
+            ...extractedData,
             input_method: 'ocr',
             confidence_score: extractedData.confidence || 0.8
           });
-          savedCount++;
+          setMessage('배당금 정보가 성공적으로 저장되었습니다!');
         }
-        
-        setMessage(`${savedCount}건의 배당금 정보가 성공적으로 저장되었습니다!`);
-      } else {
-        // 단일 배당금인 경우 기존 방식으로 저장
-        await insertDividend({
-          ...extractedData,
-          input_method: 'ocr',
-          confidence_score: extractedData.confidence || 0.8
-        });
-        setMessage('배당금 정보가 성공적으로 저장되었습니다!');
-      }
-      
+      }, { showSuccess: false });
+
       // Reset form
       setImage(null);
       setImagePreview(null);
@@ -94,13 +99,14 @@ function OCRUpload() {
           onChange={handleImageUpload}
           style={{ marginBottom: 10 }}
         />
-        <button
+        <ActionButton
           onClick={analyzeImage}
-          disabled={!image || isAnalyzing}
+          disabled={!image}
+          status={isAnalyzing ? 'loading' : 'idle'}
+          label="이미지 분석"
+          loadingLabel="분석 중…"
           style={{ marginLeft: 10 }}
-        >
-          {isAnalyzing ? '분석 중...' : '이미지 분석'}
-        </button>
+        />
       </div>
 
       {imagePreview && (
@@ -227,8 +233,13 @@ function OCRUpload() {
             </div>
           )}
 
-          <button
+          <ActionButton
             onClick={handleSave}
+            status={saveStatus}
+            label={extractedData.entries && extractedData.entries.length > 1
+              ? `${extractedData.entries.length}건 모두 저장`
+              : '저장'}
+            loadingLabel="저장 중…"
             style={{
               padding: '10px 20px',
               backgroundColor: 'var(--accent-color)',
@@ -238,11 +249,7 @@ function OCRUpload() {
               cursor: 'pointer',
               marginTop: 20
             }}
-          >
-            {extractedData.entries && extractedData.entries.length > 1 
-              ? `${extractedData.entries.length}건 모두 저장` 
-              : '저장'}
-          </button>
+          />
 
           {extractedData.confidence && (
             <div style={{ marginTop: 10, fontSize: '0.9em', color: 'var(--text-secondary)' }}>
