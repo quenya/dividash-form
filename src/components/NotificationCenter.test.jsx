@@ -157,6 +157,32 @@ test.each([
   expect(panelList).toHaveStyle({ maxHeight: '300px', overflowY: 'auto', flex: '1 1 auto', minHeight: '0' });
 });
 
+test('keeps the mobile notification panel above the bottom navigation', () => {
+  jest.useFakeTimers().setSystemTime(new Date('2026-11-03T10:00:00'));
+  Object.defineProperty(window, 'innerWidth', { configurable: true, writable: true, value: 375 });
+  Object.defineProperty(window, 'innerHeight', { configurable: true, writable: true, value: 320 });
+  const navigationBounds = { top: 230, height: 90 };
+  const bottomNavigation = document.createElement('nav');
+  bottomNavigation.className = 'app-bottom-nav';
+  bottomNavigation.getBoundingClientRect = jest.fn(() => navigationBounds);
+  document.body.appendChild(bottomNavigation);
+
+  try {
+    useDividendData.mockReturnValue(data());
+    render(<NotificationCenter alignment="right" />);
+    const button = screen.getByRole('button', { name: '알림 1개' });
+    button.parentElement.getBoundingClientRect = jest.fn(() => ({ left: 220, top: 16, width: 40, height: 40 }));
+    fireEvent.click(button);
+
+    const panel = screen.getByText('오늘·내일·모레 공식 배당 예정 (1)').parentElement;
+    const viewportTop = 16 + Number.parseFloat(panel.style.top);
+    const viewportBottom = viewportTop + Number.parseFloat(panel.style.maxHeight);
+    expect(viewportBottom).toBeLessThanOrEqual(navigationBounds.top - 12);
+  } finally {
+    bottomNavigation.remove();
+  }
+});
+
 test('adds decimal receipt strings without floating-point artifacts', () => {
   jest.useFakeTimers().setSystemTime(new Date('2026-11-03T10:00:00'));
   useDividendData.mockReturnValue(data({ data: [

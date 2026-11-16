@@ -363,3 +363,9 @@
 - 패널 너비와 높이를 뷰포트에 맞춰 제한하고 긴 콘텐츠 줄바꿈과 내부 목록 스크롤을 유지한다. 배당 데이터와 조회 흐름은 변경하지 않았다.
 - 회귀 테스트는 `Layout`의 breakpoint별 정렬 전달과 `NotificationCenter`의 좌·우 정렬, 크기 제한, 내부 스크롤을 확인한다.
 - 검증: `TZ=Asia/Seoul CI=true npm test -- --watchAll=false` 전체 24 suites / 129 tests 통과, `CI=true npm run build` 성공(기존 caniuse-lite 경고), `git diff --check` 통과. Synthetic-data browser fixture에서 1024×320, 375×320, 280×320 모두 12px viewport inset 안에 패널이 들어오고, 목록은 내부 스크롤됐다. 실제 인증 앱과 사용자 데이터는 열지 않았다.
+
+## [2026-11-16] fix | 모바일 예정 배당 패널과 하단 메뉴 간격
+
+- PR 검토에서 모바일 하단 메뉴의 높은 stacking level이 짧은 화면에서 알림 목록을 가릴 수 있음을 확인했다.
+- 알림 패널의 사용 가능 높이를 실제 `.app-bottom-nav` 상단에서 12px 여백을 둔 경계로 제한하고 회귀 테스트를 추가했다. 테스트는 기존 동작에서 패널 하단 308px, 메뉴 경계 218px로 실패한 뒤 수정 후 통과했다.
+- 검증: 전체 24 suites / 130 tests 통과, production build 성공(기존 caniuse-lite 경고), `git diff --check` 통과. Synthetic browser fixture의 1024×320, 375×320, 280×320 측정 모두 패널/viewport 또는 하단 메뉴 사이 12px 여백을 유지했고, 알림 목록 내부 스크롤을 확인했다. Vercel preview는 빈 React root를 보여 실제 인증 UI는 미검증이며 계정 데이터는 열지 않았다.

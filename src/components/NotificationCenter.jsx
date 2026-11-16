@@ -89,10 +89,15 @@ function NotificationCenter({ alignment = 'right' }) {
     const maxLeft = Math.max(margin, viewportWidth - width - margin);
     const preferredLeft = alignment === 'right' ? maxLeft : bounds.left;
     const left = Math.min(maxLeft, Math.max(margin, preferredLeft));
+    const bottomNavigationBounds = document.querySelector('.app-bottom-nav')?.getBoundingClientRect();
+    const availableBottom = Math.min(
+      viewportHeight - margin,
+      bottomNavigationBounds?.height > 0 ? bottomNavigationBounds.top - margin : viewportHeight - margin,
+    );
     const preferredTop = bounds.top + 40;
-    const top = Math.min(Math.max(margin, preferredTop), Math.max(margin, viewportHeight - margin));
+    const top = Math.min(Math.max(margin, preferredTop), Math.max(margin, availableBottom));
 
-    setPanelPosition({ left: left - bounds.left, top: top - bounds.top, width, maxHeight: Math.max(0, viewportHeight - top - margin) });
+    setPanelPosition({ left: left - bounds.left, top: top - bounds.top, width, maxHeight: Math.max(0, availableBottom - top) });
   }, [alignment]);
 
   useLayoutEffect(() => {
